@@ -1,0 +1,61 @@
+---
+title: "API overview"
+description: "Control-plane API model, auth requirements, and integration-oriented endpoint families"
+---
+
+The public control-plane API is served under:
+
+```text
+https://api.acornops.dev/api/v1
+```
+
+Browser traffic uses a cookie-backed session. In default deployments, the management console host also proxies `/api` to the control plane so browser auth callbacks and session cookies stay on `https://console.acornops.dev`.
+
+Use this page to understand how the API is organized. Use the API reference sidebar for individual endpoint parameters, request bodies, response schemas, and generated examples.
+
+If you are building a bot, workflow adapter, or custom client, start with [Integrations](/integrations) for the supported auth and event patterns before wiring endpoint calls.
+
+## Auth model
+
+The browser API uses a `SameSite=Lax` session cookie. Mutating requests that carry a session cookie must also send the CSRF token in `x-csrf-token`; password login, signup, email verification, verification resend, forgot password, and reset password require the same CSRF token before a session exists.
+
+Default production installs support OIDC plus username/password login, with self-service signup disabled and password reset enabled. When self-service password signup is enabled, email verification is required unless an operator explicitly allows unverified signup for a private deployment.
+
+Runtime service-to-service calls use separate bearer tokens and are not part of the public browser API.
+
+## Endpoint families
+
+The API reference is grouped by these areas:
+
+| Area | Use it for |
+| --- | --- |
+| Auth and users | Runtime auth configuration, CSRF, OIDC, password auth, logout, current user, current auth methods, and JWKS. |
+| Workspaces and members | Workspace lifecycle, role catalogs, members, invitations, and workspace audit logs. |
+| Targets and inventory | Target summaries, Kubernetes clusters, VMs, resources, findings, metrics, logs, and agent-key rotation. |
+| Sessions and runs | Target conversations, run state, replayable events, SSE streams, approvals, cancellation, and recent chat activity. |
+| Tools and MCP servers | Target tool catalogs, tool settings, remote MCP server configuration, connection tests, and discovered MCP tools. |
+| Webhooks | Workspace and target-scoped webhook subscriptions, history, and delivery verification. |
+
+Admin endpoints are documented separately in the Admin API reference. They use the `/admin/v1` route namespace and are for operator administration, not normal browser workflows.
+
+## Integration boundaries
+
+AcornOps v1 does not expose a public PAT or bot service-account credential for the control-plane API. Keep user actions attributable by calling privileged endpoints from a real authenticated user session.
+
+Internal service tokens such as `ORCH_SERVICE_TOKEN`, `EXECUTION_ENGINE_DISPATCH_TOKEN`, and `LLM_GATEWAY_ADMIN_TOKEN` are platform credentials. They are not public integration credentials.
+
+Execution-engine and LLM-gateway runtime APIs are internal platform surfaces. External integrations should use webhooks, run events, the public control-plane API, and the management console.
+
+## Workflow notes
+
+Password auth uses enumeration-safe response patterns for verification resend and reset request flows. Password reset consumes a single-use token, updates the password, verifies the email, revokes existing sessions, and does not create a new session.
+
+Workspace role responses include server-owned permission fields. Clients should use those fields rather than copying role or capability logic.
+
+Registration endpoints return the target record, a one-time agent key, and install instructions. Agent-key rotation returns a replacement key and updated install instructions.
+
+Run events are replayable through the events endpoint and streamable through server-sent events. Current event types include run lifecycle, assistant message, token delta, tool call, write approval, failure, cancellation, and completion events.
+
+Write approval decisions are first-writer-wins. Repeating the same decision is idempotent, while a conflicting decision or a decision that arrives after the approval expiry returns conflict with the current approval state.
+
+Webhook delivery is best-effort. Verify `AcornOps-Signature` using `timestamp + "." + raw_json_body`, signed with HMAC-SHA256 and encoded as `v1=<hex>`.

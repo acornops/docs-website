@@ -1,0 +1,325 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "mint",
+  "name": "AcornOps",
+  "colors": {
+    "primary": "#FF703B",
+    "light": "#FF8B5C",
+    "dark": "#E65F2F"
+  },
+  "appearance": {
+    "default": "system"
+  },
+  "fonts": {
+    "family": "Outfit",
+    "heading": {
+      "family": "Outfit",
+      "weight": 700
+    },
+    "body": {
+      "family": "Outfit",
+      "weight": 400
+    }
+  },
+  "background": {
+    "color": {
+      "light": "#FBFBFA",
+      "dark": "#121110"
+    }
+  },
+  "favicon": "/favicon.svg",
+  "redirects": [
+    {
+      "source": "/api-reference",
+      "destination": "/api-overview"
+    }
+  ],
+  "api": {
+    "playground": {
+      "display": "none"
+    },
+    "examples": {
+      "languages": [
+        "curl",
+        "javascript"
+      ],
+      "autogenerate": true
+    }
+  },
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Platform",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": [
+              "index",
+              "architecture"
+            ]
+          },
+          {
+            "group": "Self-host",
+            "pages": [
+              "quickstart",
+              "deployment",
+              "configuration",
+              "kubernetes-clusters",
+              "vm-targets"
+            ]
+          },
+          {
+            "group": "Build integrations",
+            "pages": [
+              "integrations",
+              "api-overview",
+              "mcp-tools"
+            ]
+          },
+          {
+            "group": "API reference",
+            "openapi": {
+              "source": "openapi/control-plane-public.json",
+              "directory": "reference/control-plane"
+            },
+            "pages": [
+              {
+                "group": "Auth and users",
+                "pages": [
+                  "GET /api/v1/auth/oidc/login",
+                  "GET /api/v1/auth/oidc/callback",
+                  "GET /api/v1/auth/config",
+                  "GET /api/v1/auth/csrf",
+                  "POST /api/v1/auth/password/login",
+                  "POST /api/v1/auth/password/signup",
+                  "POST /api/v1/auth/password/verify-email",
+                  "POST /api/v1/auth/password/resend-verification",
+                  "POST /api/v1/auth/password/forgot",
+                  "POST /api/v1/auth/password/reset",
+                  "POST /api/v1/auth/password/change",
+                  "POST /api/v1/auth/oidc/link/start",
+                  "POST /api/v1/auth/logout",
+                  "GET /api/v1/me",
+                  "GET /api/v1/auth/methods",
+                  "GET /api/v1/auth/jwks.json"
+                ]
+              },
+              {
+                "group": "Workspaces and members",
+                "pages": [
+                  "GET /api/v1/workspaces",
+                  "POST /api/v1/workspaces",
+                  "GET /api/v1/workspaces/{workspaceId}",
+                  "DELETE /api/v1/workspaces/{workspaceId}",
+                  "GET /api/v1/workspaces/{workspaceId}/members",
+                  "POST /api/v1/workspaces/{workspaceId}/members",
+                  "PATCH /api/v1/workspaces/{workspaceId}/members/{userId}",
+                  "DELETE /api/v1/workspaces/{workspaceId}/members/{userId}",
+                  "GET /api/v1/workspaces/{workspaceId}/roles",
+                  "GET /api/v1/workspaces/{workspaceId}/audit-log",
+                  "GET /api/v1/workspaces/{workspaceId}/invitations",
+                  "POST /api/v1/workspaces/{workspaceId}/invitations",
+                  "DELETE /api/v1/workspaces/{workspaceId}/invitations/{invitationId}",
+                  "GET /api/v1/workspace-invitations/{token}",
+                  "POST /api/v1/workspace-invitations/{token}/accept"
+                ]
+              },
+              {
+                "group": "Targets and inventory",
+                "pages": [
+                  "GET /api/v1/workspaces/{workspaceId}/targets",
+                  "GET /api/v1/workspaces/{workspaceId}/targets/{targetId}",
+                  "GET /api/v1/workspaces/{workspaceId}/investigations",
+                  "GET /api/v1/workspaces/{workspaceId}/kubernetes-clusters",
+                  "POST /api/v1/workspaces/{workspaceId}/kubernetes-clusters",
+                  "GET /api/v1/workspaces/{workspaceId}/kubernetes-clusters/{clusterId}",
+                  "PATCH /api/v1/workspaces/{workspaceId}/kubernetes-clusters/{clusterId}",
+                  "DELETE /api/v1/workspaces/{workspaceId}/kubernetes-clusters/{clusterId}",
+                  "POST /api/v1/workspaces/{workspaceId}/kubernetes-clusters/{clusterId}/rotate-agent-key",
+                  "GET /api/v1/workspaces/{workspaceId}/kubernetes-clusters/{clusterId}/resources",
+                  "GET /api/v1/workspaces/{workspaceId}/kubernetes-clusters/{clusterId}/findings",
+                  "GET /api/v1/workspaces/{workspaceId}/kubernetes-clusters/metrics/history",
+                  "GET /api/v1/workspaces/{workspaceId}/kubernetes-clusters/{clusterId}/metrics/history",
+                  "GET /api/v1/workspaces/{workspaceId}/kubernetes-clusters/{clusterId}/pods/{namespace}/{podName}/logs",
+                  "GET /api/v1/workspaces/{workspaceId}/virtual-machines",
+                  "POST /api/v1/workspaces/{workspaceId}/virtual-machines",
+                  "GET /api/v1/workspaces/{workspaceId}/virtual-machines/{vmId}",
+                  "PATCH /api/v1/workspaces/{workspaceId}/virtual-machines/{vmId}",
+                  "DELETE /api/v1/workspaces/{workspaceId}/virtual-machines/{vmId}",
+                  "POST /api/v1/workspaces/{workspaceId}/virtual-machines/{vmId}/rotate-agent-key",
+                  "GET /api/v1/workspaces/{workspaceId}/virtual-machines/{vmId}/resources",
+                  "GET /api/v1/workspaces/{workspaceId}/virtual-machines/{vmId}/findings",
+                  "GET /api/v1/workspaces/{workspaceId}/virtual-machines/{vmId}/metrics/history",
+                  "GET /api/v1/workspaces/{workspaceId}/virtual-machines/{vmId}/logs"
+                ]
+              },
+              {
+                "group": "Sessions and runs",
+                "pages": [
+                  "GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/sessions",
+                  "POST /api/v1/workspaces/{workspaceId}/targets/{targetId}/sessions",
+                  "GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/chat-activity",
+                  "GET /api/v1/workspaces/{workspaceId}/kubernetes-clusters/{clusterId}/sessions",
+                  "POST /api/v1/workspaces/{workspaceId}/kubernetes-clusters/{clusterId}/sessions",
+                  "GET /api/v1/sessions/{sessionId}",
+                  "DELETE /api/v1/sessions/{sessionId}",
+                  "GET /api/v1/sessions/{sessionId}/messages",
+                  "POST /api/v1/sessions/{sessionId}/messages",
+                  "GET /api/v1/runs/{runId}",
+                  "GET /api/v1/runs/{runId}/approvals",
+                  "POST /api/v1/runs/{runId}/approvals/{approvalId}/decision",
+                  "POST /api/v1/runs/{runId}/cancel",
+                  "GET /api/v1/runs/{runId}/stream",
+                  "GET /api/v1/runs/{runId}/events"
+                ]
+              },
+              {
+                "group": "Tools and MCP servers",
+                "pages": [
+                  "GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/tools/catalog",
+                  "PATCH /api/v1/workspaces/{workspaceId}/targets/{targetId}/tools/{toolName}",
+                  "GET /api/v1/workspaces/{workspaceId}/kubernetes-clusters/{clusterId}/tools/catalog",
+                  "GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers",
+                  "POST /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers",
+                  "PATCH /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}",
+                  "DELETE /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}",
+                  "POST /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}/test-connection",
+                  "GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}/tools"
+                ]
+              },
+              {
+                "group": "Webhooks",
+                "pages": [
+                  "GET /api/v1/workspaces/{workspaceId}/webhooks",
+                  "POST /api/v1/workspaces/{workspaceId}/webhooks",
+                  "GET /api/v1/workspaces/{workspaceId}/webhooks/{webhookId}",
+                  "PATCH /api/v1/workspaces/{workspaceId}/webhooks/{webhookId}",
+                  "DELETE /api/v1/workspaces/{workspaceId}/webhooks/{webhookId}",
+                  "GET /api/v1/workspaces/{workspaceId}/webhooks/{webhookId}/history"
+                ]
+              }
+            ]
+          },
+          {
+            "group": "Operate",
+            "pages": [
+              "operations",
+              "admin-operations"
+            ]
+          },
+          {
+            "group": "Admin API reference",
+            "openapi": {
+              "source": "openapi/control-plane-admin.json",
+              "directory": "reference/admin"
+            },
+            "pages": [
+              {
+                "group": "Identity and system",
+                "pages": [
+                  "GET /admin/v1/me",
+                  "GET /admin/v1/system/readiness",
+                  "GET /admin/v1/system/config"
+                ]
+              },
+              {
+                "group": "Workspace administration",
+                "pages": [
+                  "GET /admin/v1/workspaces",
+                  "GET /admin/v1/workspaces/{workspaceId}",
+                  "PATCH /admin/v1/workspaces/{workspaceId}/plan",
+                  "PATCH /admin/v1/workspaces/{workspaceId}/quotas",
+                  "POST /admin/v1/workspaces/{workspaceId}/members",
+                  "PATCH /admin/v1/workspaces/{workspaceId}/members/{userId}/role",
+                  "DELETE /admin/v1/workspaces/{workspaceId}/members/{userId}"
+                ]
+              },
+              {
+                "group": "User administration",
+                "pages": [
+                  "GET /admin/v1/users",
+                  "GET /admin/v1/users/{userId}",
+                  "POST /admin/v1/users/{userId}/sessions/revoke"
+                ]
+              },
+              {
+                "group": "Target operations",
+                "pages": [
+                  "GET /admin/v1/targets",
+                  "GET /admin/v1/targets/{targetId}/agent",
+                  "POST /admin/v1/targets/{targetId}/agent/disconnect",
+                  "POST /admin/v1/targets/{targetId}/agent-key/rotate"
+                ]
+              },
+              {
+                "group": "Run operations",
+                "pages": [
+                  "GET /admin/v1/runs",
+                  "GET /admin/v1/runs/{runId}",
+                  "POST /admin/v1/runs/{runId}/cancel",
+                  "POST /admin/v1/runs/{runId}/mark-failed"
+                ]
+              },
+              {
+                "group": "Audit and tooling",
+                "pages": [
+                  "POST /admin/v1/tooling/sync",
+                  "GET /admin/v1/admin-audit-events",
+                  "GET /admin/v1/audit-events"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "global": {
+      "anchors": [
+        {
+          "anchor": "App",
+          "href": "https://console.acornops.dev/",
+          "icon": "book-open-cover"
+        },
+        {
+          "anchor": "API",
+          "href": "/api-overview",
+          "icon": "terminal"
+        }
+      ]
+    }
+  },
+  "logo": {
+    "light": "/logo/light.svg",
+    "dark": "/logo/dark.svg"
+  },
+  "navbar": {
+    "links": [
+      {
+        "label": "Contribute",
+        "href": "https://github.com/acornops/acornops-workspace"
+      }
+    ],
+    "primary": {
+      "type": "button",
+      "label": "Console",
+      "href": "https://console.acornops.dev/"
+    }
+  },
+  "contextual": {
+    "options": [
+      "copy",
+      "view",
+      "chatgpt",
+      "claude",
+      "perplexity",
+      "mcp",
+      "cursor",
+      "vscode"
+    ]
+  },
+  "footer": {
+    "socials": {
+      "github": "https://github.com/acornops"
+    }
+  }
+}

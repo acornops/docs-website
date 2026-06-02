@@ -1,0 +1,103 @@
+---
+title: "Operations"
+description: "Operate AcornOps safely after deployment"
+---
+
+This page covers day-two operations for the central platform and connected Kubernetes clusters or VMs.
+
+## Upgrade flow
+
+For production-style environments:
+
+1. Review release notes and changed configuration keys.
+2. Confirm Postgres and Redis availability and capacity.
+3. Run service init jobs before starting updated services.
+4. Roll the management console, control plane, execution engine, and LLM gateway.
+5. Verify OIDC sign-in, workspace listing, agent connectivity, and a read-only run.
+6. Roll target agents separately when chart, package, or agent behavior changes.
+
+Pin image tags during upgrades so deployments are reproducible.
+
+Control-plane rollouts keep the service available through multiple replicas. Connected agents reconnect to an available pod during the rollout, but commands that are already running can fail or time out and may need to be retried.
+
+## Durable state
+
+Inspect durable state:
+
+| Store | Contains |
+| --- | --- |
+| Control-plane Postgres | Workspaces, users, members, targets, Kubernetes clusters, VMs, sessions, runs, invitations, webhooks |
+| LLM-gateway Postgres | MCP registry, gateway metadata, encrypted provider or MCP secrets when using database-backed secrets |
+| External secret manager | Provider keys and MCP auth secrets when Vault or another manager is enabled |
+
+Redis is used for coordination, rate limits, control-plane agent ownership, cross-pod command routing, run event fanout, and renewed scheduler leases. Size it for expected run concurrency and event volume.
+
+## Health checks
+
+Verify the platform from the outside in:
+
+- management console loads over TLS,
+- `GET /api/v1/me` works after sign-in,
+- OIDC callback returns to the management console,
+- a workspace can be created and listed,
+- target agents can connect over WebSocket,
+- a run streams events through `GET /api/v1/runs/{runId}/stream`,
+- the LLM gateway is ready with a fresh JWKS cache,
+- remote MCP server discovery and connection tests pass for configured servers,
+- webhooks record delivery attempts for subscribed events.
+
+For production, keep component API docs disabled unless you intentionally expose them on a protected network.
+
+## Logs to inspect
+
+| Symptom | Start with |
+| --- | --- |
+| Sign-in fails | Control-plane logs and OIDC provider redirect URI/client settings |
+| Console cannot call API | Management console runtime config, CORS, ingress, and cookie settings |
+| Agent disconnected | target agent logs, control-plane WebSocket logs, agent key, outbound network policy |
+| Runs stuck pending | Control-plane dispatch logs, execution-engine logs, Redis connectivity |
+| Model calls fail | LLM-gateway logs, provider keys, run JWT claims, provider allow-list |
+| MCP tools fail | Gateway egress policy, MCP server discovery, public header validation, auth secret lookup |
+| Webhook verification fails | Consumer raw-body handling, timestamp, signature header, subscription secret |
+
+## Rate limits and budgets
+
+Use both platform and gateway limits:
+
+- run max runtime,
+- max steps,
+- max tool calls,
+- duplicate tool-call cap,
+- max output tokens,
+- per-window LLM request limits,
+- per-window tool-call limits.
+
+Keep read-write runs limited to roles and Kubernetes clusters where remediation is expected. VM troubleshooting runs are read-only.
+
+## Secret rotation
+
+Rotate secrets with service-specific rollout plans:
+
+| Secret type | Rotation impact |
+| --- | --- |
+| OIDC client secret | Browser sign-in can fail until control-plane pods reload the new value |
+| Internal service tokens | Rotate paired services together or support overlap during rollout |
+| Agent keys | Use the control-plane agent-key rotation flow per target |
+| Provider API keys | Update the gateway secret backend, then verify a read-only run |
+| MCP server auth secrets | Rotate through the MCP server auth fields, test the server connection, then verify an enabled tool |
+| Webhook signing secrets | Create or rotate the subscription secret and update the consumer |
+
+Do not reuse internal service tokens across environments.
+
+## Public route drift
+
+Keep these routes consistent across deployment, OIDC provider settings, docs, and management console runtime config:
+
+- `https://console.acornops.dev/`
+- `https://api.acornops.dev/api/v1`
+- `https://docs.acornops.dev/`
+- `wss://api.acornops.dev/api/v1/agent/connect`
+
+Default OIDC settings use `https://console.acornops.dev/api/v1/auth/oidc/callback` so browser session cookies are set on the console origin. If you override the redirect URI, update the provider allow-list and deployment config together.
+
+Root `acornops.dev` is reserved outside the platform API surface. Public documentation is served directly from `docs.acornops.dev`.

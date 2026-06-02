@@ -1,0 +1,206 @@
+---
+title: "Configuration"
+description: "Configure hosts, secrets, OIDC, model access, MCP egress, and runtime limits"
+---
+
+Configuration is split between public host settings, Kubernetes or Compose deployment values, and secret values. Keep secrets out of source control and inject them through the platform secret mechanism for your deployment target.
+
+## Public hosts
+
+| Setting | Default production value | Used by |
+| --- | --- | --- |
+| Platform public URL | `https://api.acornops.dev` | Primary API route examples and agent install commands |
+| Management console URL | `https://console.acornops.dev` | Browser app origin, same-origin `/api` calls, and default OIDC callback derivation |
+| Public docs URL | `https://docs.acornops.dev` | Documentation links |
+| Agent WebSocket URL | `wss://api.acornops.dev/api/v1/agent/connect` | Target agent connections |
+
+The platform route and the management console route are separate, but both default deployment paths proxy `/api` to the control plane. The management console uses its own origin for browser session flows so cookies stay same-origin.
+
+For Kubernetes, configure these with `platform.publicUrl`, `platform.consoleUrl`, `exposure.ingress.apiHost`, and `exposure.ingress.consoleHost`. For VM Compose, configure `CONTROL_PLANE_BASE_URL`, `API_HOST`, `MANAGEMENT_CONSOLE_HOST`, `MANAGEMENT_CONSOLE_UPSTREAM`, and `CORS_ORIGIN`. Keep `TRUST_PROXY=1` when TLS and host headers are handled by the edge proxy.
+
+## Required secret keys
+
+The Kubernetes chart defaults to an existing Secret named `acornops-platform-secrets`. These keys are required for the central platform:
+
+| Key | Purpose |
+| --- | --- |
+| `CONTROL_PLANE_DATABASE_URL` | Control-plane Postgres connection |
+| `CONTROL_PLANE_REDIS_URL` | Control-plane Redis connection |
+| `OIDC_CLIENT_SECRET` | Browser sign-in client secret |
+| `CSRF_SECRET` | Browser CSRF token signing secret |
+| `GATEWAY_SIGNING_PRIVATE_KEY_PEM_B64` | Stable control-plane signing key for run-scoped gateway JWTs |
+| `ORCH_SERVICE_TOKEN` | Execution-engine callbacks into control plane |
+| `WEBHOOK_SECRET_ENCRYPTION_KEY` | Encryption for webhook signing secrets |
+| `EXECUTION_ENGINE_REDIS_URL` | Execution-engine Redis connection |
+| `EXECUTION_ENGINE_DISPATCH_TOKEN` | Control-plane dispatch auth into execution engine |
+| `LLM_GATEWAY_DATABASE_URL` | LLM-gateway Postgres connection |
+| `LLM_GATEWAY_REDIS_URL` | LLM-gateway Redis connection |
+| `LLM_GATEWAY_ADMIN_TOKEN` | Control-plane admin auth into LLM gateway |
+| `SECRETS_KEK_BASE64` | LLM-gateway database secret encryption key |
+
+Optional provider and secret-backend keys include:
+
+| Key | Purpose |
+| --- | --- |
+| `OPENAI_API_KEY` | OpenAI provider access |
+| `ANTHROPIC_API_KEY` | Anthropic provider access |
+| `GEMINI_API_KEY` | Gemini provider access |
+| `VAULT_TOKEN` | Vault secret-backend access when Vault is enabled |
+
+Generate unique values for every internal token and encryption key per environment.
+
+## Internal transport TLS
+
+Kubernetes platform installs default to plaintext HTTP between internal platform
+services. To enable internal HTTPS/mTLS, set `internalTransport.tls.enabled=true`
+and provide Kubernetes Secret names under `internalTransport.tls.ca.secretName`
+and `internalTransport.tls.certificates.*.secretName`.
+
+The chart accepts only Secret names and key names. It does not accept raw PEM
+certificate or private key values. Public ingress stays on the control-plane HTTP
+service port; the chart adds a separate internal mTLS listener for callbacks,
+JWKS, and the built-in MCP bridge. Kubelet probes use dedicated health ports for
+services that require mTLS for application traffic.
+
+The built-in MCP bridge uses the same run-scoped JWT authorization as other
+execution-time LLM gateway calls. There is no separate built-in MCP service
+token to configure.
+
+## OIDC
+
+The control plane owns OIDC login and callback handling:
+
+- Login entrypoint: `GET /api/v1/auth/oidc/login?return_to=<management-console-url>`
+- Callback entrypoint: `GET /api/v1/auth/oidc/callback`
+
+For the default Kubernetes and VM Compose settings, register this redirect URI with your provider:
+
+```text
+https://console.acornops.dev/api/v1/auth/oidc/callback
+```
+
+That URL is still served by the control plane through the console host's `/api` proxy. If you override `auth.oidc.redirectUri` or `OIDC_REDIRECT_URI`, register the exact override value instead. Registering only `https://api.acornops.dev/api/v1/auth/oidc/callback` will fail unless your deployment is configured to use that URL as the OIDC redirect URI.
+
+Common OIDC settings:
+
+| Setting | Notes |
+| --- | --- |
+| Issuer URL | Provider issuer used for discovery and token validation |
+| Public issuer URL | Optional override when internal and public issuer URLs differ |
+| Client ID | OIDC client configured for AcornOps |
+| Client secret | Stored in the platform secret bundle |
+| Scopes | Defaults to `openid profile email` |
+| Token endpoint auth method | Defaults to client-secret based auth |
+
+## Password auth
+
+Password login is enabled by default alongside OIDC, password reset is enabled by default for password-backed accounts, and self-service signup is disabled in production deployment configs. The management console reads `GET /api/v1/auth/config` and shows only the enabled login methods.
+
+Operators can:
+
+- disable password login with `auth.password.enabled=false` or `PASSWORD_AUTH_ENABLED=false`,
+- disable password reset with `auth.password.resetEnabled=false` or `PASSWORD_RESET_ENABLED=false`,
+- enable self-service signup with `auth.password.signupEnabled=true` or `PASSWORD_SIGNUP_ENABLED=true`.
+
+Only enable self-service signup in private deployments where account creation has been reviewed.
+
+Password reset and self-service password signup use AcornOps auth email delivery. Configure SMTP delivery with `email.deliveryMode=smtp`, `email.from`, `email.publicBaseUrl`, and `email.smtp.*` Helm values, backed by `SMTP_USERNAME` and `SMTP_PASSWORD` in the platform Secret.
+
+Password reset defaults:
+
+- `PASSWORD_RESET_TOKEN_TTL_SECONDS`: `3600`
+- `PASSWORD_RESET_REQUEST_WINDOW_SECONDS`: `300`
+
+Development environments may use `EMAIL_DELIVERY_MODE=log`. Production rejects log delivery unless `EMAIL_DELIVERY_ALLOW_LOG_IN_PRODUCTION=true` is set explicitly.
+
+When self-service signup is enabled, email verification is required by default. Only private deployments should disable verification with `PASSWORD_SIGNUP_ALLOW_UNVERIFIED_EMAIL=true`.
+
+Development deployments may expose a dev-login endpoint. Do not enable dev-login in production.
+
+## Browser sessions
+
+Browser sessions have both an absolute max age and a sliding idle timeout. `SESSION_MAX_AGE_SECONDS` defaults to `604800` and controls the absolute session lifetime. `SESSION_IDLE_TIMEOUT_SECONDS` defaults to `86400` and refreshes on active authenticated requests until the absolute max age is reached.
+
+`SESSION_TTL_SECONDS` is still accepted as a legacy fallback for `SESSION_MAX_AGE_SECONDS` when the newer variable is unset. Keep `SESSION_IDLE_TIMEOUT_SECONDS` less than or equal to the effective max age.
+
+## LLM providers and run limits
+
+The control plane sets default model policy and runtime budgets for runs:
+
+| Setting area | Examples |
+| --- | --- |
+| Providers | `openai`, `anthropic`, `gemini` |
+| Models | Provider-specific allowed model list |
+| Runtime limits | max runtime, max steps, max tool calls, duplicate tool-call limit |
+| Output limits | max context tokens, max output tokens, budget cents |
+| Sampling | default temperature |
+
+The LLM gateway enforces the run-scoped JWT minted by the control plane. It should not infer provider, model, or tool permissions from request body fields alone.
+
+## Gateway auth readiness and limits
+
+The LLM gateway validates run-scoped JWTs against the control plane's JWKS endpoint. Keep JWKS readiness required in production so gateway pods do not accept runtime traffic before they have a fresh signing-key view.
+
+| Kubernetes value | VM Compose variable | Default | Purpose |
+| --- | --- | --- | --- |
+| `components.llmGateway.maxRequestBodyBytes` | `LLM_GATEWAY_MAX_REQUEST_BODY_BYTES` | `1000000` | Maximum request body size accepted by the LLM gateway. |
+| `components.llmGateway.auth.jwksCacheTtlSeconds` | `JWKS_CACHE_TTL_SECONDS` | `300` | JWKS cache TTL. |
+| `components.llmGateway.auth.jwksReadinessMaxStalenessSeconds` | `JWKS_READINESS_MAX_STALENESS_SECONDS` | `900` | Maximum JWKS age allowed for readiness. |
+| `components.llmGateway.auth.requireJwksReadiness` | `REQUIRE_JWKS_READINESS` | `true` | Requires a fresh JWKS view before gateway readiness succeeds. |
+| `components.executionEngine.maxRequestBodyBytes` | `MAX_REQUEST_BODY_BYTES` | `1000000` | Maximum request body size accepted by the execution engine. |
+
+## Write confirmations
+
+Write-capable Kubernetes agent tools require confirmation by default. VM built-in tools are read-only. The deployment default is controlled by:
+
+| Setting | Default | Purpose |
+| --- | --- | --- |
+| `AGENT_WRITE_CONFIRMATION_REQUIRED` | `true` | Requires approval before write-capable tools execute. |
+| `AGENT_WRITE_CONFIRMATION_TIMEOUT_SECONDS` | `300` | Bounds how long a paused run waits for a decision. |
+| `TARGET_CHAT_RECENT_ACTIVITY_WINDOW_SECONDS` | `300` | Controls the recent activity window used for target chat warnings. |
+| `agent.runtime.writeConfirmationRequired` | `true` | Helm value rendered into `AGENT_WRITE_CONFIRMATION_REQUIRED`. |
+| `agent.runtime.writeConfirmationTimeoutSeconds` | `300` | Helm value rendered into `AGENT_WRITE_CONFIRMATION_TIMEOUT_SECONDS`. |
+| `components.controlPlane.recentActivity.windowSeconds` | `300` | Helm value rendered into `TARGET_CHAT_RECENT_ACTIVITY_WINDOW_SECONDS`. |
+
+Clusters can inherit the deployment default or set a per-cluster override. Required confirmations are enforced by the backend runtime before tool execution. Browser chat cards and bot surfaces only submit explicit approve or reject decisions.
+
+In the management console, per-cluster write confirmation policy is managed from Cluster Settings.
+
+## Audit logging lifecycle
+
+Workspace audit logging is deployment-wide. There is no workspace-level or user-level override.
+
+| Helm value | Rendered environment variable | Default | Purpose |
+| --- | --- | --- | --- |
+| `auditLogging.mode` | `WORKSPACE_AUDIT_LOGGING_MODE` | `read_write` | Controls future workspace audit event persistence. |
+| `auditLogging.retentionDays` | `WORKSPACE_AUDIT_RETENTION_DAYS` | `365` | Purges persisted workspace audit events older than this many days. |
+
+Supported modes are:
+
+- `read_write`: persist read and write audit events.
+- `write_only`: persist only audit events classified as `operation: "write"`.
+- `disabled`: persist no future workspace audit events.
+
+Retention always runs for persisted rows, even when logging mode is `disabled`. Audit metadata remains sanitized before persistence, so raw tokens, secrets, message bodies, pod logs, auth headers, and full tool arguments are not stored.
+
+## MCP egress policy
+
+Remote MCP servers are configured per target. The management console presents MCP server settings on Kubernetes cluster and VM target pages. In production, the gateway should require HTTPS and block private, local, and reserved network targets unless you intentionally allow specific hosts.
+
+Use allow-lists for trusted internal MCP endpoints instead of broad private-network access.
+
+| Kubernetes value | VM Compose variable | Purpose |
+| --- | --- | --- |
+| `components.llmGateway.mcpEgress.allowedHosts` | `MCP_EGRESS_ALLOWED_HOSTS` | Comma-separated allow-list for remote MCP hosts. |
+| `components.llmGateway.mcpEgress.allowPrivateNetworks` | `MCP_EGRESS_ALLOW_PRIVATE_NETWORKS` | Allows private address ranges when deliberately enabled. |
+| `components.llmGateway.mcpEgress.allowLocalAddresses` | `MCP_EGRESS_ALLOW_LOCAL_ADDRESSES` | Allows loopback or local targets for reviewed non-production setups. |
+| `networkPolicies.vault.to` | N/A | Egress destinations for private Vault backends. |
+| `networkPolicies.extraEgress.llmGateway` | N/A | Additional gateway egress for private MCP targets, webhook targets, or approved provider routes. |
+
+Remote MCP server `publicHeaders` are for non-secret metadata only. Credentials belong in secret-backed auth fields, and platform scope headers are reserved.
+
+## Webhooks
+
+Webhook signing secrets are generated per subscription and returned only once at creation time. The control plane stores encrypted webhook secrets and signs deliveries with HMAC-SHA256.
+
+Webhook delivery is best-effort. Consumers should handle duplicate events and should verify signatures before processing payloads.

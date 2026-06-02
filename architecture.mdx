@@ -1,0 +1,99 @@
+---
+title: "Architecture"
+description: "How AcornOps components, trust boundaries, and runtime flows fit together"
+---
+
+AcornOps separates the operator experience, platform state, run execution, model/tool access, and target access into distinct components. The platform has a target core for Kubernetes clusters and Linux/systemd VMs. That separation keeps public traffic narrow and lets target agents connect outbound only.
+
+## System overview
+
+```mermaid
+flowchart LR
+  User["Operator browser"] --> Console["Management console"]
+  Console --> PublicIngress["Public ingress"]
+  PublicIngress --> ControlPlane["Control plane"]
+  ControlPlane --> Postgres["External Postgres"]
+  ControlPlane --> Redis["External Redis"]
+  ControlPlane --> ExecutionEngine["Execution engine"]
+  ExecutionEngine --> Redis
+  ExecutionEngine --> LLMGateway["LLM gateway"]
+  LLMGateway --> Postgres
+  LLMGateway --> Redis
+  WorkloadAgent["k8s agent"] -->|Outbound WebSocket| ControlPlane
+  VMAgent["VM agent"] -->|Outbound WebSocket| ControlPlane
+  LLMGateway --> Providers["LLM providers"]
+  LLMGateway --> RemoteMcp["Remote MCP servers"]
+```
+
+## Component responsibilities
+
+| Component | Responsibility | Public exposure |
+| --- | --- | --- |
+| Management console | Workspace, target, member, tool, and session user experience | `https://console.acornops.dev/` |
+| Control plane | Auth, workspaces, target core, Kubernetes and VM APIs, agent WebSockets, run state, webhooks, API authorization | `https://api.acornops.dev/api/v1` |
+| Execution engine | Run lifecycle, orchestration loop, event emission, cancellation, tool-call coordination | Internal only |
+| LLM gateway | Provider routing, run-scoped model access, MCP registry, secret lookup, gateway auditing | Internal only |
+| k8s agent | Kubernetes cluster snapshots, logs, and builtin Kubernetes tool execution | Outbound only |
+| VM agent | Linux/systemd host snapshots, logs, and read-only builtin VM tool execution | Outbound only |
+
+## Runtime flow
+
+1. An operator signs in through OIDC and uses the management console with a cookie-backed control-plane session.
+2. The operator creates a workspace, registers a cluster or VM, and installs the generated agent command.
+3. The target agent authenticates with its agent key and opens an outbound WebSocket to the control plane.
+4. The agent sends heartbeats, capability metadata, and snapshots. The control plane persists target state and synchronizes builtin tools into the LLM gateway.
+5. When an operator sends a troubleshooting message, the control plane creates a run and dispatches it to the execution engine.
+6. The execution engine fetches run context from the control plane, streams model requests through the LLM gateway, and calls allowed tools.
+7. The control plane records run events and streams them back to the management console.
+
+Remote MCP servers use the same run-scoped tool permission model. The gateway discovers remote tools from `tools/list`, stores discovered tools disabled by default, and forwards calls with platform scope headers plus any configured non-secret public headers.
+
+## Auth and trust boundaries
+
+AcornOps uses separate credentials for separate trust boundaries:
+
+| Channel | Credential |
+| --- | --- |
+| Browser to control plane | Session cookie |
+| Control plane to execution engine | `EXECUTION_ENGINE_DISPATCH_TOKEN` |
+| Execution engine to control plane | `ORCH_SERVICE_TOKEN` |
+| Control plane to LLM gateway admin API | `LLM_GATEWAY_ADMIN_TOKEN` |
+| LLM gateway to control-plane built-in MCP bridge | Control-plane-signed run JWT |
+| Execution engine to LLM gateway runtime API | Control-plane-signed run JWT |
+| target agents to control plane | Target agent key |
+
+Run-scoped JWTs include workspace, target, session, run, allowed provider, allowed model, allowed tool, and output-budget claims. Kubernetes clusters and virtual machines use the same target scope model. The LLM gateway rejects requests whose body scope does not match the token scope.
+
+Remote MCP credentials are secret-backed. Non-secret `publicHeaders` may be forwarded to remote MCP servers, but platform scope headers such as `x-workspace-id`, `x-target-id`, `x-target-type`, and `x-run-id` are reserved and are added by the gateway.
+
+## Workspace and role model
+
+A workspace contains members, audit events, targets, Kubernetes clusters, VMs, MCP server settings, tool settings, sessions, runs, and webhooks. Server responses include role-derived permissions so clients can show available actions without reimplementing authorization rules.
+
+The deployment defines the supported workspace role templates. `owner` is always present, protected, and required. Deployments can disable non-owner built-ins (`admin`, `operator`, `viewer`, `auditor`) and define custom lowercase snake_case roles with supported workspace capabilities. Workspaces assign members and invitations from this deployment catalog; they cannot edit capability sets or role availability.
+
+The control plane prevents membership changes that would leave a workspace without an owner. Only owners can assign protected roles.
+
+Workspace audit logs are scoped to the workspace and validate filters before querying. Audit metadata is sanitized before it is stored, so raw tokens, secrets, message bodies, pod logs, auth headers, and full tool arguments are not retained. Audit retention removes persisted rows after the configured retention window.
+
+Tool call audit events store only high-level details such as identity, source, target, duration, run id when available, and success or failure. Workspace summary responses hide operational counts from roles without workspace-data read permission; auditors keep member context but receive `clusterCount: 0`.
+
+Troubleshooting conversations are owner-write and viewer-read. The user who starts a conversation can send follow-ups while they still have run creation permission. Other users with target read access can open the conversation and watch active run events live, but they cannot post into that conversation. When a user starts a separate conversation on a target with recent chat activity, the management console shows an inline warning that names recent investigators and highlights recent write-capable activity.
+
+## Data ownership
+
+| Data | Owner |
+| --- | --- |
+| Workspaces, members, audit events, targets, Kubernetes clusters, VMs, sessions, runs, invitations, webhooks | Control plane |
+| Run reservations and worker coordination | Execution engine with Redis |
+| Provider credentials, MCP registry, gateway request records | LLM gateway |
+| Live Kubernetes discovery and builtin tool behavior | k8s agent |
+| Live VM host discovery and read-only builtin tool behavior | VM agent |
+
+Agent snapshots are persisted by the control plane and exposed to the management console. Kubernetes snapshots include resources, events, and metrics when available. VM snapshots include host inventory, health findings, metrics, and bounded logs.
+
+## High availability posture
+
+The Kubernetes chart defaults the management console, control plane, execution engine, and LLM gateway to multiple replicas when backed by external Postgres and Redis. The control plane uses Redis for agent routing, command routing between pods, run event fanout, and renewed scheduler leases. If a control-plane pod stops while an agent command is active, that command may fail; the agent reconnects and later commands continue through an available pod.
+
+The k8s agent supports active-passive high availability through Kubernetes Lease leader election. When `replicaCount` is greater than one, enable leader election so exactly one agent runtime connects at a time.

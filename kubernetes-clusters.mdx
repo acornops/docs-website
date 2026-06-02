@@ -1,0 +1,112 @@
+---
+title: "Kubernetes clusters"
+description: "Install, scope, secure, and verify the k8s agent in connected Kubernetes clusters"
+---
+
+Every Kubernetes cluster that AcornOps observes runs a k8s agent. The agent opens an outbound WebSocket to the control plane, reports cluster state, and executes allowed Kubernetes tools during troubleshooting runs.
+
+## Registration flow
+
+1. Open the workspace in the management console.
+2. Register a new cluster.
+3. Copy the install instructions returned by the control plane.
+4. Run the generated Helm command against the Kubernetes cluster.
+5. Confirm the cluster shows as connected.
+
+The registration response includes `{ cluster, agentKey, installInstructions }`. Treat `installInstructions.command` as authoritative.
+
+## Agent connection
+
+By default, the agent derives its WebSocket URL from the platform URL:
+
+```text
+wss://api.acornops.dev/api/v1/agent/connect
+```
+
+The agent authenticates with the issued agent key. Store the key in a Kubernetes Secret for long-running installs, or use the generated command for first-time setup.
+
+## Namespace scope
+
+Use namespace include and exclude lists to limit what the agent observes and what builtin tools may touch.
+
+| Setting | Behavior |
+| --- | --- |
+| Include list | When non-empty, the agent watches only listed namespaces. |
+| Exclude list | Skips listed namespaces after include filtering. |
+| Empty include and exclude lists | Watches all namespaces allowed by RBAC except default platform exclusions. |
+
+`kube-node-lease` and `kube-public` are excluded by default. Control-plane cluster updates persist namespace scope. If the connected agent supports dynamic scope updates, the control plane pushes the change over the existing WebSocket. Otherwise, the agent receives the persisted scope on the next reconnect.
+
+In the management console, namespace scope is edited from Cluster Settings.
+
+## RBAC scope
+
+The agent chart can create cluster-scoped RBAC or namespace-scoped RBAC.
+
+Use cluster scope when AcornOps should observe the whole Kubernetes cluster. Use namespace scope when you want to constrain access to a known set of namespaces.
+
+Write-capable tools require explicit configuration:
+
+- the chart must grant mutation RBAC,
+- the agent must advertise write support,
+- `ACORNOPS_AGENT_WRITE_ENABLED` must be `true`,
+- the workspace role must allow read-write runs,
+- the run must be requested with read-write tool access.
+
+Read-only runs cannot execute write tools even when the agent and RBAC support them.
+
+## Write confirmation policy
+
+Each cluster has an effective write confirmation policy:
+
+- `deployment_default`: inherits `AGENT_WRITE_CONFIRMATION_REQUIRED`.
+- `cluster_override`: uses the cluster's explicit override.
+
+In the management console, this policy is managed from Cluster Settings alongside namespace scope.
+
+When confirmations are required, the run pauses before each write-capable tool call and waits for an authorized user to approve or reject the pending write. Approval executes that one queued write once; rejection and timeout do not call the k8s agent.
+
+This approval resource is channel-agnostic. The management console renders it in chat, and bot adapters can render the same approval payload and call the same decision endpoint, as long as the click is attributable to a real AcornOps user with read-write run permission.
+
+Cluster troubleshooting conversations are owner-write and viewer-read. The creator can send follow-ups while they still have run permissions. Other workspace users with cluster read access can open the conversation, read the persisted messages, and watch active run events live, but they cannot type into that conversation. Starting a separate conversation after recent cluster chat activity shows an inline warning, with stronger copy when the recent activity used write-capable tools.
+
+## Builtin tools
+
+The current builtin Kubernetes tool set includes:
+
+- `list_resources`
+- `get_resource`
+- `get_resource_logs`
+- `restart_workload`
+- `scale_workload`
+- `simulate_patch`
+- `apply_remediation`
+
+The connected agent advertises the available builtin tools. AcornOps shows those tools in the target tool catalog and filters access based on workspace role, target policy, and run mode.
+
+See [MCP and tools](/mcp-tools) for remote MCP server setup, public header policy, and tool enablement behavior.
+
+## High availability
+
+The agent supports active-passive high availability. If you run more than one replica, enable Kubernetes Lease leader election:
+
+```yaml
+replicaCount: 2
+leaderElection:
+  enabled: true
+```
+
+Only the elected replica connects to the control plane. Other replicas wait and take over when the leader stops renewing its lease.
+
+## Verification
+
+After installation, check:
+
+- the pod is running in the chosen namespace,
+- the agent logs show a successful handshake,
+- the management console shows the cluster as connected,
+- snapshots include resources and events,
+- metrics appear when the Kubernetes cluster has the metrics API available,
+- pod log reads work for roles with log permissions.
+
+If the cluster stays disconnected, verify the platform URL, WebSocket route, agent key, outbound network access, and namespace/RBAC settings.

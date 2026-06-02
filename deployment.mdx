@@ -1,0 +1,246 @@
+---
+title: "Deployment"
+description: "Deploy AcornOps through Kubernetes, VM Compose, workload agents, and production-ready platform configuration"
+---
+
+AcornOps deployment has two independent steps: deploy the central platform, then connect each Kubernetes cluster or Linux VM with an outbound agent.
+
+## Kubernetes
+
+Use the `acornops-platform` Helm chart to deploy the central platform into a Kubernetes cluster. The chart deploys:
+
+- management console,
+- control plane,
+- execution engine,
+- LLM gateway,
+- database migration Jobs.
+
+Postgres and Redis are operator-provided. The chart references an existing Kubernetes Secret instead of templating secret values into Helm values.
+
+### Required platform inputs
+
+Prepare these inputs before installing the chart:
+
+| Input | Notes |
+| --- | --- |
+| Public API host | Defaults to `api.acornops.dev` for API routes. |
+| Console host | Defaults to `console.acornops.dev`. |
+| TLS secret | Referenced by the ingress configuration. |
+| External Postgres | Used by control plane and LLM gateway. |
+| External Redis | Used by control plane, execution engine, and LLM gateway. |
+| Existing secret | Defaults to `acornops-platform-secrets`. |
+| OIDC client | Redirects back to the control plane callback route. |
+| LLM provider key | At least one enabled provider needs credentials. |
+| Internal TLS Secrets | Optional. Required only when `internalTransport.tls.enabled=true`. |
+
+Review these value groups before installing or upgrading:
+
+| Area | Values |
+| --- | --- |
+| Public hosts | `platform.publicUrl`, `platform.consoleUrl`, `exposure.ingress.apiHost`, `exposure.ingress.consoleHost` |
+| Auth | `auth.oidc.*`, `auth.password.*`, `auth.session.*` |
+| Workspace roles | `workspaceRoles.enabledBuiltIns`, `workspaceRoles.customTemplates` |
+| Run policy | `ai.*`, `agent.runtime.*`, `agent.routing.*` |
+| Gateway controls | `components.llmGateway.auth.*`, `components.llmGateway.mcpEgress.*`, `components.llmGateway.rateLimits.*` |
+| Internal transport TLS | `internalTransport.tls.*` |
+| Network egress | `networkPolicies.postgres.to`, `networkPolicies.redis.to`, `networkPolicies.vault.to`, `networkPolicies.extraEgress.*` |
+
+### Internal service TLS
+
+The chart can harden control-plane, execution-engine, and LLM gateway traffic
+with operator-supplied HTTPS/mTLS. It is disabled by default. AcornOps does not
+generate or chart-manage the CA or certificates.
+
+Create a CA Secret and one TLS Secret per service:
+
+```bash
+kubectl -n acornops-platform create secret generic acornops-internal-ca \
+  --from-file=ca.crt=./ca.crt
+
+kubectl -n acornops-platform create secret tls control-plane-internal-tls \
+  --cert=./control-plane.crt \
+  --key=./control-plane.key
+
+kubectl -n acornops-platform create secret tls execution-engine-internal-tls \
+  --cert=./execution-engine.crt \
+  --key=./execution-engine.key
+
+kubectl -n acornops-platform create secret tls llm-gateway-internal-tls \
+  --cert=./llm-gateway.crt \
+  --key=./llm-gateway.key
+```
+
+Then set:
+
+```yaml
+internalTransport:
+  tls:
+    enabled: true
+    ca:
+      secretName: acornops-internal-ca
+    certificates:
+      controlPlane:
+        secretName: control-plane-internal-tls
+      executionEngine:
+        secretName: execution-engine-internal-tls
+      llmGateway:
+        secretName: llm-gateway-internal-tls
+```
+
+Certificates should include SANs for the rendered service DNS names. For the
+default release name and namespace shown in this guide, the control-plane DNS
+name is `acornops-platform-control-plane.acornops-platform.svc`.
+If you use a different release name or namespace, render the chart and use the
+service DNS names from your deployment.
+Public ingress stays on the control-plane HTTP service port. Existing bearer
+tokens and run-scoped JWT checks remain required.
+
+cert-manager can create the same Secrets, but it is optional. A representative
+control-plane certificate looks like this:
+
+```yaml
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: control-plane-internal-tls
+  namespace: acornops-platform
+spec:
+  secretName: control-plane-internal-tls
+  issuerRef:
+    name: acornops-internal-ca-issuer
+    kind: Issuer
+  dnsNames:
+    - acornops-platform-control-plane.acornops-platform.svc
+  usages:
+    - server auth
+    - client auth
+```
+
+Create equivalent certificates for execution-engine and llm-gateway with their
+rendered service DNS names. Restart affected pods after CA or leaf certificate
+rotation unless an operator-managed reloader handles restarts.
+
+### Workspace roles
+
+Configure deployment-supported workspace roles with `workspaceRoles` in chart values:
+
+```yaml
+workspaceRoles:
+  enabledBuiltIns:
+    - owner
+    - admin
+    - operator
+    - viewer
+    - auditor
+  customTemplates:
+    - key: incident_responder
+      displayName: Incident Responder
+      description: Can run read-only diagnostics, inspect logs, and cancel runs.
+      capabilities:
+        - read_workspace_data
+        - read_members
+        - create_sessions
+        - create_read_only_runs
+        - read_target_logs
+        - cancel_runs
+      sortOrder: 300
+```
+
+If `enabledBuiltIns` is omitted, all built-ins are enabled. If it is provided, it must include `owner`. Custom roles may only use supported workspace capabilities and cannot include owner-only governance capabilities. Every workspace inherits the same catalog.
+
+Example install:
+
+```bash
+helm upgrade --install acornops-platform oci://ghcr.io/acornops/charts/acornops-platform \
+  --namespace acornops-platform \
+  --create-namespace \
+  --values values.prod.yaml
+```
+
+### Production exposure
+
+Expose only the management console and control-plane public routes:
+
+- `https://console.acornops.dev/`
+- `https://api.acornops.dev/api/v1`
+- `wss://api.acornops.dev/api/v1/agent/connect`
+
+Keep execution engine and LLM gateway private to the platform network.
+
+### Replicas
+
+The chart defaults to multiple replicas for stateless or Redis-coordinated services where supported:
+
+| Component | Default posture |
+| --- | --- |
+| Management console | Multiple replicas |
+| Control plane | Multiple replicas with Redis-backed agent routing and renewed scheduler leases |
+| Execution engine | Multiple replicas with Redis-backed run reservation |
+| LLM gateway | Multiple replicas with external Postgres and Redis |
+
+During a control-plane rollout, connected agents reconnect to an available pod. Commands that are active during the rollout can fail or time out and should be retried.
+
+## VM Compose
+
+Use the VM Compose stack for a single-machine central platform installation. This path is useful for smaller environments and production-style testing with separate Kubernetes clusters and VM targets.
+
+Typical flow:
+
+```bash
+cp env/vm/.env.example env/vm/.env.prod
+task prod-up
+```
+
+Before starting the stack:
+
+- Generate unique internal service tokens and encryption keys.
+- Set production hostnames and OIDC settings.
+- Keep `TRUST_PROXY=1` when the edge proxy owns TLS and forwarded host headers.
+- Point database and Redis settings at durable services.
+- Review JWKS readiness, request-size, rate-limit, and MCP egress variables.
+- Pin image tags instead of using mutable tags.
+- Confirm the reverse proxy terminates TLS for the console and API hosts.
+
+Database init jobs run before services start. Treat init failures as deployment blockers.
+
+## Kubernetes clusters
+
+Each connected Kubernetes cluster gets the `acornops-k8s-agent` Helm chart. Register the cluster in the management console, then run the generated install command returned by the control plane.
+
+The agent:
+
+- connects outbound to the control plane,
+- authenticates with the generated agent key,
+- reports heartbeats and snapshots,
+- advertises builtin Kubernetes tools,
+- executes allowed tool calls during troubleshooting runs.
+
+Connected Kubernetes clusters do not need public inbound access.
+
+## VM targets
+
+Each Linux/systemd VM gets the `acornops-vm-agent` systemd service. Register the VM in the management console, then run the generated install instructions returned by the control plane.
+
+The VM agent:
+
+- connects outbound to the control plane,
+- authenticates with the generated agent key,
+- reports heartbeats and host snapshots,
+- advertises read-only Linux/systemd tools,
+- executes allowed read-only tool calls during troubleshooting runs.
+
+VM targets do not need public inbound access.
+
+## Validation
+
+Before using a deployment for production operations, verify:
+
+- the management console loads from `https://console.acornops.dev/`,
+- OIDC login returns to the expected callback route,
+- `GET /api/v1/me` returns the current user from the same host used by the management console session,
+- the first workspace can be created,
+- a registered k8s agent shows as connected,
+- a registered VM agent shows as connected and reports host inventory,
+- a read-only troubleshooting run can stream events to the management console,
+- internal execution-engine and LLM-gateway endpoints are not publicly reachable,
+- Kubernetes high availability behavior has been exercised in a non-production environment when you run multiple replicas.

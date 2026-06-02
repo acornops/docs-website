@@ -1,0 +1,64 @@
+---
+title: "VM targets"
+description: "Register Linux/systemd VMs, install the VM agent, and verify read-only host troubleshooting"
+---
+
+Every Linux VM that AcornOps observes runs the VM agent. The agent opens an outbound WebSocket to the control plane, reports host snapshots, and executes read-only VM tools during troubleshooting runs.
+
+## Register a VM
+
+1. Open a workspace in the management console.
+2. Go to **Virtual Machines**.
+3. Register a VM with a name and optional hostname.
+4. Copy the generated systemd install instructions.
+5. Run the instructions on the Linux host.
+6. Confirm the VM shows as connected.
+
+The registration response includes `{ virtualMachine, agentKey, installInstructions }`. Treat `installInstructions.command` as authoritative.
+
+## Agent behavior
+
+The VM agent authenticates with the issued agent key and connects to:
+
+```text
+wss://api.acornops.dev/api/v1/agent/connect
+```
+
+The initial VM agent supports Linux with systemd. It is read-only: it can inspect host state and logs, but it cannot modify services, packages, files, users, firewall rules, or kernel settings.
+
+## Inventory and findings
+
+VM snapshots populate:
+
+- host summary and OS metadata,
+- process inventory,
+- systemd service inventory,
+- listening ports,
+- metrics history,
+- findings derived from host health signals.
+
+The management console shows this data on the VM detail page. VM logs are fetched live through the connected agent and are bounded by source and limit.
+
+## Tools and MCP
+
+The VM built-in tools include:
+
+- `get_host_summary`
+- `list_processes`
+- `get_process`
+- `list_services`
+- `get_service_status`
+- `get_logs`
+- `search_logs`
+- `check_port`
+- `list_listening_ports`
+
+VM targets also support target-scoped remote MCP servers. Add servers from the VM detail page under **MCP Servers**, test discovery, then enable reviewed tools.
+
+## Troubleshooting chat
+
+VM troubleshooting runs are read-only and can only use tools enabled for that VM target.
+
+VM conversations follow the same collaboration rules as Kubernetes target conversations. The creator can send follow-ups. Other users with target read access can open the conversation and watch active runs live, but the composer stays view-only. Starting a new VM conversation after recent target chat activity shows an inline warning so operators can review or continue the relevant investigation before creating a separate thread.
+
+If the VM stays disconnected, verify the platform URL, WebSocket route, agent key, outbound network access, systemd service state, and agent logs.

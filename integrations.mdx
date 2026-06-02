@@ -1,0 +1,98 @@
+---
+title: "Integrations"
+description: "Build bots, workflow adapters, and custom clients on top of AcornOps"
+---
+
+Use this path when you want to build around AcornOps rather than only operate the platform. Common examples include Mattermost or Slack-style bots, incident workflow automation, custom dashboards, and internal tools that react to AcornOps run events.
+
+## Integration surfaces
+
+| Surface | Use it for | Notes |
+| --- | --- | --- |
+| Control-plane API | Workspaces, targets, Kubernetes clusters, VMs, sessions, runs, approvals, tool settings, MCP server settings | Public API under `https://api.acornops.dev/api/v1`; v1 calls require an authenticated AcornOps user session. |
+| Webhooks | Event-driven bots and workflow automation | Verify every delivery signature before processing the payload. |
+| Run events and SSE | Custom run timelines or signed-in user experiences | Use replayable run events and `GET /api/v1/runs/{runId}/stream` for live updates. |
+| MCP server configuration | Connecting external tool providers | Add remote MCP servers through the control-plane API or management console, then enable discovered tools. |
+
+Execution-engine and LLM-gateway runtime APIs are internal platform surfaces. Do not call them from external bots or customer integrations.
+
+## Auth model for integrations
+
+The public control-plane API is session-based. Browser clients use the same `SameSite=Lax` session cookie as the management console. Mutating requests with a session cookie, plus password login and signup before a session exists, must echo the CSRF token in `x-csrf-token`.
+
+AcornOps v1 does not expose a public PAT or bot service-account credential for the control-plane API.
+
+For v1 integrations, keep user actions attributable:
+
+- use webhooks for bot notifications and workflow triggers,
+- send users to the management console or an authenticated client flow for privileged actions,
+- call approval endpoints only as a real AcornOps user with the required workspace permission,
+- avoid shared bot-user decisions for write approvals.
+
+Internal service tokens such as `ORCH_SERVICE_TOKEN`, `EXECUTION_ENGINE_DISPATCH_TOKEN`, and `LLM_GATEWAY_ADMIN_TOKEN` are platform credentials. They are not public integration credentials. The built-in MCP bridge uses the run-scoped JWT minted for the active execution.
+
+## Bot adapter pattern
+
+A Mattermost-style adapter usually follows this flow:
+
+1. Subscribe to the AcornOps webhook events the bot needs.
+2. Verify `AcornOps-Signature` using the subscription secret.
+3. Map the event to a channel, thread, incident, or user-visible card.
+4. For read-only context, link to the management console or fetch allowed public API data from a client flow that has an authenticated user session.
+5. For write approvals, render approve and reject controls only when the click can be tied back to a real AcornOps user.
+6. Submit approval decisions to `POST /api/v1/runs/{runId}/approvals/{approvalId}/decision`.
+
+Approval decisions are intentionally not just webhook acknowledgements. The first recorded decision wins; conflicting later decisions return the current approval state.
+
+## Webhook events
+
+Webhook delivery is best-effort and signed with HMAC-SHA256. Consumers should handle duplicates and out-of-order delivery.
+
+Each delivery includes:
+
+- `AcornOps-Event-Id`
+- `AcornOps-Event-Type`
+- `AcornOps-Timestamp`
+- `AcornOps-Signature`
+
+Target-scoped events include `targetId` and `targetType`. Kubernetes events also include `clusterId`, which matches the Kubernetes target ID.
+
+The signature input is `timestamp + "." + raw_json_body`, encoded as `v1=<hex>`.
+
+Write approval integrations should handle:
+
+- `run.tool_approval_requested.v1`
+- `run.tool_approval_decided.v1`
+
+MCP server integrations may also care about:
+
+- `mcp.server.created.v1`
+- `mcp.server.updated.v1`
+- `mcp.server.deleted.v1`
+- `mcp.server.tested.v1`
+
+Use the API reference sidebar for webhook endpoint schemas and examples.
+
+## Tool and MCP integrations
+
+There are two different integration directions:
+
+| Goal | Recommended path |
+| --- | --- |
+| Let AcornOps call your external tools | Expose an MCP server, add it to a target, test discovery, then enable reviewed tools. |
+| Let your app react to AcornOps activity | Subscribe to webhooks and call public control-plane endpoints with an authenticated user session when needed. |
+
+Remote MCP servers can receive non-secret `publicHeaders`. Credentials must use the secret-backed auth fields. Platform scope headers such as `x-workspace-id`, `x-target-id`, `x-target-type`, and `x-run-id` are reserved and added by the gateway.
+
+See [MCP and tools](/mcp-tools) for MCP setup and header policy.
+
+## Start here
+
+Use this sequence for a new integration:
+
+1. Confirm the platform is deployed and reachable from your integration host.
+2. Decide whether the integration is webhook-driven, user-session driven, or both.
+3. Create a workspace webhook subscription for the required event types.
+4. Verify signatures before acting on payloads.
+5. Use [API overview](/api-overview) to confirm API boundaries, then use the API reference sidebar for endpoint schemas.
+6. Use [MCP and tools](/mcp-tools) only when AcornOps should call tools exposed by another system.

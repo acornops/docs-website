@@ -1,0 +1,15 @@
+{
+  "name": "acornops-docs",
+  "private": true,
+  "version": "0.0.1-experimental.1",
+  "type": "module",
+  "scripts": {
+    "check": "node scripts/check-docs.mjs",
+    "dev": "mint dev --no-open",
+    "validate": "npm run check && mint validate",
+    "links": "mint broken-links"
+  },
+  "devDependencies": {
+    "mint": "4.2.568"
+  }
+}

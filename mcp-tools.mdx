@@ -1,0 +1,117 @@
+---
+title: "MCP and tools"
+description: "Configure built-in target tools, remote MCP servers, public headers, and write controls"
+---
+
+AcornOps exposes tools to runs through two paths:
+
+- Builtin Kubernetes tools are provided by the k8s agent and synchronized through the control plane.
+- Builtin VM tools are provided by the VM agent and synchronized through the control plane.
+- Remote MCP tools are discovered by the LLM gateway from target-scoped MCP server settings.
+
+Owners and admins manage tool availability. Operators can start runs and use tools allowed by their role, the target policy, and the run's requested access mode.
+
+If you are building a bot or workflow adapter that reacts to AcornOps events, start with [Integrations](/integrations). Use this page when you are configuring tools that AcornOps can call.
+
+## Tool sources
+
+| Source | Owner | How tools appear |
+| --- | --- | --- |
+| Builtin Kubernetes tools | k8s agent | The connected agent advertises tools and AcornOps shows them in the target tool catalog. |
+| Builtin VM tools | VM agent | The agent advertises read-only Linux/systemd tools over `tools/list`; the control plane synchronizes them into the gateway for the VM target. |
+| Remote MCP servers | LLM gateway | Owners or admins add a server URL; the gateway discovers tools from that server's `tools/list` response. |
+
+Newly discovered remote MCP tools stay disabled until an owner or admin enables each tool with an explicit `read` or `write` capability.
+
+## Builtin Kubernetes tools
+
+The current builtin tool set is:
+
+- `list_resources`
+- `get_resource`
+- `get_resource_logs`
+- `restart_workload`
+- `scale_workload`
+- `simulate_patch`
+- `apply_remediation`
+
+Read-only runs cannot execute write-capable tools. Write-capable tools also require mutation RBAC in the Kubernetes cluster and an agent that advertises write support.
+
+## Builtin VM tools
+
+The current builtin VM tool set is read-only:
+
+- `get_host_summary`
+- `list_processes`
+- `get_process`
+- `list_services`
+- `get_service_status`
+- `get_logs`
+- `search_logs`
+- `check_port`
+- `list_listening_ports`
+
+VM runs cannot execute write-capable tools.
+
+## Remote MCP server setup
+
+Create remote MCP servers from the management console's MCP Servers view, or through the target-scoped control-plane API. Server creation is discovery-first: provide connection details, then review and enable discovered tools.
+
+| Field | Purpose |
+| --- | --- |
+| `name` | Operator-visible server name. |
+| `url` | HTTPS MCP server endpoint in production. |
+| `enabled` | Turns server use on or off without deleting configuration. |
+| `publicHeaders` | Optional non-secret headers sent to the remote MCP server. |
+| `auth.type` | `none`, `bearer_token`, or `custom_header`. |
+| `auth.secretName` and `auth.secretValue` | Secret-backed credential storage. The value is write-only at creation or rotation time. |
+| `auth.headerName` and `auth.headerPrefix` | Header construction for secret-backed auth. |
+
+Server URL changes are modeled as delete and re-add. Owners and admins can update the server name, enabled state, secret-backed auth fields, public headers, and tool settings in place.
+
+## Public header policy
+
+Use `publicHeaders` only for non-secret metadata such as client version, tenant hint, or feature flag headers required by a trusted MCP server.
+
+Public headers must follow these rules:
+
+- at most 64 headers per server,
+- header names must be valid HTTP header tokens and 128 characters or fewer,
+- values must be strings, 4096 characters or fewer, and cannot contain CR or LF,
+- credential-like names such as `Authorization`, `Cookie`, `x-api-key`, `x-auth-token`, and names containing `token`, `secret`, `credential`, `api-key`, or `apikey` are rejected,
+- platform scope headers such as `x-workspace-id`, `x-target-id`, `x-target-type`, `x-run-id`, and `x-tool-name` are reserved.
+
+`staticHeaders` is no longer part of the public API. Send non-secret metadata as top-level `publicHeaders`; keep credentials in the secret-backed auth fields.
+
+## Header forwarding order
+
+When the gateway calls a remote MCP server, it applies headers in this order:
+
+1. configured `publicHeaders`,
+2. platform scope headers,
+3. the configured auth header derived from the secret store.
+
+Discovery and connection tests include `x-workspace-id`, `x-target-id`, and `x-target-type`. Runtime tool calls also include `x-run-id`.
+
+Public headers cannot override platform scope or auth headers. Remote MCP servers should treat platform scope headers as AcornOps-provided context, not user-controlled data.
+
+## Egress controls
+
+Production gateways should require HTTPS for remote MCP servers and block private, local, and reserved network targets unless you intentionally allow specific hosts.
+
+Use these controls together:
+
+| Deployment target | Settings |
+| --- | --- |
+| Kubernetes | `components.llmGateway.mcpEgress.allowedHosts`, `allowPrivateNetworks`, `allowLocalAddresses`, and `networkPolicies.extraEgress.llmGateway` |
+| VM Compose | `MCP_EGRESS_ALLOWED_HOSTS`, `MCP_EGRESS_ALLOW_PRIVATE_NETWORKS`, and `MCP_EGRESS_ALLOW_LOCAL_ADDRESSES` |
+
+Use allow-lists for trusted internal MCP endpoints instead of enabling broad private-network access.
+
+## Write confirmations
+
+When write confirmations are required, the run pauses before a write-capable tool call. An authorized user must approve or reject the specific pending write before it runs.
+
+The default timeout is 300 seconds. Rejection and timeout do not call the k8s agent. Approval executes the queued write once. VM runs are read-only and do not request write approvals.
+
+See [Kubernetes clusters](/kubernetes-clusters#write-confirmation-policy) for Kubernetes write confirmation behavior, [VM targets](/vm-targets#tools-and-mcp) for VM tool behavior, and the API reference sidebar for public endpoint schemas.

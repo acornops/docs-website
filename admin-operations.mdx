@@ -1,0 +1,128 @@
+---
+title: "Admin operations"
+description: "Configure and use the control-plane admin API safely"
+---
+
+The control-plane admin API is for authorized self-host operators who need
+break-glass or support workflows. It is disabled by default and is served under:
+
+```text
+https://api.acornops.dev/admin/v1
+```
+
+Only enable it when you have a process for storing admin tokens and auditing
+their use. Only the API host routes `/admin`. The management console host must
+not proxy admin endpoints, and browser sessions are not valid admin credentials.
+
+## Enablement
+
+For Kubernetes, enable the chart value and load token descriptors from the
+platform Secret:
+
+```yaml
+adminApi:
+  enabled: true
+  ingress:
+    enabled: true
+  tokens:
+    existingSecretName: acornops-platform-secrets
+    tokensJsonKey: CONTROL_PLANE_ADMIN_TOKENS_JSON
+```
+
+For VM Compose:
+
+```bash
+CONTROL_PLANE_ADMIN_API_ENABLED=true
+CONTROL_PLANE_ADMIN_TOKENS_JSON='[{"id":"ops-primary","name":"Ops primary","sha256":"<64 lowercase hex sha256>","scopes":["admin:*"],"enabled":true}]'
+```
+
+`CONTROL_PLANE_ADMIN_TOKENS_JSON` contains hash descriptors, not raw tokens.
+Generate raw tokens out of band, store only the SHA-256 hash in the descriptor,
+and deliver the raw token through your operator secret channel. Production
+startup rejects enabled admin API configuration with no enabled token
+descriptors, invalid hashes, duplicate ids, unsupported scopes, or placeholder
+hash values.
+
+## Auth and scopes
+
+Every request uses:
+
+```bash
+curl -H "Authorization: Bearer $ACORNOPS_ADMIN_TOKEN" \
+  https://api.acornops.dev/admin/v1/me
+```
+
+Admin endpoints reject browser cookies, CSRF tokens, internal service tokens,
+run-scoped JWTs, and agent keys. Scopes are separate from workspace roles.
+Use the narrowest descriptor scopes possible:
+
+```text
+admin:self
+admin:system:read
+admin:audit:read
+admin:workspace:read
+admin:workspace:write
+admin:user:read
+admin:user:write
+admin:member:write
+admin:target:read
+admin:target:write
+admin:agent-key:rotate
+admin:tooling:write
+admin:run:read
+admin:run:write
+admin:*
+```
+
+## Mutations and audit
+
+Mutating admin requests require a `reason`:
+
+```bash
+curl -X POST \
+  -H "Authorization: Bearer $ACORNOPS_ADMIN_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"reason":"incident INC-1234: revoke stale browser sessions"}' \
+  https://api.acornops.dev/admin/v1/users/<user-id>/sessions/revoke
+```
+
+Each mutation writes an admin audit event. Workspace-scoped mutations also write
+workspace audit events with `actor.type=admin_token` and the admin token id.
+Audit metadata is sanitized and must not contain raw tokens, prompts, message
+bodies, authorization headers, full tool arguments, or agent keys.
+
+Agent-key rotation is the only admin response that returns a secret:
+
+```bash
+curl -X POST \
+  -H "Authorization: Bearer $ACORNOPS_ADMIN_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"reason":"rotate leaked target bootstrap key"}' \
+  https://api.acornops.dev/admin/v1/targets/<target-id>/agent-key/rotate
+```
+
+The replacement key is returned once with `Cache-Control: no-store`.
+
+## Workspace plans and quotas
+
+Configure deployment-wide workspace plans in Kubernetes:
+
+```yaml
+workspacePlans:
+  defaultPlanKey: default
+  plans:
+    - key: default
+      name: Default
+      quotas:
+        members: 100
+        kubernetesClusters: 30
+        virtualMachines: 30
+```
+
+For VM Compose, set the equivalent `WORKSPACE_PLANS_CONFIG_JSON`.
+
+Admins can change a workspace plan or set nullable quota overrides through
+`PATCH /admin/v1/workspaces/{workspaceId}/plan` and
+`PATCH /admin/v1/workspaces/{workspaceId}/quotas`. The control plane rejects
+changes that would place current workspace usage over the resulting effective
+limit.
