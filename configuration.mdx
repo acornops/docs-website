@@ -134,8 +134,21 @@ The control plane sets default model policy and runtime budgets for runs:
 | Runtime limits | max runtime, max steps, max tool calls, duplicate tool-call limit |
 | Output limits | max context tokens, max output tokens, budget cents |
 | Sampling | default temperature |
+| Reasoning summaries | deployment enablement, allowed summary modes, allowed effort levels |
 
 The LLM gateway enforces the run-scoped JWT minted by the control plane. It should not infer provider, model, or tool permissions from request body fields alone.
+
+Reasoning summaries are workspace opt-in and off by default for each workspace. When enabled in AI Settings, OpenAI, Anthropic, and Gemini may stream short provider-generated summaries while a response is being generated. AcornOps displays summaries only; it does not request or expose raw chain-of-thought, encrypted reasoning items, thinking signatures, or provider-internal reasoning state.
+
+Operators can set the deployment policy ceiling with:
+
+| Kubernetes value | Compose variable | Default |
+| --- | --- | --- |
+| `ai.reasoningSummariesEnabled` | `LLM_REASONING_SUMMARIES_ENABLED` | `true` |
+| `ai.allowedReasoningSummaryModes` | `LLM_ALLOWED_REASONING_SUMMARY_MODES` | `off,auto,concise,detailed` |
+| `ai.allowedReasoningEfforts` | `LLM_ALLOWED_REASONING_EFFORTS` | `default,low,medium,high` |
+
+Summaries are saved in run event history when enabled, so users who reconnect or review a completed run see the same summary trail. Provider and model support varies, and summaries can increase provider latency or billable reasoning/output tokens.
 
 ## Gateway auth readiness and limits
 

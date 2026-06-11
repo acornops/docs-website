@@ -54,7 +54,7 @@ Workspace role responses include server-owned permission fields. Clients should 
 
 Registration endpoints return the target record, a one-time agent key, and install instructions. Agent-key rotation returns a replacement key and updated install instructions.
 
-Run events are replayable through the events endpoint and streamable through server-sent events. Current event types include run lifecycle, assistant message, token delta, tool call, write approval, failure, cancellation, and completion events.
+Run events are replayable through the events endpoint and streamable through server-sent events. Current event types include run lifecycle, assistant message, token delta, provider reasoning summary, tool call, write approval, failure, cancellation, and completion events. Reasoning summary events contain provider-generated summaries only, not raw chain-of-thought.
 
 Write approval decisions are first-writer-wins. Repeating the same decision is idempotent, while a conflicting decision or a decision that arrives after the approval expiry returns conflict with the current approval state.
 
