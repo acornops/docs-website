@@ -1,11 +1,11 @@
 <p align="center">
-  <img width="220" src="https://raw.githubusercontent.com/acornops/docs/main/logo/light.svg" alt="AcornOps" />
+  <img width="220" src="https://raw.githubusercontent.com/acornops/docs-website/main/logo/light.svg" alt="AcornOps" />
 </p>
 
 <h1 align="center">AcornOps Docs</h1>
 
 <p align="center">
-  <a href="https://github.com/acornops/docs/actions/workflows/ci.yml"><img src="https://github.com/acornops/docs/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
+  <a href="https://github.com/acornops/docs-website/actions/workflows/ci.yml"><img src="https://github.com/acornops/docs-website/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
   <img src="https://img.shields.io/badge/docs-Mintlify-blue.svg" alt="Mintlify docs" />
   <img src="https://img.shields.io/badge/node-%3E%3D20.17-green.svg" alt="Node >=20.17" />
   <img src="https://img.shields.io/badge/links-checked-blue.svg" alt="Links checked" />

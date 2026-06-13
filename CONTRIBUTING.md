@@ -32,9 +32,9 @@ Keep fast-changing implementation details in the repository that owns the behavi
 Use these repositories as source material when updating public docs:
 
 - platform deployment: `acornops-deployment`,
-- management console behavior: `management-console-playground`,
-- control-plane API and auth: `control-plane-playground`,
-- execution run lifecycle: `execution-engine-playground`,
-- LLM gateway and MCP behavior: `llm-gateway-playground`,
-- k8s agent behavior: `k8s-agent-playground`,
-- VM agent behavior: `vm-agent-playground`.
+- management console behavior: `management-console`,
+- control-plane API and auth: `control-plane`,
+- execution run lifecycle: `execution-engine`,
+- LLM gateway and MCP behavior: `llm-gateway`,
+- k8s agent behavior: `k8s-agent`,
+- VM agent behavior: `vm-agent`.
