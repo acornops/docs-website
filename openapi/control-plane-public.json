@@ -2870,7 +2870,7 @@
           },
           {
             "in": "query",
-            "name": "targetType",
+            "name": "objectType",
             "required": false,
             "schema": {
               "type": "string"
@@ -11841,7 +11841,11 @@
           "category",
           "eventType",
           "operation",
-          "createdAt"
+          "actor",
+          "object",
+          "summary",
+          "metadata",
+          "occurredAt"
         ],
         "properties": {
           "id": {
@@ -11869,15 +11873,18 @@
             "type": "object",
             "additionalProperties": true
           },
-          "target": {
+          "object": {
             "type": "object",
             "additionalProperties": true
+          },
+          "summary": {
+            "type": "string"
           },
           "metadata": {
             "type": "object",
             "additionalProperties": true
           },
-          "createdAt": {
+          "occurredAt": {
             "type": "string",
             "format": "date-time"
           }
