@@ -21,10 +21,10 @@ The registration response includes `{ virtualMachine, agentKey, installInstructi
 The VM agent authenticates with the issued agent key and connects to:
 
 ```text
-wss://api.acornops.dev/api/v1/agent/connect
+wss://api.example.com/api/v1/agent/connect
 ```
 
-The initial VM agent supports Linux with systemd. It is read-only: it can inspect host state and logs, but it cannot modify services, packages, files, users, firewall rules, or kernel settings.
+Replace `example.com` with your deployment domain. The public demo agent route is `wss://api.demo.acornops.dev/api/v1/agent/connect`. The initial VM agent supports Linux with systemd. It is read-only: it can inspect host state and logs, but it cannot modify services, packages, files, users, firewall rules, or kernel settings.
 
 ## Inventory and findings
 

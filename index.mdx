@@ -5,9 +5,14 @@ description: "AI-assisted operations for Kubernetes and VM targets"
 
 AcornOps connects a central operations platform to Kubernetes clusters and Linux/systemd VMs through outbound agents. Operators use the management console to investigate target state, run guided triage sessions, and coordinate safe remediation workflows.
 
+AcornOps is self-hosted for production use. A public demo is available at `https://console.demo.acornops.dev/` for evaluation, backed by `https://api.demo.acornops.dev`.
+
 ## Choose your path
 
 <CardGroup cols={2}>
+  <Card title="Try the demo" icon="display" href="https://console.demo.acornops.dev/">
+    Explore the public demo before deploying AcornOps into your own environment.
+  </Card>
   <Card title="Self-host AcornOps" icon="server" href="/quickstart">
     Deploy the platform, configure dependencies, and connect Kubernetes clusters or VMs.
   </Card>
@@ -72,14 +77,14 @@ AcornOps connects a central operations platform to Kubernetes clusters and Linux
   </Card>
 </CardGroup>
 
-## Public surfaces
+## Self-host surfaces
 
-- Console: `https://console.acornops.dev/`
+- Console: `https://console.example.com/`
 - Public docs: `https://docs.acornops.dev/`
-- Public control-plane API: `https://api.acornops.dev/api/v1`
-- Agent WebSocket: `wss://api.acornops.dev/api/v1/agent/connect`
+- Public control-plane API: `https://api.example.com/api/v1`
+- Agent WebSocket: `wss://api.example.com/api/v1/agent/connect`
 
-Execution engine and LLM gateway are internal services. They should not have public DNS records or public ingress routes in production.
+Replace `example.com` with domains you control. Execution engine and LLM gateway are internal services. They should not have public DNS records or public ingress routes in production.
 
 ## Where to go next
 

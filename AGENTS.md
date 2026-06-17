@@ -20,7 +20,7 @@ For work that touches multiple AcornOps repositories, start the agent from the `
 
 - Use "management console" for the browser application; do not use outdated browser-app names.
 - Use "control plane", "execution engine", "LLM gateway", and "k8s agent" for platform components.
-- Use `api.acornops.dev`, `console.acornops.dev`, and `docs.acornops.dev` for production URL examples.
+- Use `api.example.com` and `console.example.com` for self-host deployment examples. Use `api.demo.acornops.dev` and `console.demo.acornops.dev` only for the public demo. Keep `docs.acornops.dev` for the public docs host.
 - Kubernetes platform deployments use external Postgres and Redis by default.
 - Multi-replica control-plane deployments use Redis for agent ownership, cross-pod command routing, run event fanout, and renewed scheduler leases.
 

@@ -20,10 +20,10 @@ The registration response includes `{ cluster, agentKey, installInstructions }`.
 By default, the agent derives its WebSocket URL from the platform URL:
 
 ```text
-wss://api.acornops.dev/api/v1/agent/connect
+wss://api.example.com/api/v1/agent/connect
 ```
 
-The agent authenticates with the issued agent key. Store the key in a Kubernetes Secret for long-running installs, or use the generated command for first-time setup.
+Replace `example.com` with your deployment domain. The public demo agent route is `wss://api.demo.acornops.dev/api/v1/agent/connect`. The agent authenticates with the issued agent key. Store the key in a Kubernetes Secret for long-running installs, or use the generated command for first-time setup.
 
 ## Namespace scope
 

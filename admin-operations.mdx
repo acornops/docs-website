@@ -7,10 +7,10 @@ The control-plane admin API is for authorized self-host operators who need
 break-glass or support workflows. It is disabled by default and is served under:
 
 ```text
-https://api.acornops.dev/admin/v1
+https://api.example.com/admin/v1
 ```
 
-Only enable it when you have a process for storing admin tokens and auditing
+Replace `example.com` with your deployment domain. Only enable it when you have a process for storing admin tokens and auditing
 their use. Only the API host routes `/admin`. The management console host must
 not proxy admin endpoints, and browser sessions are not valid admin credentials.
 
@@ -49,7 +49,7 @@ Every request uses:
 
 ```bash
 curl -H "Authorization: Bearer $ACORNOPS_ADMIN_TOKEN" \
-  https://api.acornops.dev/admin/v1/me
+  https://api.example.com/admin/v1/me
 ```
 
 Admin endpoints reject browser cookies, CSRF tokens, internal service tokens,
@@ -83,7 +83,7 @@ curl -X POST \
   -H "Authorization: Bearer $ACORNOPS_ADMIN_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"reason":"incident INC-1234: revoke stale browser sessions"}' \
-  https://api.acornops.dev/admin/v1/users/<user-id>/sessions/revoke
+  https://api.example.com/admin/v1/users/<user-id>/sessions/revoke
 ```
 
 Each mutation writes an admin audit event. Workspace-scoped mutations also write
@@ -98,7 +98,7 @@ curl -X POST \
   -H "Authorization: Bearer $ACORNOPS_ADMIN_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"reason":"rotate leaked target bootstrap key"}' \
-  https://api.acornops.dev/admin/v1/targets/<target-id>/agent-key/rotate
+  https://api.example.com/admin/v1/targets/<target-id>/agent-key/rotate
 ```
 
 The replacement key is returned once with `Cache-Control: no-store`.

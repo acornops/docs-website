@@ -9,7 +9,7 @@ Use this path when you want to build around AcornOps rather than only operate th
 
 | Surface | Use it for | Notes |
 | --- | --- | --- |
-| Control-plane API | Workspaces, targets, Kubernetes clusters, VMs, sessions, runs, approvals, tool settings, MCP server settings | Public API under `https://api.acornops.dev/api/v1`; v1 calls require an authenticated AcornOps user session. |
+| Control-plane API | Workspaces, targets, Kubernetes clusters, VMs, sessions, runs, approvals, tool settings, MCP server settings | Public API under your deployment host, such as `https://api.example.com/api/v1`; v1 calls require an authenticated AcornOps user session. The public demo API is `https://api.demo.acornops.dev/api/v1`. |
 | Webhooks | Event-driven bots and workflow automation | Verify every delivery signature before processing the payload. |
 | Run events and SSE | Custom run timelines or signed-in user experiences | Use replayable run events and `GET /api/v1/runs/{runId}/stream` for live updates. |
 | MCP server configuration | Connecting external tool providers | Add remote MCP servers through the control-plane API or management console, then enable discovered tools. |

@@ -93,11 +93,13 @@ Do not reuse internal service tokens across environments.
 
 Keep these routes consistent across deployment, OIDC provider settings, docs, and management console runtime config:
 
-- `https://console.acornops.dev/`
-- `https://api.acornops.dev/api/v1`
+- `https://console.example.com/`
+- `https://api.example.com/api/v1`
 - `https://docs.acornops.dev/`
-- `wss://api.acornops.dev/api/v1/agent/connect`
+- `wss://api.example.com/api/v1/agent/connect`
 
-Default OIDC settings use `https://console.acornops.dev/api/v1/auth/oidc/callback` so browser session cookies are set on the console origin. If you override the redirect URI, update the provider allow-list and deployment config together.
+Replace `example.com` with domains you control. The public demo uses `https://console.demo.acornops.dev/` and `https://api.demo.acornops.dev`.
+
+Default OIDC settings use the console-host callback, such as `https://console.example.com/api/v1/auth/oidc/callback`, so browser session cookies are set on the console origin. If you override the redirect URI, update the provider allow-list and deployment config together.
 
 Root `acornops.dev` is reserved outside the platform API surface. Public documentation is served directly from `docs.acornops.dev`.

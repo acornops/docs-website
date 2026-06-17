@@ -24,16 +24,16 @@ Use Kubernetes for production-like installs. Use VM Compose when you want a smal
 
 ## 2. Prepare public routes
 
-For the default production hostnames, expose:
+For a self-host deployment, expose operator-owned hostnames such as:
 
 | Surface | URL |
 | --- | --- |
-| Management console | `https://console.acornops.dev/` |
+| Management console | `https://console.example.com/` |
 | Public docs | `https://docs.acornops.dev/` |
-| Public control-plane API | `https://api.acornops.dev/api/v1` |
-| Agent WebSocket | `wss://api.acornops.dev/api/v1/agent/connect` |
+| Public control-plane API | `https://api.example.com/api/v1` |
+| Agent WebSocket | `wss://api.example.com/api/v1/agent/connect` |
 
-The management console host also proxies `/api` to the control plane for browser session flows.
+Replace `example.com` with DNS names you control. The public demo uses `https://console.demo.acornops.dev/` and `https://api.demo.acornops.dev`. The management console host also proxies `/api` to the control plane for browser session flows.
 
 Execution engine and LLM gateway are internal services. Do not expose them through public ingress in production.
 
@@ -45,7 +45,7 @@ Before deploying the central platform, prepare:
 - External Redis for control-plane agent ownership, command routing, run/event coordination, execution-engine reservations, and gateway rate limits.
 - OIDC client configuration for browser sign-in. Username/password login and password reset are enabled by default, while self-service signup is disabled for production deployment configs. Configure SMTP before relying on password reset or enabling password signup in production.
 - LLM provider credentials for at least one enabled provider.
-- TLS certificates and ingress for `api.acornops.dev` and `console.acornops.dev`.
+- TLS certificates and ingress for your API and console hosts.
 - A secret bundle for database URLs, Redis URLs, OIDC credentials, internal service tokens, and gateway secrets encryption.
 
 See [Configuration](/configuration) for the required secret keys and host settings.
@@ -72,7 +72,7 @@ Pin image tags for long-running environments. Avoid mutable image tags for produ
 
 ## 5. Sign in and create a workspace
 
-Open `https://console.acornops.dev/` and sign in through your configured OIDC provider or username/password auth. If no workspace exists for your account, the management console should prompt you to create one.
+Open your management console URL, such as `https://console.example.com/`, and sign in through your configured OIDC provider or username/password auth. If no workspace exists for your account, the management console should prompt you to create one.
 
 A workspace groups:
 

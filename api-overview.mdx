@@ -6,10 +6,10 @@ description: "Control-plane API model, auth requirements, and integration-orient
 The public control-plane API is served under:
 
 ```text
-https://api.acornops.dev/api/v1
+https://api.example.com/api/v1
 ```
 
-Browser traffic uses a cookie-backed session. In default deployments, the management console host also proxies `/api` to the control plane so browser auth callbacks and session cookies stay on `https://console.acornops.dev`.
+Replace `example.com` with your deployment domain. The public demo API is available at `https://api.demo.acornops.dev/api/v1` for evaluation. Browser traffic uses a cookie-backed session. In default deployments, the management console host also proxies `/api` to the control plane so browser auth callbacks and session cookies stay on the management console origin.
 
 Use this page to understand how the API is organized. Use the API reference sidebar for individual endpoint parameters, request bodies, response schemas, and generated examples.
 
