@@ -20,7 +20,7 @@ Execution-engine and LLM-gateway runtime APIs are internal platform surfaces. Do
 
 The public control-plane API is session-based. Browser clients use the same `SameSite=Lax` session cookie as the management console. Mutating requests with a session cookie, plus password login and signup before a session exists, must echo the CSRF token in `x-csrf-token`.
 
-AcornOps v1 does not expose a public PAT or bot service-account credential for the control-plane API.
+AcornOps v1 does not expose a public PAT or broad bot service-account credential for the control-plane API. The deployment-owned `MATTERMOST_CHAT_SERVICE_TOKEN` is only accepted by the Mattermost account-link endpoints.
 
 For v1 integrations, keep user actions attributable:
 
@@ -29,7 +29,20 @@ For v1 integrations, keep user actions attributable:
 - call approval endpoints only as a real AcornOps user with the required workspace permission,
 - avoid shared bot-user decisions for write approvals.
 
-Internal service tokens such as `ORCH_SERVICE_TOKEN`, `EXECUTION_ENGINE_DISPATCH_TOKEN`, and `LLM_GATEWAY_ADMIN_TOKEN` are platform credentials. They are not public integration credentials. The built-in MCP bridge uses the run-scoped JWT minted for the active execution.
+Internal service tokens such as `ORCH_SERVICE_TOKEN`, `EXECUTION_ENGINE_DISPATCH_TOKEN`, `LLM_GATEWAY_ADMIN_TOKEN`, and `MATTERMOST_CHAT_SERVICE_TOKEN` are platform credentials. They are not public integration credentials. The built-in MCP bridge uses the run-scoped JWT minted for the active execution.
+
+## Mattermost account-link endpoints
+
+AcornOps exposes a narrow Mattermost account-link contract for an external integration client. Mattermost-side command handling, message copy, event handling, retries, and channel behavior belong outside AcornOps.
+
+The integration client can use:
+
+- `POST /api/v1/auth/chat/mattermost/link` with `Authorization: Bearer <MATTERMOST_CHAT_SERVICE_TOKEN>` and body `{ "mattermostUserId": "<mattermost-user-id>" }` to create a short-lived browser link.
+- `POST /api/v1/auth/chat/mattermost/resolve` with the same bearer token and body `{ "mattermostUserId": "<mattermost-user-id>" }` to resolve whether the Mattermost identity is `linked` or `unlinked`.
+
+AcornOps returns a management-console `linkUrl` under `/integrations/mattermost/link`. The user opens that URL within the token TTL, and the console shows the normal AcornOps login page when no browser session exists. After password or OIDC sign-in establishes a browser session, the console calls `POST /api/v1/auth/chat/mattermost/link/complete` with the link token to complete the durable account link.
+
+External integration clients should not store browser cookies, OIDC tokens, raw link tokens, or an AcornOps user ID as authorization material. Browser login and link completion are AcornOps-owned session flows, not external integration APIs.
 
 ## Bot adapter pattern
 

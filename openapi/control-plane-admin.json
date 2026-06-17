@@ -17,7 +17,7 @@
     },
     {
       "name": "auth",
-      "description": "OIDC, password, and browser session endpoints."
+      "description": "OIDC, password, browser session, and Mattermost account link endpoints."
     },
     {
       "name": "workspaces",
@@ -2886,6 +2886,114 @@
           }
         }
       },
+      "MattermostLinkCreation": {
+        "type": "object",
+        "required": [
+          "linkUrl",
+          "expiresAt"
+        ],
+        "properties": {
+          "linkUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "MattermostLinkCompletion": {
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "linked"
+            ]
+          }
+        }
+      },
+      "MattermostLinkResolution": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": [
+              "status"
+            ],
+            "properties": {
+              "status": {
+                "type": "string",
+                "enum": [
+                  "unlinked"
+                ]
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": [
+              "status",
+              "user",
+              "link"
+            ],
+            "properties": {
+              "status": {
+                "type": "string",
+                "enum": [
+                  "linked"
+                ]
+              },
+              "user": {
+                "type": "object",
+                "required": [
+                  "id",
+                  "displayName",
+                  "email"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "displayName": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  }
+                }
+              },
+              "link": {
+                "type": "object",
+                "required": [
+                  "linkedAt",
+                  "lastAuthenticatedAt",
+                  "expiresAt"
+                ],
+                "properties": {
+                  "linkedAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "lastAuthenticatedAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "expiresAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
       "AuthMethods": {
         "type": "object",
         "properties": {
@@ -3053,6 +3161,132 @@
             }
           }
         }
+      },
+      "WorkspaceAiProviderStatus": {
+        "type": "object",
+        "required": [
+          "provider",
+          "configured",
+          "enabled"
+        ],
+        "properties": {
+          "provider": {
+            "type": "string",
+            "enum": [
+              "openai",
+              "anthropic",
+              "gemini"
+            ]
+          },
+          "configured": {
+            "type": "boolean"
+          },
+          "enabled": {
+            "type": "boolean"
+          }
+        }
+      },
+      "WorkspaceAiSettings": {
+        "type": "object",
+        "required": [
+          "workspaceId",
+          "defaultProvider",
+          "defaultModel",
+          "reasoningSummaryMode",
+          "reasoningEffort",
+          "allowedReasoningSummaryModes",
+          "allowedReasoningEfforts",
+          "reasoningSummariesEnabled",
+          "allowedProviders",
+          "allowedModels",
+          "providers"
+        ],
+        "properties": {
+          "workspaceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "defaultProvider": {
+            "type": "string",
+            "enum": [
+              "openai",
+              "anthropic",
+              "gemini"
+            ]
+          },
+          "defaultModel": {
+            "type": "string"
+          },
+          "reasoningSummaryMode": {
+            "type": "string",
+            "enum": [
+              "off",
+              "auto",
+              "concise",
+              "detailed"
+            ]
+          },
+          "reasoningEffort": {
+            "type": "string",
+            "enum": [
+              "default",
+              "low",
+              "medium",
+              "high"
+            ]
+          },
+          "allowedReasoningSummaryModes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "off",
+                "auto",
+                "concise",
+                "detailed"
+              ]
+            }
+          },
+          "allowedReasoningEfforts": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "default",
+                "low",
+                "medium",
+                "high"
+              ]
+            }
+          },
+          "reasoningSummariesEnabled": {
+            "type": "boolean"
+          },
+          "allowedProviders": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "openai",
+                "anthropic",
+                "gemini"
+              ]
+            }
+          },
+          "allowedModels": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "providers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkspaceAiProviderStatus"
+            }
+          }
+        },
+        "additionalProperties": false
       },
       "WorkspaceMember": {
         "type": "object",
@@ -4137,6 +4371,10 @@
           },
           "toolName": {
             "type": "string"
+          },
+          "summary": {
+            "type": "string",
+            "description": "Human-readable, non-authoritative description of the pending write action."
           },
           "createdAt": {
             "type": "string",
