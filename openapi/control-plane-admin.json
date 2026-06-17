@@ -9,10 +9,6 @@
     {
       "url": "https://api.example.com",
       "description": "Self-host deployment"
-    },
-    {
-      "url": "https://api.demo.acornops.dev",
-      "description": "Public demo"
     }
   ],
   "tags": [
