@@ -30,7 +30,7 @@ Prepare these inputs before installing the chart:
 | External Redis | Used by control plane, execution engine, and LLM gateway. |
 | Existing secret | Defaults to `acornops-platform-secrets`. |
 | OIDC client | Redirects back to the control plane callback route. |
-| Mattermost chat service token | Required when enabling the registered Mattermost bot account-link flow. |
+| External integration service token | Required when enabling the registered external integration client account-link flow. |
 | LLM provider key | At least one enabled provider needs credentials. |
 | Internal TLS Secrets | Optional. Required only when `internalTransport.tls.enabled=true`. |
 

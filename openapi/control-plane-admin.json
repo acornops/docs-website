@@ -17,7 +17,7 @@
     },
     {
       "name": "auth",
-      "description": "OIDC, password, browser session, and Mattermost account link endpoints."
+      "description": "OIDC, password, browser session, and external integration account link endpoints."
     },
     {
       "name": "workspaces",
@@ -2886,7 +2886,7 @@
           }
         }
       },
-      "MattermostLinkCreation": {
+      "ExternalIntegrationLinkCreation": {
         "type": "object",
         "required": [
           "linkUrl",
@@ -2903,7 +2903,7 @@
           }
         }
       },
-      "MattermostLinkCompletion": {
+      "ExternalIntegrationLinkCompletion": {
         "type": "object",
         "required": [
           "status"
@@ -2917,7 +2917,7 @@
           }
         }
       },
-      "MattermostLinkResolution": {
+      "ExternalIntegrationLinkResolution": {
         "oneOf": [
           {
             "type": "object",

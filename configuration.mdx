@@ -30,7 +30,7 @@ The Kubernetes chart defaults to an existing Secret named `acornops-platform-sec
 | `CSRF_SECRET` | Browser CSRF token signing secret |
 | `GATEWAY_SIGNING_PRIVATE_KEY_PEM_B64` | Stable control-plane signing key for run-scoped gateway JWTs |
 | `ORCH_SERVICE_TOKEN` | Execution-engine callbacks into control plane |
-| `MATTERMOST_CHAT_SERVICE_TOKEN` | Registered Mattermost bot access to account-link and resolve endpoints |
+| `EXTERNAL_INTEGRATION_SERVICE_TOKEN` | Registered external integration client access to account-link and resolve endpoints |
 | `WEBHOOK_SECRET_ENCRYPTION_KEY` | Encryption for webhook signing secrets |
 | `EXECUTION_ENGINE_REDIS_URL` | Execution-engine Redis connection |
 | `EXECUTION_ENGINE_DISPATCH_TOKEN` | Control-plane dispatch auth into execution engine |
@@ -50,7 +50,7 @@ Optional provider and secret-backend keys include:
 
 Generate unique values for every internal token and encryption key per environment.
 
-`MATTERMOST_CHAT_SERVICE_TOKEN` does not authorize general control-plane API calls. It is accepted only by the Mattermost account-link endpoints used by a registered bot.
+`EXTERNAL_INTEGRATION_SERVICE_TOKEN` does not authorize general control-plane API calls. It is accepted only by the external integration account-link endpoints used by a registered external integration client.
 
 ## Internal transport TLS
 

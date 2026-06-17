@@ -17,7 +17,7 @@
     },
     {
       "name": "auth",
-      "description": "OIDC, password, browser session, and Mattermost account link endpoints."
+      "description": "OIDC, password, browser session, and external integration account link endpoints."
     },
     {
       "name": "workspaces",
@@ -1491,16 +1491,16 @@
         }
       }
     },
-    "/api/v1/auth/chat/mattermost/link": {
+    "/api/v1/auth/chat/integration/link": {
       "post": {
         "tags": [
           "auth"
         ],
-        "summary": "Create a Mattermost account link token",
-        "description": "Service-token endpoint for the registered Mattermost bot. The bot submits the Mattermost user id observed from Mattermost and receives a management-console URL that starts browser authentication.",
+        "summary": "Create an external integration account link token",
+        "description": "Service-token endpoint for a registered external integration client. The client submits its own stable external user id and receives a management-console URL that starts browser authentication.",
         "security": [
           {
-            "mattermostChatServiceToken": []
+            "externalIntegrationServiceToken": []
           }
         ],
         "requestBody": {
@@ -1510,14 +1510,14 @@
               "schema": {
                 "type": "object",
                 "required": [
-                  "mattermostUserId"
+                  "externalUserId"
                 ],
                 "properties": {
-                  "mattermostUserId": {
+                  "externalUserId": {
                     "type": "string",
                     "minLength": 1,
                     "maxLength": 128,
-                    "example": "mm-user-id"
+                    "example": "slack-user-id"
                   }
                 }
               }
@@ -1526,17 +1526,17 @@
         },
         "responses": {
           "200": {
-            "description": "Short-lived Mattermost account link URL for the user to open in a browser.",
+            "description": "Short-lived external integration account link URL for the user to open in a browser.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MattermostLinkCreation"
+                  "$ref": "#/components/schemas/ExternalIntegrationLinkCreation"
                 }
               }
             }
           },
           "400": {
-            "description": "Invalid Mattermost account link payload.",
+            "description": "Invalid external integration account link payload.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1546,7 +1546,7 @@
             }
           },
           "401": {
-            "description": "Missing or invalid Mattermost chat service token.",
+            "description": "Missing or invalid external integration service token.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1608,16 +1608,16 @@
         }
       }
     },
-    "/api/v1/auth/chat/mattermost/resolve": {
+    "/api/v1/auth/chat/integration/resolve": {
       "post": {
         "tags": [
           "auth"
         ],
-        "summary": "Resolve a Mattermost user link",
-        "description": "Service-token endpoint for the registered Mattermost bot. The bot submits the Mattermost user id observed from Mattermost and receives whether that identity is durably linked to an AcornOps user.",
+        "summary": "Resolve an external user link",
+        "description": "Service-token endpoint for a registered external integration client. The client submits its own stable external user id and receives whether that identity is durably linked to an AcornOps user.",
         "security": [
           {
-            "mattermostChatServiceToken": []
+            "externalIntegrationServiceToken": []
           }
         ],
         "requestBody": {
@@ -1627,14 +1627,14 @@
               "schema": {
                 "type": "object",
                 "required": [
-                  "mattermostUserId"
+                  "externalUserId"
                 ],
                 "properties": {
-                  "mattermostUserId": {
+                  "externalUserId": {
                     "type": "string",
                     "minLength": 1,
                     "maxLength": 128,
-                    "example": "mm-user-id"
+                    "example": "slack-user-id"
                   }
                 }
               }
@@ -1643,17 +1643,17 @@
         },
         "responses": {
           "200": {
-            "description": "Linked or unlinked Mattermost account status.",
+            "description": "Linked or unlinked external integration account status.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MattermostLinkResolution"
+                  "$ref": "#/components/schemas/ExternalIntegrationLinkResolution"
                 }
               }
             }
           },
           "400": {
-            "description": "Invalid Mattermost identity payload.",
+            "description": "Invalid external identity payload.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1663,7 +1663,7 @@
             }
           },
           "401": {
-            "description": "Missing or invalid Mattermost chat service token.",
+            "description": "Missing or invalid external integration service token.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1725,13 +1725,13 @@
         }
       }
     },
-    "/api/v1/auth/chat/mattermost/link/complete": {
+    "/api/v1/auth/chat/integration/link/complete": {
       "post": {
         "tags": [
           "auth"
         ],
-        "summary": "Complete a Mattermost account link",
-        "description": "Authenticated browser-session endpoint used by the management console after password or OIDC sign-in. It consumes a valid short-lived Mattermost link token and binds the Mattermost user id to the signed-in AcornOps user.",
+        "summary": "Complete an external integration account link",
+        "description": "Authenticated browser-session endpoint used by the management console after password or OIDC sign-in and explicit user approval. It consumes a valid short-lived external integration link token and binds the external user id to the signed-in AcornOps user.",
         "security": [
           {
             "sessionCookie": []
@@ -1751,7 +1751,7 @@
                     "type": "string",
                     "minLength": 1,
                     "maxLength": 256,
-                    "example": "mmlink_random_abc123"
+                    "example": "intlink_random_abc123"
                   }
                 }
               }
@@ -1760,17 +1760,17 @@
         },
         "responses": {
           "200": {
-            "description": "Mattermost account link completed.",
+            "description": "External integration account link completed.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MattermostLinkCompletion"
+                  "$ref": "#/components/schemas/ExternalIntegrationLinkCompletion"
                 }
               }
             }
           },
           "400": {
-            "description": "Invalid Mattermost link completion payload.",
+            "description": "Invalid external integration link completion payload.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1820,7 +1820,7 @@
             }
           },
           "410": {
-            "description": "Mattermost link token is expired, consumed, invalidated, or unavailable."
+            "description": "External integration link token is expired, consumed, invalidated, or unavailable."
           },
           "429": {
             "description": "Error response.",
@@ -3296,7 +3296,7 @@
                   },
                   "defaultModel": {
                     "type": "string",
-                    "example": "gemini-2.0-flash"
+                    "example": "gpt-5.5"
                   },
                   "reasoningSummaryMode": {
                     "type": "string",
@@ -12198,10 +12198,10 @@
         "in": "cookie",
         "name": "acornops_cp_session"
       },
-      "mattermostChatServiceToken": {
+      "externalIntegrationServiceToken": {
         "type": "http",
         "scheme": "bearer",
-        "bearerFormat": "opaque Mattermost chat service token"
+        "bearerFormat": "opaque external integration service token"
       }
     },
     "schemas": {
@@ -12418,7 +12418,7 @@
           }
         }
       },
-      "MattermostLinkCreation": {
+      "ExternalIntegrationLinkCreation": {
         "type": "object",
         "required": [
           "linkUrl",
@@ -12435,7 +12435,7 @@
           }
         }
       },
-      "MattermostLinkCompletion": {
+      "ExternalIntegrationLinkCompletion": {
         "type": "object",
         "required": [
           "status"
@@ -12449,7 +12449,7 @@
           }
         }
       },
-      "MattermostLinkResolution": {
+      "ExternalIntegrationLinkResolution": {
         "oneOf": [
           {
             "type": "object",
