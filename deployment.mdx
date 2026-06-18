@@ -23,8 +23,8 @@ Prepare these inputs before installing the chart:
 
 | Input | Notes |
 | --- | --- |
-| Public API host | Defaults to `api.acornops.dev` for API routes. |
-| Console host | Defaults to `console.acornops.dev`. |
+| Public API host | Operator-owned host for API routes, such as `api.example.com`. |
+| Console host | Operator-owned host for the management console, such as `console.example.com`. |
 | TLS secret | Referenced by the ingress configuration. |
 | External Postgres | Used by control plane and LLM gateway. |
 | External Redis | Used by control plane, execution engine, and LLM gateway. |
@@ -162,9 +162,9 @@ helm upgrade --install acornops-platform oci://ghcr.io/acornops/charts/acornops-
 
 Expose only the management console and control-plane public routes:
 
-- `https://console.acornops.dev/`
-- `https://api.acornops.dev/api/v1`
-- `wss://api.acornops.dev/api/v1/agent/connect`
+- `https://console.example.com/`
+- `https://api.example.com/api/v1`
+- `wss://api.example.com/api/v1/agent/connect`
 
 Keep execution engine and LLM gateway private to the platform network.
 
@@ -236,7 +236,7 @@ VM targets do not need public inbound access.
 
 Before using a deployment for production operations, verify:
 
-- the management console loads from `https://console.acornops.dev/`,
+- the management console loads from your console host, such as `https://console.example.com/`,
 - OIDC login returns to the expected callback route,
 - `GET /api/v1/me` returns the current user from the same host used by the management console session,
 - the first workspace can be created,

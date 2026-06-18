@@ -7,7 +7,8 @@
   },
   "servers": [
     {
-      "url": "https://api.acornops.dev"
+      "url": "https://api.example.com",
+      "description": "Self-host deployment"
     }
   ],
   "tags": [

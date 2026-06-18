@@ -22,7 +22,7 @@ Keep fast-changing implementation details in the repository that owns the behavi
 ## Writing Guidelines
 
 - Use "management console" for the browser application; do not use outdated browser-app names.
-- Use `api.acornops.dev`, `console.acornops.dev`, and `docs.acornops.dev` for production examples.
+- Use `api.example.com` and `console.example.com` for self-host deployment examples. Use `api.demo.acornops.dev` and `console.demo.acornops.dev` only for the public demo. Keep `docs.acornops.dev` for the public docs host.
 - Keep public docs focused on user and operator outcomes.
 - Put component-specific implementation details in the component repository.
 - Update affected docs in the same change as product, API, deployment, or behavior changes.

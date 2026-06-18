@@ -7,14 +7,14 @@ Configuration is split between public host settings, Kubernetes or Compose deplo
 
 ## Public hosts
 
-| Setting | Default production value | Used by |
+| Setting | Example self-host value | Used by |
 | --- | --- | --- |
-| Platform public URL | `https://api.acornops.dev` | Primary API route examples and agent install commands |
-| Management console URL | `https://console.acornops.dev` | Browser app origin, same-origin `/api` calls, and default OIDC callback derivation |
+| Platform public URL | `https://api.example.com` | Primary API route examples and agent install commands |
+| Management console URL | `https://console.example.com` | Browser app origin, same-origin `/api` calls, and default OIDC callback derivation |
 | Public docs URL | `https://docs.acornops.dev` | Documentation links |
-| Agent WebSocket URL | `wss://api.acornops.dev/api/v1/agent/connect` | Target agent connections |
+| Agent WebSocket URL | `wss://api.example.com/api/v1/agent/connect` | Target agent connections |
 
-The platform route and the management console route are separate, but both default deployment paths proxy `/api` to the control plane. The management console uses its own origin for browser session flows so cookies stay same-origin.
+Replace `example.com` with domains you control. The public demo uses `https://console.demo.acornops.dev` and `https://api.demo.acornops.dev`. The platform route and the management console route are separate, but both default deployment paths proxy `/api` to the control plane. The management console uses its own origin for browser session flows so cookies stay same-origin.
 
 For Kubernetes, configure these with `platform.publicUrl`, `platform.consoleUrl`, `exposure.ingress.apiHost`, and `exposure.ingress.consoleHost`. For VM Compose, configure `CONTROL_PLANE_BASE_URL`, `API_HOST`, `MANAGEMENT_CONSOLE_HOST`, `MANAGEMENT_CONSOLE_UPSTREAM`, and `CORS_ORIGIN`. Keep `TRUST_PROXY=1` when TLS and host headers are handled by the edge proxy.
 
@@ -73,13 +73,13 @@ The control plane owns OIDC login and callback handling:
 - Login entrypoint: `GET /api/v1/auth/oidc/login?return_to=<management-console-url>`
 - Callback entrypoint: `GET /api/v1/auth/oidc/callback`
 
-For the default Kubernetes and VM Compose settings, register this redirect URI with your provider:
+For Kubernetes and VM Compose settings that derive the redirect URI from your console URL, register this redirect URI with your provider:
 
 ```text
-https://console.acornops.dev/api/v1/auth/oidc/callback
+https://console.example.com/api/v1/auth/oidc/callback
 ```
 
-That URL is still served by the control plane through the console host's `/api` proxy. If you override `auth.oidc.redirectUri` or `OIDC_REDIRECT_URI`, register the exact override value instead. Registering only `https://api.acornops.dev/api/v1/auth/oidc/callback` will fail unless your deployment is configured to use that URL as the OIDC redirect URI.
+That URL is still served by the control plane through the console host's `/api` proxy. If you override `auth.oidc.redirectUri` or `OIDC_REDIRECT_URI`, register the exact override value instead. Registering only `https://api.example.com/api/v1/auth/oidc/callback` will fail unless your deployment is configured to use that URL as the OIDC redirect URI.
 
 Common OIDC settings:
 

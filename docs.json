@@ -276,8 +276,8 @@
     "global": {
       "anchors": [
         {
-          "anchor": "App",
-          "href": "https://console.acornops.dev/",
+          "anchor": "Demo",
+          "href": "https://console.demo.acornops.dev/",
           "icon": "book-open-cover"
         },
         {
@@ -301,8 +301,8 @@
     ],
     "primary": {
       "type": "button",
-      "label": "Console",
-      "href": "https://console.acornops.dev/"
+      "label": "Try demo",
+      "href": "https://console.demo.acornops.dev/"
     }
   },
   "contextual": {
