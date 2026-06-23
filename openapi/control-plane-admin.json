@@ -2903,6 +2903,116 @@
           }
         }
       },
+      "ExternalIntegrationLinkSummary": {
+        "type": "object",
+        "required": [
+          "id",
+          "integrationClientId",
+          "provider",
+          "clientDisplayName",
+          "externalUserId",
+          "linkedAt",
+          "lastAuthenticatedAt",
+          "expiresAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "integrationClientId": {
+            "type": "string"
+          },
+          "provider": {
+            "type": "string"
+          },
+          "clientDisplayName": {
+            "type": "string"
+          },
+          "externalUserId": {
+            "type": "string"
+          },
+          "externalDisplayName": {
+            "type": "string"
+          },
+          "linkedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastAuthenticatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ExternalIntegrationLinkPreview": {
+        "type": "object",
+        "required": [
+          "integrationClientId",
+          "provider",
+          "clientDisplayName",
+          "externalUserId",
+          "expiresAt",
+          "signedInUser"
+        ],
+        "properties": {
+          "integrationClientId": {
+            "type": "string"
+          },
+          "provider": {
+            "type": "string"
+          },
+          "clientDisplayName": {
+            "type": "string"
+          },
+          "externalUserId": {
+            "type": "string"
+          },
+          "externalDisplayName": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "signedInUser": {
+            "type": "object",
+            "required": [
+              "id",
+              "email",
+              "displayName"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "email": {
+                "type": "string",
+                "format": "email"
+              },
+              "displayName": {
+                "type": "string"
+              },
+              "emailVerified": {
+                "type": "boolean"
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updatedAt": {
+                "type": "string",
+                "format": "date-time"
+              }
+            },
+            "additionalProperties": true
+          }
+        }
+      },
       "ExternalIntegrationLinkCompletion": {
         "type": "object",
         "required": [
@@ -2914,6 +3024,41 @@
             "enum": [
               "linked"
             ]
+          },
+          "link": {
+            "$ref": "#/components/schemas/ExternalIntegrationLinkSummary"
+          }
+        }
+      },
+      "ExternalIntegrationLinkList": {
+        "type": "object",
+        "required": [
+          "links"
+        ],
+        "properties": {
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExternalIntegrationLinkSummary"
+            }
+          }
+        }
+      },
+      "ExternalIntegrationLinkRevocation": {
+        "type": "object",
+        "required": [
+          "status",
+          "link"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "revoked"
+            ]
+          },
+          "link": {
+            "$ref": "#/components/schemas/ExternalIntegrationLinkSummary"
           }
         }
       },
@@ -2971,11 +3116,30 @@
               "link": {
                 "type": "object",
                 "required": [
+                  "integrationClientId",
+                  "provider",
+                  "clientDisplayName",
+                  "externalUserId",
                   "linkedAt",
                   "lastAuthenticatedAt",
                   "expiresAt"
                 ],
                 "properties": {
+                  "integrationClientId": {
+                    "type": "string"
+                  },
+                  "provider": {
+                    "type": "string"
+                  },
+                  "clientDisplayName": {
+                    "type": "string"
+                  },
+                  "externalUserId": {
+                    "type": "string"
+                  },
+                  "externalDisplayName": {
+                    "type": "string"
+                  },
                   "linkedAt": {
                     "type": "string",
                     "format": "date-time"
