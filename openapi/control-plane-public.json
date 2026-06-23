@@ -3564,7 +3564,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Deployment-supported role catalog: { items: RoleTemplate[] }. Role templates include key, displayName, description, kind, capabilities, protected, and sortOrder.",
+            "description": "Deployment-supported role catalog: { items: RoleTemplate[] }. Role templates include key, displayName, description, kind, capabilities, capabilityGroups[].{key,capabilities,sortOrder}, protected, and sortOrder.",
             "content": {
               "application/json": {
                 "schema": {
@@ -3805,7 +3805,7 @@
                       "concise",
                       "detailed"
                     ],
-                    "default": "off"
+                    "default": "auto"
                   },
                   "reasoningEffort": {
                     "type": "string",
@@ -9700,7 +9700,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Virtual machine summary page payload: { items, nextCursor? }.",
+            "description": "Virtual machine summary page payload: { items, nextCursor? }. Items include latestSnapshot.{targetId,workspaceId,timestamp} and summary.{inventoryCount,findingCount,criticalFindingCount,serviceCount,processCount,listenerCount,logCount}.",
             "content": {
               "application/json": {
                 "schema": {
@@ -9985,7 +9985,7 @@
         ],
         "responses": {
           "200": {
-            "description": "VM details with latestSnapshot timestamp and summary counts.",
+            "description": "VM details with latestSnapshot.{targetId,workspaceId,timestamp} and summary.{inventoryCount,findingCount,criticalFindingCount,serviceCount,processCount,listenerCount,logCount}.",
             "content": {
               "application/json": {
                 "schema": {
@@ -11348,6 +11348,143 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/TargetChatActivity"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/targets/{targetId}/chat-activity/stream": {
+      "get": {
+        "tags": [
+          "sessions"
+        ],
+        "summary": "Stream target chat activity",
+        "description": "Long-lived SSE stream for browser-facing target chat activity. Frames use event: chat_activity, id: activity event id, and JSON data with resource identifiers. Supports Last-Event-ID and the optional after query parameter for resume replay; connections without a resume cursor are live-only.",
+        "security": [
+          {
+            "userSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspaceId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "4b930d98-add9-4924-ab26-3c16d96ec373"
+            }
+          },
+          {
+            "in": "path",
+            "name": "targetId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "5b006e4c-509c-458a-9f02-5aafbdc01ade"
+            }
+          },
+          {
+            "in": "query",
+            "name": "after",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "42"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Last-Event-ID",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "42"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "SSE stream of target chat activity events.",
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "type": "string",
+                  "description": "Server-Sent Events stream."
                 }
               }
             }
@@ -13614,6 +13751,7 @@
           "displayName",
           "kind",
           "capabilities",
+          "capabilityGroups",
           "protected",
           "sortOrder"
         ],
@@ -13630,7 +13768,7 @@
           "kind": {
             "type": "string",
             "enum": [
-              "built_in",
+              "system",
               "custom"
             ]
           },
@@ -13640,8 +13778,44 @@
               "type": "string"
             }
           },
+          "capabilityGroups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkspaceRoleCapabilityGroup"
+            }
+          },
           "protected": {
             "type": "boolean"
+          },
+          "sortOrder": {
+            "type": "integer"
+          }
+        },
+        "additionalProperties": true
+      },
+      "WorkspaceRoleCapabilityGroup": {
+        "type": "object",
+        "required": [
+          "key",
+          "capabilities",
+          "sortOrder"
+        ],
+        "properties": {
+          "key": {
+            "type": "string",
+            "enum": [
+              "workspace",
+              "members",
+              "targets",
+              "operations",
+              "settings"
+            ]
+          },
+          "capabilities": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           },
           "sortOrder": {
             "type": "integer"
@@ -15057,6 +15231,14 @@
           },
           "enabledEffective": {
             "type": "boolean"
+          },
+          "effectiveDisabledReason": {
+            "type": "string",
+            "enum": [
+              "server_disabled",
+              "agent_write_disabled"
+            ],
+            "nullable": true
           }
         },
         "additionalProperties": true

@@ -3277,6 +3277,7 @@
           "displayName",
           "kind",
           "capabilities",
+          "capabilityGroups",
           "protected",
           "sortOrder"
         ],
@@ -3293,7 +3294,7 @@
           "kind": {
             "type": "string",
             "enum": [
-              "built_in",
+              "system",
               "custom"
             ]
           },
@@ -3303,8 +3304,44 @@
               "type": "string"
             }
           },
+          "capabilityGroups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkspaceRoleCapabilityGroup"
+            }
+          },
           "protected": {
             "type": "boolean"
+          },
+          "sortOrder": {
+            "type": "integer"
+          }
+        },
+        "additionalProperties": true
+      },
+      "WorkspaceRoleCapabilityGroup": {
+        "type": "object",
+        "required": [
+          "key",
+          "capabilities",
+          "sortOrder"
+        ],
+        "properties": {
+          "key": {
+            "type": "string",
+            "enum": [
+              "workspace",
+              "members",
+              "targets",
+              "operations",
+              "settings"
+            ]
+          },
+          "capabilities": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           },
           "sortOrder": {
             "type": "integer"
@@ -4720,6 +4757,14 @@
           },
           "enabledEffective": {
             "type": "boolean"
+          },
+          "effectiveDisabledReason": {
+            "type": "string",
+            "enum": [
+              "server_disabled",
+              "agent_write_disabled"
+            ],
+            "nullable": true
           }
         },
         "additionalProperties": true
