@@ -30,6 +30,7 @@ The Kubernetes chart defaults to an existing Secret named `acornops-platform-sec
 | `CSRF_SECRET` | Browser CSRF token signing secret |
 | `GATEWAY_SIGNING_PRIVATE_KEY_PEM_B64` | Stable control-plane signing key for run-scoped gateway JWTs |
 | `ORCH_SERVICE_TOKEN` | Execution-engine callbacks into control plane |
+| `EXTERNAL_INTEGRATION_CLIENTS_JSON` | Installed external integration client descriptors with SHA-256 bearer-token hashes |
 | `WEBHOOK_SECRET_ENCRYPTION_KEY` | Encryption for webhook signing secrets |
 | `EXECUTION_ENGINE_REDIS_URL` | Execution-engine Redis connection |
 | `EXECUTION_ENGINE_DISPATCH_TOKEN` | Control-plane dispatch auth into execution engine |
@@ -48,6 +49,13 @@ Optional provider and secret-backend keys include:
 | `VAULT_TOKEN` | Vault secret-backend access when Vault is enabled |
 
 Generate unique values for every internal token and encryption key per environment.
+
+`EXTERNAL_INTEGRATION_CLIENTS_JSON` stores descriptors such as client id, provider,
+display name, enabled flag, and lowercase SHA-256 token hash. Generate raw
+bearer tokens out of band and store only their hashes in this Secret value. Raw
+external integration client tokens do not authorize general control-plane API
+calls; they are accepted only by the external integration account-link, resolve,
+revoke, and linked-user bot endpoints.
 
 ## Internal transport TLS
 

@@ -22,7 +22,7 @@
     },
     {
       "name": "auth",
-      "description": "OIDC, password, and browser session endpoints."
+      "description": "OIDC, password, browser session, and external integration account link endpoints."
     },
     {
       "name": "workspaces",
@@ -1496,6 +1496,829 @@
         }
       }
     },
+    "/api/v1/auth/external-integrations/link": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Create an external integration account link token",
+        "description": "Client-token endpoint for a registered external integration client. The client submits its own stable external user id and receives a management-console URL that starts browser authentication.",
+        "security": [
+          {
+            "externalIntegrationClientToken": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "externalUserId"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "externalUserId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "example": "slack-user-id"
+                  },
+                  "externalDisplayName": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 120,
+                    "example": "John Tan"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Short-lived external integration account link URL for the user to open in a browser.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExternalIntegrationLinkCreation"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid external integration account link payload.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid external integration client token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/external-integrations/resolve": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Resolve an external user link",
+        "description": "Client-token endpoint for a registered external integration client. The client submits its own stable external user id and receives whether that identity is durably linked to an AcornOps user.",
+        "security": [
+          {
+            "externalIntegrationClientToken": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "externalUserId"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "externalUserId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "example": "slack-user-id"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Linked or unlinked external integration account status.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExternalIntegrationLinkResolution"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid external identity payload.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid external integration client token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/external-integrations/link/preview": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Preview an external integration account link",
+        "description": "Authenticated browser-session endpoint used by the management console to display safe consent metadata before explicit approval.",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "token"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "token": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256,
+                    "example": "intlink_random_abc123"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Safe external integration link consent metadata.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExternalIntegrationLinkPreview"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid external integration link preview payload.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "User session required.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "External integration link token is expired, consumed, invalidated, or unavailable."
+          },
+          "429": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/external-integrations/link/complete": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Complete an external integration account link",
+        "description": "Authenticated browser-session endpoint used by the management console after password or OIDC sign-in and explicit user approval. It consumes a valid short-lived external integration link token and binds the external user id to the signed-in AcornOps user.",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "token"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "token": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256,
+                    "example": "intlink_random_abc123"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "External integration account link completed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExternalIntegrationLinkCompletion"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid external integration link completion payload.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "User session required.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "External integration link token is expired, consumed, invalidated, or unavailable."
+          },
+          "429": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/external-integrations/links": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "List linked external integrations",
+        "description": "Authenticated browser-session endpoint returning active external integration links for the signed-in user.",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Active external integration links.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExternalIntegrationLinkList"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "User session required.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/external-integrations/links/unlink": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Unlink an external integration account",
+        "description": "Authenticated browser-session endpoint that revokes one active external integration link owned by the signed-in user.",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "integrationClientId",
+                  "provider",
+                  "externalUserId"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "integrationClientId": {
+                    "type": "string"
+                  },
+                  "provider": {
+                    "type": "string"
+                  },
+                  "externalUserId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "External integration link revoked.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExternalIntegrationLinkRevocation"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid unlink payload.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "User session required.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "External integration link not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/external-integrations/revoke": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Revoke an external integration account link",
+        "description": "Client-token endpoint for a registered external integration client to revoke one identity link scoped to that client.",
+        "security": [
+          {
+            "externalIntegrationClientToken": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "externalUserId"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "externalUserId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "example": "slack-user-id"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "External integration link revoked.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExternalIntegrationLinkRevocation"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid external identity payload.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid external integration client token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "External integration link not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/auth/logout": {
       "post": {
         "tags": [
@@ -2018,7 +2841,7 @@
             }
           },
           "401": {
-            "description": "Error response.",
+            "description": "Missing browser session.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2716,7 +3539,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Deployment-supported role catalog: { items: RoleTemplate[] }. Role templates include key, displayName, description, kind, capabilities, protected, and sortOrder.",
+            "description": "Deployment-supported role catalog: { items: RoleTemplate[] }. Role templates include key, displayName, description, kind, capabilities, capabilityGroups[].{key,capabilities,sortOrder}, protected, and sortOrder.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2747,6 +3570,524 @@
           },
           "403": {
             "description": "No workspace read access.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/ai-settings": {
+      "get": {
+        "tags": [
+          "workspaces"
+        ],
+        "summary": "Get workspace AI assistant settings and provider credential status",
+        "security": [
+          {
+            "userSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspaceId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "4b930d98-add9-4924-ab26-3c16d96ec373"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Workspace AI assistant settings. Response includes default provider/model, platform allow-lists, and configured/not-configured provider credential status. It never includes API key values or internal secret names.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceAiSettings"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No workspace read access.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "workspaces"
+        ],
+        "summary": "Update workspace default AI provider, model, and reasoning summary settings",
+        "security": [
+          {
+            "userSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspaceId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "4b930d98-add9-4924-ab26-3c16d96ec373"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "defaultProvider",
+                  "defaultModel"
+                ],
+                "properties": {
+                  "defaultProvider": {
+                    "type": "string",
+                    "enum": [
+                      "openai",
+                      "anthropic",
+                      "gemini"
+                    ]
+                  },
+                  "defaultModel": {
+                    "type": "string",
+                    "example": "gpt-5.5"
+                  },
+                  "reasoningSummaryMode": {
+                    "type": "string",
+                    "enum": [
+                      "off",
+                      "auto",
+                      "concise",
+                      "detailed"
+                    ],
+                    "default": "auto"
+                  },
+                  "reasoningEffort": {
+                    "type": "string",
+                    "enum": [
+                      "default",
+                      "low",
+                      "medium",
+                      "high"
+                    ],
+                    "default": "default"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Workspace AI assistant settings updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceAiSettings"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Selected provider, model, reasoning summary mode, or effort is not allowed by deployment policy.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Requires manage_ai_settings.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/ai-provider-credentials/{provider}": {
+      "put": {
+        "tags": [
+          "workspaces"
+        ],
+        "summary": "Save or rotate a workspace AI provider credential",
+        "security": [
+          {
+            "userSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspaceId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "4b930d98-add9-4924-ab26-3c16d96ec373"
+            }
+          },
+          {
+            "in": "path",
+            "name": "provider",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "openai",
+                "anthropic",
+                "gemini"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "apiKey"
+                ],
+                "properties": {
+                  "apiKey": {
+                    "type": "string",
+                    "writeOnly": true,
+                    "minLength": 1
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Credential saved. Response returns safe AI settings status only, with no key value or secret name.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceAiSettings"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Selected provider is not allowed by deployment policy.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Requires manage_ai_settings.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "workspaces"
+        ],
+        "summary": "Delete a workspace AI provider credential",
+        "security": [
+          {
+            "userSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspaceId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "4b930d98-add9-4924-ab26-3c16d96ec373"
+            }
+          },
+          {
+            "in": "path",
+            "name": "provider",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "openai",
+                "anthropic",
+                "gemini"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Credential deleted. Response returns safe AI settings status only.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceAiSettings"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Selected provider is not supported.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Requires manage_ai_settings.",
             "content": {
               "application/json": {
                 "schema": {
@@ -8244,7 +9585,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Virtual machine summary page payload: { items, nextCursor? }.",
+            "description": "Virtual machine summary page payload: { items, nextCursor? }. Items include latestSnapshot.{targetId,workspaceId,timestamp} and summary.{inventoryCount,findingCount,criticalFindingCount,serviceCount,processCount,listenerCount,logCount}.",
             "content": {
               "application/json": {
                 "schema": {
@@ -8514,7 +9855,7 @@
         ],
         "responses": {
           "200": {
-            "description": "VM details with latestSnapshot timestamp and summary counts.",
+            "description": "VM details with latestSnapshot.{targetId,workspaceId,timestamp} and summary.{inventoryCount,findingCount,criticalFindingCount,serviceCount,processCount,listenerCount,logCount}.",
             "content": {
               "application/json": {
                 "schema": {
@@ -9881,6 +11222,143 @@
         }
       }
     },
+    "/api/v1/workspaces/{workspaceId}/targets/{targetId}/chat-activity/stream": {
+      "get": {
+        "tags": [
+          "sessions"
+        ],
+        "summary": "Stream target chat activity",
+        "description": "Long-lived SSE stream for browser-facing target chat activity. Frames use event: chat_activity, id: activity event id, and JSON data with resource identifiers. Supports Last-Event-ID and the optional after query parameter for resume replay; connections without a resume cursor are live-only.",
+        "security": [
+          {
+            "userSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspaceId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "4b930d98-add9-4924-ab26-3c16d96ec373"
+            }
+          },
+          {
+            "in": "path",
+            "name": "targetId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "5b006e4c-509c-458a-9f02-5aafbdc01ade"
+            }
+          },
+          {
+            "in": "query",
+            "name": "after",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "42"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Last-Event-ID",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "42"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "SSE stream of target chat activity events.",
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "type": "string",
+                  "description": "Server-Sent Events stream."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/workspaces/{workspaceId}/kubernetes-clusters/{clusterId}/sessions": {
       "get": {
         "tags": [
@@ -10756,7 +12234,7 @@
           "runs"
         ],
         "summary": "List write-tool approvals for a run",
-        "description": "Returns pending and decided write-tool approvals. Approval cards in browser or bot channels are decision surfaces only; the execution runtime still enforces approval before write execution.",
+        "description": "Returns pending and decided write-tool approvals for visibility.",
         "security": [
           {
             "userSession": []
@@ -11330,6 +12808,11 @@
         "type": "apiKey",
         "in": "cookie",
         "name": "acornops_cp_session"
+      },
+      "externalIntegrationClientToken": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "opaque external integration client token"
       }
     },
     "schemas": {
@@ -11546,6 +13029,278 @@
           }
         }
       },
+      "ExternalIntegrationLinkCreation": {
+        "type": "object",
+        "required": [
+          "linkUrl",
+          "expiresAt"
+        ],
+        "properties": {
+          "linkUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ExternalIntegrationLinkSummary": {
+        "type": "object",
+        "required": [
+          "id",
+          "integrationClientId",
+          "provider",
+          "clientDisplayName",
+          "externalUserId",
+          "linkedAt",
+          "lastAuthenticatedAt",
+          "expiresAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "integrationClientId": {
+            "type": "string"
+          },
+          "provider": {
+            "type": "string"
+          },
+          "clientDisplayName": {
+            "type": "string"
+          },
+          "externalUserId": {
+            "type": "string"
+          },
+          "externalDisplayName": {
+            "type": "string"
+          },
+          "linkedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastAuthenticatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ExternalIntegrationLinkPreview": {
+        "type": "object",
+        "required": [
+          "integrationClientId",
+          "provider",
+          "clientDisplayName",
+          "externalUserId",
+          "expiresAt",
+          "signedInUser"
+        ],
+        "properties": {
+          "integrationClientId": {
+            "type": "string"
+          },
+          "provider": {
+            "type": "string"
+          },
+          "clientDisplayName": {
+            "type": "string"
+          },
+          "externalUserId": {
+            "type": "string"
+          },
+          "externalDisplayName": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "signedInUser": {
+            "type": "object",
+            "required": [
+              "id",
+              "email",
+              "displayName"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "email": {
+                "type": "string",
+                "format": "email"
+              },
+              "displayName": {
+                "type": "string"
+              },
+              "emailVerified": {
+                "type": "boolean"
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updatedAt": {
+                "type": "string",
+                "format": "date-time"
+              }
+            },
+            "additionalProperties": true
+          }
+        }
+      },
+      "ExternalIntegrationLinkCompletion": {
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "linked"
+            ]
+          },
+          "link": {
+            "$ref": "#/components/schemas/ExternalIntegrationLinkSummary"
+          }
+        }
+      },
+      "ExternalIntegrationLinkList": {
+        "type": "object",
+        "required": [
+          "links"
+        ],
+        "properties": {
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExternalIntegrationLinkSummary"
+            }
+          }
+        }
+      },
+      "ExternalIntegrationLinkRevocation": {
+        "type": "object",
+        "required": [
+          "status",
+          "link"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "revoked"
+            ]
+          },
+          "link": {
+            "$ref": "#/components/schemas/ExternalIntegrationLinkSummary"
+          }
+        }
+      },
+      "ExternalIntegrationLinkResolution": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": [
+              "status"
+            ],
+            "properties": {
+              "status": {
+                "type": "string",
+                "enum": [
+                  "unlinked"
+                ]
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": [
+              "status",
+              "user",
+              "link"
+            ],
+            "properties": {
+              "status": {
+                "type": "string",
+                "enum": [
+                  "linked"
+                ]
+              },
+              "user": {
+                "type": "object",
+                "required": [
+                  "id",
+                  "displayName",
+                  "email"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "displayName": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  }
+                }
+              },
+              "link": {
+                "type": "object",
+                "required": [
+                  "integrationClientId",
+                  "provider",
+                  "clientDisplayName",
+                  "externalUserId",
+                  "linkedAt",
+                  "lastAuthenticatedAt",
+                  "expiresAt"
+                ],
+                "properties": {
+                  "integrationClientId": {
+                    "type": "string"
+                  },
+                  "provider": {
+                    "type": "string"
+                  },
+                  "clientDisplayName": {
+                    "type": "string"
+                  },
+                  "externalUserId": {
+                    "type": "string"
+                  },
+                  "externalDisplayName": {
+                    "type": "string"
+                  },
+                  "linkedAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "lastAuthenticatedAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "expiresAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
       "AuthMethods": {
         "type": "object",
         "properties": {
@@ -11665,6 +13420,7 @@
           "displayName",
           "kind",
           "capabilities",
+          "capabilityGroups",
           "protected",
           "sortOrder"
         ],
@@ -11681,7 +13437,7 @@
           "kind": {
             "type": "string",
             "enum": [
-              "built_in",
+              "system",
               "custom"
             ]
           },
@@ -11691,8 +13447,44 @@
               "type": "string"
             }
           },
+          "capabilityGroups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkspaceRoleCapabilityGroup"
+            }
+          },
           "protected": {
             "type": "boolean"
+          },
+          "sortOrder": {
+            "type": "integer"
+          }
+        },
+        "additionalProperties": true
+      },
+      "WorkspaceRoleCapabilityGroup": {
+        "type": "object",
+        "required": [
+          "key",
+          "capabilities",
+          "sortOrder"
+        ],
+        "properties": {
+          "key": {
+            "type": "string",
+            "enum": [
+              "workspace",
+              "members",
+              "targets",
+              "operations",
+              "settings"
+            ]
+          },
+          "capabilities": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           },
           "sortOrder": {
             "type": "integer"
@@ -11713,6 +13505,132 @@
             }
           }
         }
+      },
+      "WorkspaceAiProviderStatus": {
+        "type": "object",
+        "required": [
+          "provider",
+          "configured",
+          "enabled"
+        ],
+        "properties": {
+          "provider": {
+            "type": "string",
+            "enum": [
+              "openai",
+              "anthropic",
+              "gemini"
+            ]
+          },
+          "configured": {
+            "type": "boolean"
+          },
+          "enabled": {
+            "type": "boolean"
+          }
+        }
+      },
+      "WorkspaceAiSettings": {
+        "type": "object",
+        "required": [
+          "workspaceId",
+          "defaultProvider",
+          "defaultModel",
+          "reasoningSummaryMode",
+          "reasoningEffort",
+          "allowedReasoningSummaryModes",
+          "allowedReasoningEfforts",
+          "reasoningSummariesEnabled",
+          "allowedProviders",
+          "allowedModels",
+          "providers"
+        ],
+        "properties": {
+          "workspaceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "defaultProvider": {
+            "type": "string",
+            "enum": [
+              "openai",
+              "anthropic",
+              "gemini"
+            ]
+          },
+          "defaultModel": {
+            "type": "string"
+          },
+          "reasoningSummaryMode": {
+            "type": "string",
+            "enum": [
+              "off",
+              "auto",
+              "concise",
+              "detailed"
+            ]
+          },
+          "reasoningEffort": {
+            "type": "string",
+            "enum": [
+              "default",
+              "low",
+              "medium",
+              "high"
+            ]
+          },
+          "allowedReasoningSummaryModes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "off",
+                "auto",
+                "concise",
+                "detailed"
+              ]
+            }
+          },
+          "allowedReasoningEfforts": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "default",
+                "low",
+                "medium",
+                "high"
+              ]
+            }
+          },
+          "reasoningSummariesEnabled": {
+            "type": "boolean"
+          },
+          "allowedProviders": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "openai",
+                "anthropic",
+                "gemini"
+              ]
+            }
+          },
+          "allowedModels": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "providers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkspaceAiProviderStatus"
+            }
+          }
+        },
+        "additionalProperties": false
       },
       "WorkspaceMember": {
         "type": "object",
@@ -12798,6 +14716,10 @@
           "toolName": {
             "type": "string"
           },
+          "summary": {
+            "type": "string",
+            "description": "Human-readable, non-authoritative description of the pending write action."
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time"
@@ -12978,6 +14900,14 @@
           },
           "enabledEffective": {
             "type": "boolean"
+          },
+          "effectiveDisabledReason": {
+            "type": "string",
+            "enum": [
+              "server_disabled",
+              "agent_write_disabled"
+            ],
+            "nullable": true
           }
         },
         "additionalProperties": true

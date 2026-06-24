@@ -18,7 +18,7 @@
     },
     {
       "name": "auth",
-      "description": "OIDC, password, and browser session endpoints."
+      "description": "OIDC, password, browser session, and external integration account link endpoints."
     },
     {
       "name": "workspaces",
@@ -2887,6 +2887,278 @@
           }
         }
       },
+      "ExternalIntegrationLinkCreation": {
+        "type": "object",
+        "required": [
+          "linkUrl",
+          "expiresAt"
+        ],
+        "properties": {
+          "linkUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ExternalIntegrationLinkSummary": {
+        "type": "object",
+        "required": [
+          "id",
+          "integrationClientId",
+          "provider",
+          "clientDisplayName",
+          "externalUserId",
+          "linkedAt",
+          "lastAuthenticatedAt",
+          "expiresAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "integrationClientId": {
+            "type": "string"
+          },
+          "provider": {
+            "type": "string"
+          },
+          "clientDisplayName": {
+            "type": "string"
+          },
+          "externalUserId": {
+            "type": "string"
+          },
+          "externalDisplayName": {
+            "type": "string"
+          },
+          "linkedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastAuthenticatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ExternalIntegrationLinkPreview": {
+        "type": "object",
+        "required": [
+          "integrationClientId",
+          "provider",
+          "clientDisplayName",
+          "externalUserId",
+          "expiresAt",
+          "signedInUser"
+        ],
+        "properties": {
+          "integrationClientId": {
+            "type": "string"
+          },
+          "provider": {
+            "type": "string"
+          },
+          "clientDisplayName": {
+            "type": "string"
+          },
+          "externalUserId": {
+            "type": "string"
+          },
+          "externalDisplayName": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "signedInUser": {
+            "type": "object",
+            "required": [
+              "id",
+              "email",
+              "displayName"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "email": {
+                "type": "string",
+                "format": "email"
+              },
+              "displayName": {
+                "type": "string"
+              },
+              "emailVerified": {
+                "type": "boolean"
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updatedAt": {
+                "type": "string",
+                "format": "date-time"
+              }
+            },
+            "additionalProperties": true
+          }
+        }
+      },
+      "ExternalIntegrationLinkCompletion": {
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "linked"
+            ]
+          },
+          "link": {
+            "$ref": "#/components/schemas/ExternalIntegrationLinkSummary"
+          }
+        }
+      },
+      "ExternalIntegrationLinkList": {
+        "type": "object",
+        "required": [
+          "links"
+        ],
+        "properties": {
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExternalIntegrationLinkSummary"
+            }
+          }
+        }
+      },
+      "ExternalIntegrationLinkRevocation": {
+        "type": "object",
+        "required": [
+          "status",
+          "link"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "revoked"
+            ]
+          },
+          "link": {
+            "$ref": "#/components/schemas/ExternalIntegrationLinkSummary"
+          }
+        }
+      },
+      "ExternalIntegrationLinkResolution": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": [
+              "status"
+            ],
+            "properties": {
+              "status": {
+                "type": "string",
+                "enum": [
+                  "unlinked"
+                ]
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": [
+              "status",
+              "user",
+              "link"
+            ],
+            "properties": {
+              "status": {
+                "type": "string",
+                "enum": [
+                  "linked"
+                ]
+              },
+              "user": {
+                "type": "object",
+                "required": [
+                  "id",
+                  "displayName",
+                  "email"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "displayName": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  }
+                }
+              },
+              "link": {
+                "type": "object",
+                "required": [
+                  "integrationClientId",
+                  "provider",
+                  "clientDisplayName",
+                  "externalUserId",
+                  "linkedAt",
+                  "lastAuthenticatedAt",
+                  "expiresAt"
+                ],
+                "properties": {
+                  "integrationClientId": {
+                    "type": "string"
+                  },
+                  "provider": {
+                    "type": "string"
+                  },
+                  "clientDisplayName": {
+                    "type": "string"
+                  },
+                  "externalUserId": {
+                    "type": "string"
+                  },
+                  "externalDisplayName": {
+                    "type": "string"
+                  },
+                  "linkedAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "lastAuthenticatedAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "expiresAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
       "AuthMethods": {
         "type": "object",
         "properties": {
@@ -3006,6 +3278,7 @@
           "displayName",
           "kind",
           "capabilities",
+          "capabilityGroups",
           "protected",
           "sortOrder"
         ],
@@ -3022,7 +3295,7 @@
           "kind": {
             "type": "string",
             "enum": [
-              "built_in",
+              "system",
               "custom"
             ]
           },
@@ -3032,8 +3305,44 @@
               "type": "string"
             }
           },
+          "capabilityGroups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkspaceRoleCapabilityGroup"
+            }
+          },
           "protected": {
             "type": "boolean"
+          },
+          "sortOrder": {
+            "type": "integer"
+          }
+        },
+        "additionalProperties": true
+      },
+      "WorkspaceRoleCapabilityGroup": {
+        "type": "object",
+        "required": [
+          "key",
+          "capabilities",
+          "sortOrder"
+        ],
+        "properties": {
+          "key": {
+            "type": "string",
+            "enum": [
+              "workspace",
+              "members",
+              "targets",
+              "operations",
+              "settings"
+            ]
+          },
+          "capabilities": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           },
           "sortOrder": {
             "type": "integer"
@@ -3054,6 +3363,132 @@
             }
           }
         }
+      },
+      "WorkspaceAiProviderStatus": {
+        "type": "object",
+        "required": [
+          "provider",
+          "configured",
+          "enabled"
+        ],
+        "properties": {
+          "provider": {
+            "type": "string",
+            "enum": [
+              "openai",
+              "anthropic",
+              "gemini"
+            ]
+          },
+          "configured": {
+            "type": "boolean"
+          },
+          "enabled": {
+            "type": "boolean"
+          }
+        }
+      },
+      "WorkspaceAiSettings": {
+        "type": "object",
+        "required": [
+          "workspaceId",
+          "defaultProvider",
+          "defaultModel",
+          "reasoningSummaryMode",
+          "reasoningEffort",
+          "allowedReasoningSummaryModes",
+          "allowedReasoningEfforts",
+          "reasoningSummariesEnabled",
+          "allowedProviders",
+          "allowedModels",
+          "providers"
+        ],
+        "properties": {
+          "workspaceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "defaultProvider": {
+            "type": "string",
+            "enum": [
+              "openai",
+              "anthropic",
+              "gemini"
+            ]
+          },
+          "defaultModel": {
+            "type": "string"
+          },
+          "reasoningSummaryMode": {
+            "type": "string",
+            "enum": [
+              "off",
+              "auto",
+              "concise",
+              "detailed"
+            ]
+          },
+          "reasoningEffort": {
+            "type": "string",
+            "enum": [
+              "default",
+              "low",
+              "medium",
+              "high"
+            ]
+          },
+          "allowedReasoningSummaryModes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "off",
+                "auto",
+                "concise",
+                "detailed"
+              ]
+            }
+          },
+          "allowedReasoningEfforts": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "default",
+                "low",
+                "medium",
+                "high"
+              ]
+            }
+          },
+          "reasoningSummariesEnabled": {
+            "type": "boolean"
+          },
+          "allowedProviders": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "openai",
+                "anthropic",
+                "gemini"
+              ]
+            }
+          },
+          "allowedModels": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "providers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkspaceAiProviderStatus"
+            }
+          }
+        },
+        "additionalProperties": false
       },
       "WorkspaceMember": {
         "type": "object",
@@ -4139,6 +4574,10 @@
           "toolName": {
             "type": "string"
           },
+          "summary": {
+            "type": "string",
+            "description": "Human-readable, non-authoritative description of the pending write action."
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time"
@@ -4319,6 +4758,14 @@
           },
           "enabledEffective": {
             "type": "boolean"
+          },
+          "effectiveDisabledReason": {
+            "type": "string",
+            "enum": [
+              "server_disabled",
+              "agent_write_disabled"
+            ],
+            "nullable": true
           }
         },
         "additionalProperties": true
