@@ -2780,27 +2780,12 @@
           "workspaces"
         ],
         "summary": "List workspaces available to current user",
-        "description": "Browser callers use the session cookie. Phase-1 external integration callers may use the external integration service token plus x-acornops-external-user-id for a linked external user; external integration workspace summaries are scoped to read_workspace_data only.",
         "security": [
           {
             "userSession": []
-          },
-          {
-            "externalIntegrationClientToken": []
           }
         ],
         "parameters": [
-          {
-            "in": "header",
-            "name": "x-acornops-external-user-id",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 128
-            },
-            "description": "Required only for external integration service-token requests. Must identify a linked external integration user."
-          },
           {
             "in": "query",
             "name": "limit",
@@ -2831,7 +2816,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Workspace page payload: { items, nextCursor? }. Workspace items include plan.{key,name} and quota.{members,kubernetesClusters,virtualMachines}.{used,limit}; operational quota usage is redacted to 0 when permissions.read_workspace_data is false, and member usage requires permissions.read_members. External integration requests receive read_workspace_data only, so member usage is redacted.",
+            "description": "Workspace page payload: { items, nextCursor? }. Workspace items include plan.{key,name} and quota.{members,kubernetesClusters,virtualMachines}.{used,limit}; operational quota usage is redacted to 0 when permissions.read_workspace_data is false, and member usage requires permissions.read_members.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2851,7 +2836,7 @@
             }
           },
           "401": {
-            "description": "Missing browser session or missing/invalid/unlinked external integration credentials.",
+            "description": "Missing browser session.",
             "content": {
               "application/json": {
                 "schema": {
@@ -3034,27 +3019,12 @@
           "workspaces"
         ],
         "summary": "Get a workspace summary available to current user",
-        "description": "Browser callers use the session cookie. Phase-1 external integration callers may use the external integration service token plus x-acornops-external-user-id for a linked external user; external integration workspace summaries are scoped to read_workspace_data only.",
         "security": [
           {
             "userSession": []
-          },
-          {
-            "externalIntegrationClientToken": []
           }
         ],
         "parameters": [
-          {
-            "in": "header",
-            "name": "x-acornops-external-user-id",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 128
-            },
-            "description": "Required only for external integration service-token requests. Must identify a linked external integration user."
-          },
           {
             "in": "path",
             "name": "workspaceId",
@@ -4977,27 +4947,12 @@
           "workspaces"
         ],
         "summary": "List snapshot-derived investigations for a workspace",
-        "description": "Browser callers use the session cookie. External integration callers may use the external integration service token plus x-acornops-external-user-id when the linked user and bot allowlist grant read_workspace_data.",
         "security": [
           {
             "userSession": []
-          },
-          {
-            "externalIntegrationClientToken": []
           }
         ],
         "parameters": [
-          {
-            "in": "header",
-            "name": "x-acornops-external-user-id",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 128
-            },
-            "description": "Required only for external integration service-token requests. Must identify a linked external integration user."
-          },
           {
             "in": "path",
             "name": "workspaceId",
@@ -7846,27 +7801,12 @@
           "workspaces"
         ],
         "summary": "List clusters in a workspace",
-        "description": "Browser callers use the session cookie. Phase-1 external integration callers may use the external integration service token plus x-acornops-external-user-id for a linked external user with bot-scoped read_workspace_data.",
         "security": [
           {
             "userSession": []
-          },
-          {
-            "externalIntegrationClientToken": []
           }
         ],
         "parameters": [
-          {
-            "in": "header",
-            "name": "x-acornops-external-user-id",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 128
-            },
-            "description": "Required only for external integration service-token requests. Must identify a linked external integration user."
-          },
           {
             "in": "path",
             "name": "workspaceId",
@@ -8164,27 +8104,12 @@
           "workspaces"
         ],
         "summary": "Get cluster details and latest snapshot summary",
-        "description": "Browser callers use the session cookie. External integration callers may use the external integration service token plus x-acornops-external-user-id when the linked user and bot allowlist grant read_workspace_data.",
         "security": [
           {
             "userSession": []
-          },
-          {
-            "externalIntegrationClientToken": []
           }
         ],
         "parameters": [
-          {
-            "in": "header",
-            "name": "x-acornops-external-user-id",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 128
-            },
-            "description": "Required only for external integration service-token requests. Must identify a linked external integration user."
-          },
           {
             "in": "path",
             "name": "workspaceId",
@@ -8573,27 +8498,12 @@
           "workspaces"
         ],
         "summary": "List snapshot-derived cluster resources",
-        "description": "Browser callers use the session cookie. External integration callers may use the external integration service token plus x-acornops-external-user-id when the linked user and bot allowlist grant read_workspace_data.",
         "security": [
           {
             "userSession": []
-          },
-          {
-            "externalIntegrationClientToken": []
           }
         ],
         "parameters": [
-          {
-            "in": "header",
-            "name": "x-acornops-external-user-id",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 128
-            },
-            "description": "Required only for external integration service-token requests. Must identify a linked external integration user."
-          },
           {
             "in": "path",
             "name": "workspaceId",
@@ -8774,27 +8684,12 @@
           "workspaces"
         ],
         "summary": "List snapshot-derived cluster findings",
-        "description": "Browser callers use the session cookie. External integration callers may use the external integration service token plus x-acornops-external-user-id when the linked user and bot allowlist grant read_workspace_data.",
         "security": [
           {
             "userSession": []
-          },
-          {
-            "externalIntegrationClientToken": []
           }
         ],
         "parameters": [
-          {
-            "in": "header",
-            "name": "x-acornops-external-user-id",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 128
-            },
-            "description": "Required only for external integration service-token requests. Must identify a linked external integration user."
-          },
           {
             "in": "path",
             "name": "workspaceId",
@@ -9631,27 +9526,12 @@
           "workspaces"
         ],
         "summary": "List virtual machines in a workspace",
-        "description": "Browser callers use the session cookie. External integration callers may use the external integration service token plus x-acornops-external-user-id when the linked user and bot allowlist grant read_workspace_data.",
         "security": [
           {
             "userSession": []
-          },
-          {
-            "externalIntegrationClientToken": []
           }
         ],
         "parameters": [
-          {
-            "in": "header",
-            "name": "x-acornops-external-user-id",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 128
-            },
-            "description": "Required only for external integration service-token requests. Must identify a linked external integration user."
-          },
           {
             "in": "path",
             "name": "workspaceId",
@@ -9941,27 +9821,12 @@
           "workspaces"
         ],
         "summary": "Get virtual machine details and latest snapshot summary",
-        "description": "Browser callers use the session cookie. External integration callers may use the external integration service token plus x-acornops-external-user-id when the linked user and bot allowlist grant read_workspace_data.",
         "security": [
           {
             "userSession": []
-          },
-          {
-            "externalIntegrationClientToken": []
           }
         ],
         "parameters": [
-          {
-            "in": "header",
-            "name": "x-acornops-external-user-id",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 128
-            },
-            "description": "Required only for external integration service-token requests. Must identify a linked external integration user."
-          },
           {
             "in": "path",
             "name": "workspaceId",
@@ -10443,27 +10308,12 @@
           "workspaces"
         ],
         "summary": "List snapshot-derived VM inventory items",
-        "description": "Browser callers use the session cookie. External integration callers may use the external integration service token plus x-acornops-external-user-id when the linked user and bot allowlist grant read_workspace_data.",
         "security": [
           {
             "userSession": []
-          },
-          {
-            "externalIntegrationClientToken": []
           }
         ],
         "parameters": [
-          {
-            "in": "header",
-            "name": "x-acornops-external-user-id",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 128
-            },
-            "description": "Required only for external integration service-token requests. Must identify a linked external integration user."
-          },
           {
             "in": "path",
             "name": "workspaceId",
@@ -10575,27 +10425,12 @@
           "workspaces"
         ],
         "summary": "List snapshot-derived VM findings",
-        "description": "Browser callers use the session cookie. External integration callers may use the external integration service token plus x-acornops-external-user-id when the linked user and bot allowlist grant read_workspace_data.",
         "security": [
           {
             "userSession": []
-          },
-          {
-            "externalIntegrationClientToken": []
           }
         ],
         "parameters": [
-          {
-            "in": "header",
-            "name": "x-acornops-external-user-id",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 128
-            },
-            "description": "Required only for external integration service-token requests. Must identify a linked external integration user."
-          },
           {
             "in": "path",
             "name": "workspaceId",
@@ -10972,23 +10807,9 @@
         "security": [
           {
             "userSession": []
-          },
-          {
-            "externalIntegrationClientToken": []
           }
         ],
         "parameters": [
-          {
-            "in": "header",
-            "name": "x-acornops-external-user-id",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 128
-            },
-            "description": "Required only for external integration service-token requests. Must identify a linked external integration user."
-          },
           {
             "in": "path",
             "name": "workspaceId",
@@ -11134,27 +10955,12 @@
           "sessions"
         ],
         "summary": "Create troubleshooting session for target",
-        "description": "External integration callers may create sessions only when the linked user role and bot allowlist grant create_sessions.",
         "security": [
           {
             "userSession": []
-          },
-          {
-            "externalIntegrationClientToken": []
           }
         ],
         "parameters": [
-          {
-            "in": "header",
-            "name": "x-acornops-external-user-id",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 128
-            },
-            "description": "Required only for external integration service-token requests. Must identify a linked external integration user."
-          },
           {
             "in": "path",
             "name": "workspaceId",
@@ -11292,23 +11098,9 @@
         "security": [
           {
             "userSession": []
-          },
-          {
-            "externalIntegrationClientToken": []
           }
         ],
         "parameters": [
-          {
-            "in": "header",
-            "name": "x-acornops-external-user-id",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 128
-            },
-            "description": "Required only for external integration service-token requests. Must identify a linked external integration user."
-          },
           {
             "in": "path",
             "name": "workspaceId",
@@ -11571,23 +11363,9 @@
         "security": [
           {
             "userSession": []
-          },
-          {
-            "externalIntegrationClientToken": []
           }
         ],
         "parameters": [
-          {
-            "in": "header",
-            "name": "x-acornops-external-user-id",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 128
-            },
-            "description": "Required only for external integration service-token requests. Must identify a linked external integration user."
-          },
           {
             "in": "path",
             "name": "workspaceId",
@@ -11733,27 +11511,12 @@
           "sessions"
         ],
         "summary": "Create troubleshooting session for cluster",
-        "description": "External integration callers may create sessions only when the linked user role and bot allowlist grant create_sessions.",
         "security": [
           {
             "userSession": []
-          },
-          {
-            "externalIntegrationClientToken": []
           }
         ],
         "parameters": [
-          {
-            "in": "header",
-            "name": "x-acornops-external-user-id",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 128
-            },
-            "description": "Required only for external integration service-token requests. Must identify a linked external integration user."
-          },
           {
             "in": "path",
             "name": "workspaceId",
@@ -11890,23 +11653,9 @@
         "security": [
           {
             "userSession": []
-          },
-          {
-            "externalIntegrationClientToken": []
           }
         ],
         "parameters": [
-          {
-            "in": "header",
-            "name": "x-acornops-external-user-id",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 128
-            },
-            "description": "Required only for external integration service-token requests. Must identify a linked external integration user."
-          },
           {
             "in": "path",
             "name": "sessionId",
@@ -12109,23 +11858,9 @@
         "security": [
           {
             "userSession": []
-          },
-          {
-            "externalIntegrationClientToken": []
           }
         ],
         "parameters": [
-          {
-            "in": "header",
-            "name": "x-acornops-external-user-id",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 128
-            },
-            "description": "Required only for external integration service-token requests. Must identify a linked external integration user."
-          },
           {
             "in": "path",
             "name": "sessionId",
@@ -12244,27 +11979,12 @@
           "sessions"
         ],
         "summary": "Append user message and trigger run dispatch",
-        "description": "External integration callers may append messages only to sessions owned by the linked AcornOps user and may trigger read-only troubleshooting runs only.",
         "security": [
           {
             "userSession": []
-          },
-          {
-            "externalIntegrationClientToken": []
           }
         ],
         "parameters": [
-          {
-            "in": "header",
-            "name": "x-acornops-external-user-id",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 128
-            },
-            "description": "Required only for external integration service-token requests. Must identify a linked external integration user."
-          },
           {
             "in": "path",
             "name": "sessionId",
@@ -12405,23 +12125,9 @@
         "security": [
           {
             "userSession": []
-          },
-          {
-            "externalIntegrationClientToken": []
           }
         ],
         "parameters": [
-          {
-            "in": "header",
-            "name": "x-acornops-external-user-id",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 128
-            },
-            "description": "Required only for external integration service-token requests. Must identify a linked external integration user."
-          },
           {
             "in": "path",
             "name": "runId",
@@ -12523,27 +12229,13 @@
           "runs"
         ],
         "summary": "List write-tool approvals for a run",
-        "description": "Returns pending and decided write-tool approvals for visibility. External integration callers may read approval state but cannot decide approvals.",
+        "description": "Returns pending and decided write-tool approvals for visibility.",
         "security": [
           {
             "userSession": []
-          },
-          {
-            "externalIntegrationClientToken": []
           }
         ],
         "parameters": [
-          {
-            "in": "header",
-            "name": "x-acornops-external-user-id",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 128
-            },
-            "description": "Required only for external integration service-token requests. Must identify a linked external integration user."
-          },
           {
             "in": "path",
             "name": "runId",
@@ -12898,23 +12590,9 @@
         "security": [
           {
             "userSession": []
-          },
-          {
-            "externalIntegrationClientToken": []
           }
         ],
         "parameters": [
-          {
-            "in": "header",
-            "name": "x-acornops-external-user-id",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 128
-            },
-            "description": "Required only for external integration service-token requests. Must identify a linked external integration user."
-          },
           {
             "in": "path",
             "name": "runId",
@@ -13020,23 +12698,9 @@
         "security": [
           {
             "userSession": []
-          },
-          {
-            "externalIntegrationClientToken": []
           }
         ],
         "parameters": [
-          {
-            "in": "header",
-            "name": "x-acornops-external-user-id",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 128
-            },
-            "description": "Required only for external integration service-token requests. Must identify a linked external integration user."
-          },
           {
             "in": "path",
             "name": "runId",
