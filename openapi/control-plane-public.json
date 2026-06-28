@@ -7,12 +7,7 @@
   },
   "servers": [
     {
-      "url": "https://api.example.com",
-      "description": "Self-host deployment"
-    },
-    {
-      "url": "https://api.demo.acornops.dev",
-      "description": "Public demo"
+      "url": "https://api.acornops.dev"
     }
   ],
   "tags": [
@@ -4946,12 +4941,12 @@
         }
       }
     },
-    "/api/v1/workspaces/{workspaceId}/investigations": {
+    "/api/v1/workspaces/{workspaceId}/issues": {
       "get": {
         "tags": [
           "workspaces"
         ],
-        "summary": "List snapshot-derived investigations for a workspace",
+        "summary": "List durable operational issues for a workspace",
         "security": [
           {
             "userSession": []
@@ -4997,6 +4992,20 @@
           },
           {
             "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "active",
+                "recovering",
+                "resolved",
+                "all"
+              ]
+            }
+          },
+          {
+            "in": "query",
             "name": "severity",
             "required": false,
             "schema": {
@@ -5010,7 +5019,19 @@
           },
           {
             "in": "query",
-            "name": "clusterId",
+            "name": "targetType",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "kubernetes",
+                "virtual_machine"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "targetId",
             "required": false,
             "schema": {
               "type": "string",
@@ -5030,11 +5051,11 @@
         ],
         "responses": {
           "200": {
-            "description": "Investigation page payload: { items, nextCursor? }.",
+            "description": "Issue page payload: { items, nextCursor? }.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/InvestigationPage"
+                  "$ref": "#/components/schemas/IssuePage"
                 }
               }
             }
@@ -5071,6 +5092,257 @@
           },
           "404": {
             "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/issues/{issueId}": {
+      "get": {
+        "tags": [
+          "workspaces"
+        ],
+        "summary": "Get a durable operational issue",
+        "security": [
+          {
+            "userSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspaceId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "4b930d98-add9-4924-ab26-3c16d96ec373"
+            }
+          },
+          {
+            "in": "path",
+            "name": "issueId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Issue payload.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Issue"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Issue not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/issues/{issueId}/observations": {
+      "get": {
+        "tags": [
+          "workspaces"
+        ],
+        "summary": "List observations for a durable operational issue",
+        "security": [
+          {
+            "userSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspaceId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "4b930d98-add9-4924-ab26-3c16d96ec373"
+            }
+          },
+          {
+            "in": "path",
+            "name": "issueId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Issue observation page payload: { items, nextCursor? }.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IssueObservationPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Issue not found.",
             "content": {
               "application/json": {
                 "schema": {
@@ -6387,12 +6659,192 @@
         }
       }
     },
-    "/api/v1/workspaces/{workspaceId}/targets/{targetId}/tools/catalog": {
+    "/api/v1/workspaces/{workspaceId}/targets/{targetId}/issues": {
       "get": {
         "tags": [
           "workspaces"
         ],
-        "summary": "List target tools grouped by server with configured/effective state",
+        "summary": "List durable operational issues for a target",
+        "security": [
+          {
+            "userSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspaceId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "4b930d98-add9-4924-ab26-3c16d96ec373"
+            }
+          },
+          {
+            "in": "path",
+            "name": "targetId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "5b006e4c-509c-458a-9f02-5aafbdc01ade"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "active",
+                "recovering",
+                "resolved",
+                "all"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "severity",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "critical",
+                "warning",
+                "info"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "namespace",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "default"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Issue page payload: { items, nextCursor? }.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IssuePage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/catalog": {
+      "get": {
+        "tags": [
+          "workspaces"
+        ],
+        "summary": "List target MCP tools grouped by server with configured/effective state",
         "security": [
           {
             "userSession": []
@@ -6449,17 +6901,17 @@
         ],
         "responses": {
           "200": {
-            "description": "Target tool catalog grouped by paged server summaries.",
+            "description": "Target MCP catalog grouped by paged server summaries.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ToolCatalog"
+                  "$ref": "#/components/schemas/McpCatalog"
                 }
               }
             }
           },
           "400": {
-            "description": "Unsupported target type for tool catalog in this release.",
+            "description": "Unsupported target type for MCP catalog in this release.",
             "content": {
               "application/json": {
                 "schema": {
@@ -6490,6 +6942,288 @@
           },
           "404": {
             "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/targets/{targetId}/tools": {
+      "get": {
+        "tags": [
+          "workspaces"
+        ],
+        "summary": "List built-in tools configured for a target",
+        "security": [
+          {
+            "userSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspaceId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "4b930d98-add9-4924-ab26-3c16d96ec373"
+            }
+          },
+          {
+            "in": "path",
+            "name": "targetId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "5b006e4c-509c-458a-9f02-5aafbdc01ade"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Target built-in tool catalog.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TargetToolCatalog"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/targets/{targetId}/tools/{toolId}": {
+      "patch": {
+        "tags": [
+          "workspaces"
+        ],
+        "summary": "Update a built-in target tool",
+        "security": [
+          {
+            "userSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspaceId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "4b930d98-add9-4924-ab26-3c16d96ec373"
+            }
+          },
+          {
+            "in": "path",
+            "name": "targetId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "5b006e4c-509c-458a-9f02-5aafbdc01ade"
+            }
+          },
+          {
+            "in": "path",
+            "name": "toolId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "web_search"
+              ],
+              "example": "web_search"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "enabled"
+                ],
+                "properties": {
+                  "enabled": {
+                    "type": "boolean",
+                    "example": true
+                  },
+                  "config": {
+                    "type": "object",
+                    "additionalProperties": true
+                  }
+                },
+                "example": {
+                  "enabled": true,
+                  "config": {
+                    "domainFilters": {
+                      "allowedDomains": [
+                        "docs.example.com"
+                      ],
+                      "blockedDomains": [
+                        "internal.example.com"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated built-in target tool.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TargetTool"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid web_search configuration.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Missing manage_tools permission.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown toolId.",
             "content": {
               "application/json": {
                 "schema": {
@@ -7499,12 +8233,12 @@
         }
       }
     },
-    "/api/v1/workspaces/{workspaceId}/targets/{targetId}/tools/{toolName}": {
+    "/api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}/tools/{toolName}": {
       "patch": {
         "tags": [
           "workspaces"
         ],
-        "summary": "Enable or disable a discovered target tool",
+        "summary": "Enable or disable an MCP-discovered target tool",
         "security": [
           {
             "userSession": []
@@ -7529,6 +8263,16 @@
               "type": "string",
               "format": "uuid",
               "example": "5b006e4c-509c-458a-9f02-5aafbdc01ade"
+            }
+          },
+          {
+            "in": "path",
+            "name": "serverId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "42573ae4-0a1f-4488-ae1f-e6bd3fd2469b"
             }
           },
           {
@@ -7574,11 +8318,11 @@
         },
         "responses": {
           "200": {
-            "description": "Tool setting updated.",
+            "description": "MCP tool setting updated.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ToolSetting"
+                  "$ref": "#/components/schemas/McpTool"
                 }
               }
             }
@@ -7614,7 +8358,7 @@
             }
           },
           "404": {
-            "description": "Tool not found.",
+            "description": "MCP server or tool not found.",
             "content": {
               "application/json": {
                 "schema": {
@@ -7656,12 +8400,12 @@
         }
       }
     },
-    "/api/v1/workspaces/{workspaceId}/kubernetes-clusters/{clusterId}/tools/catalog": {
+    "/api/v1/workspaces/{workspaceId}/targets/{targetId}/skills": {
       "get": {
         "tags": [
           "workspaces"
         ],
-        "summary": "List cluster tools grouped by server with configured/effective state",
+        "summary": "List target-scoped troubleshooting skills",
         "security": [
           {
             "userSession": []
@@ -7680,7 +8424,7 @@
           },
           {
             "in": "path",
-            "name": "clusterId",
+            "name": "targetId",
             "required": true,
             "schema": {
               "type": "string",
@@ -7718,11 +8462,1848 @@
         ],
         "responses": {
           "200": {
-            "description": "Cluster tool catalog grouped by paged server summaries.",
+            "description": "Target skill catalog page payload with permissions, items, and nextCursor.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ToolCatalog"
+                  "type": "object",
+                  "required": [
+                    "workspaceId",
+                    "targetId",
+                    "targetType",
+                    "permissions",
+                    "items"
+                  ],
+                  "properties": {
+                    "workspaceId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "targetId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "targetType": {
+                      "type": "string",
+                      "enum": [
+                        "kubernetes",
+                        "virtual_machine"
+                      ]
+                    },
+                    "clusterId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "permissions": {
+                      "type": "object",
+                      "required": [
+                        "canEdit",
+                        "editableRoles"
+                      ],
+                      "properties": {
+                        "canEdit": {
+                          "type": "boolean"
+                        },
+                        "editableRoles": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "workspaceId",
+                          "targetId",
+                          "targetType",
+                          "name",
+                          "description",
+                          "enabled",
+                          "validationStatus",
+                          "validationErrors",
+                          "bundleStats",
+                          "source",
+                          "createdAt",
+                          "updatedAt"
+                        ],
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "workspaceId": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "targetId": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "targetType": {
+                            "type": "string",
+                            "enum": [
+                              "kubernetes",
+                              "virtual_machine"
+                            ]
+                          },
+                          "clusterId": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "description": {
+                            "type": "string"
+                          },
+                          "enabled": {
+                            "type": "boolean"
+                          },
+                          "validationStatus": {
+                            "type": "string",
+                            "enum": [
+                              "valid",
+                              "invalid"
+                            ]
+                          },
+                          "validationErrors": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "bundleStats": {
+                            "type": "object",
+                            "required": [
+                              "fileCount",
+                              "totalBytes"
+                            ],
+                            "properties": {
+                              "fileCount": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 16
+                              },
+                              "totalBytes": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 131072
+                              }
+                            }
+                          },
+                          "source": {
+                            "type": "object",
+                            "required": [
+                              "type",
+                              "syncStatus"
+                            ],
+                            "properties": {
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "manual",
+                                  "git_import"
+                                ]
+                              },
+                              "repoUrl": {
+                                "type": "string",
+                                "format": "uri"
+                              },
+                              "ref": {
+                                "type": "string"
+                              },
+                              "subpath": {
+                                "type": "string"
+                              },
+                              "commitSha": {
+                                "type": "string"
+                              },
+                              "syncStatus": {
+                                "type": "string",
+                                "enum": [
+                                  "not_applicable",
+                                  "current",
+                                  "modified"
+                                ]
+                              }
+                            }
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "updatedAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          }
+                        }
+                      }
+                    },
+                    "nextCursor": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "workspaces"
+        ],
+        "summary": "Create a manual target troubleshooting skill from Markdown files",
+        "security": [
+          {
+            "userSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspaceId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "4b930d98-add9-4924-ab26-3c16d96ec373"
+            }
+          },
+          {
+            "in": "path",
+            "name": "targetId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "5b006e4c-509c-458a-9f02-5aafbdc01ade"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "files"
+                ],
+                "properties": {
+                  "files": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "path",
+                        "content"
+                      ],
+                      "properties": {
+                        "path": {
+                          "type": "string",
+                          "example": "SKILL.md"
+                        },
+                        "content": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Target skill created. Valid manual skills are enabled automatically; invalid skills are stored disabled.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "type": "object",
+                      "required": [
+                        "id",
+                        "workspaceId",
+                        "targetId",
+                        "targetType",
+                        "name",
+                        "description",
+                        "enabled",
+                        "validationStatus",
+                        "validationErrors",
+                        "bundleStats",
+                        "source",
+                        "createdAt",
+                        "updatedAt"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "workspaceId": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "targetId": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "targetType": {
+                          "type": "string",
+                          "enum": [
+                            "kubernetes",
+                            "virtual_machine"
+                          ]
+                        },
+                        "clusterId": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "description": {
+                          "type": "string"
+                        },
+                        "enabled": {
+                          "type": "boolean"
+                        },
+                        "validationStatus": {
+                          "type": "string",
+                          "enum": [
+                            "valid",
+                            "invalid"
+                          ]
+                        },
+                        "validationErrors": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "bundleStats": {
+                          "type": "object",
+                          "required": [
+                            "fileCount",
+                            "totalBytes"
+                          ],
+                          "properties": {
+                            "fileCount": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 16
+                            },
+                            "totalBytes": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 131072
+                            }
+                          }
+                        },
+                        "source": {
+                          "type": "object",
+                          "required": [
+                            "type",
+                            "syncStatus"
+                          ],
+                          "properties": {
+                            "type": {
+                              "type": "string",
+                              "enum": [
+                                "manual",
+                                "git_import"
+                              ]
+                            },
+                            "repoUrl": {
+                              "type": "string",
+                              "format": "uri"
+                            },
+                            "ref": {
+                              "type": "string"
+                            },
+                            "subpath": {
+                              "type": "string"
+                            },
+                            "commitSha": {
+                              "type": "string"
+                            },
+                            "syncStatus": {
+                              "type": "string",
+                              "enum": [
+                                "not_applicable",
+                                "current",
+                                "modified"
+                              ]
+                            }
+                          }
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "updatedAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        }
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "files"
+                      ],
+                      "properties": {
+                        "files": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": [
+                              "path",
+                              "content",
+                              "sizeBytes"
+                            ],
+                            "properties": {
+                              "path": {
+                                "type": "string",
+                                "example": "SKILL.md"
+                              },
+                              "content": {
+                                "type": "string"
+                              },
+                              "sizeBytes": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 32768
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/targets/{targetId}/skills/import": {
+      "post": {
+        "tags": [
+          "workspaces"
+        ],
+        "summary": "Import a target troubleshooting skill from an unauthenticated GitHub repository snapshot",
+        "security": [
+          {
+            "userSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspaceId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "4b930d98-add9-4924-ab26-3c16d96ec373"
+            }
+          },
+          {
+            "in": "path",
+            "name": "targetId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "5b006e4c-509c-458a-9f02-5aafbdc01ade"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "repoUrl"
+                ],
+                "properties": {
+                  "repoUrl": {
+                    "type": "string",
+                    "format": "uri",
+                    "example": "https://github.com/openai/skills/tree/main/skills/.curated/cli-creator"
+                  },
+                  "ref": {
+                    "type": "string",
+                    "example": "main"
+                  },
+                  "subpath": {
+                    "type": "string",
+                    "example": "skills/troubleshooting-cnpg"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Target skill imported. Valid imported skills are enabled automatically; invalid imports are stored disabled with validation errors.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "type": "object",
+                      "required": [
+                        "id",
+                        "workspaceId",
+                        "targetId",
+                        "targetType",
+                        "name",
+                        "description",
+                        "enabled",
+                        "validationStatus",
+                        "validationErrors",
+                        "bundleStats",
+                        "source",
+                        "createdAt",
+                        "updatedAt"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "workspaceId": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "targetId": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "targetType": {
+                          "type": "string",
+                          "enum": [
+                            "kubernetes",
+                            "virtual_machine"
+                          ]
+                        },
+                        "clusterId": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "description": {
+                          "type": "string"
+                        },
+                        "enabled": {
+                          "type": "boolean"
+                        },
+                        "validationStatus": {
+                          "type": "string",
+                          "enum": [
+                            "valid",
+                            "invalid"
+                          ]
+                        },
+                        "validationErrors": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "bundleStats": {
+                          "type": "object",
+                          "required": [
+                            "fileCount",
+                            "totalBytes"
+                          ],
+                          "properties": {
+                            "fileCount": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 16
+                            },
+                            "totalBytes": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 131072
+                            }
+                          }
+                        },
+                        "source": {
+                          "type": "object",
+                          "required": [
+                            "type",
+                            "syncStatus"
+                          ],
+                          "properties": {
+                            "type": {
+                              "type": "string",
+                              "enum": [
+                                "manual",
+                                "git_import"
+                              ]
+                            },
+                            "repoUrl": {
+                              "type": "string",
+                              "format": "uri"
+                            },
+                            "ref": {
+                              "type": "string"
+                            },
+                            "subpath": {
+                              "type": "string"
+                            },
+                            "commitSha": {
+                              "type": "string"
+                            },
+                            "syncStatus": {
+                              "type": "string",
+                              "enum": [
+                                "not_applicable",
+                                "current",
+                                "modified"
+                              ]
+                            }
+                          }
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "updatedAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        }
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "files"
+                      ],
+                      "properties": {
+                        "files": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": [
+                              "path",
+                              "content",
+                              "sizeBytes"
+                            ],
+                            "properties": {
+                              "path": {
+                                "type": "string",
+                                "example": "SKILL.md"
+                              },
+                              "content": {
+                                "type": "string"
+                              },
+                              "sizeBytes": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 32768
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/targets/{targetId}/skills/{skillId}": {
+      "get": {
+        "tags": [
+          "workspaces"
+        ],
+        "summary": "Get full target troubleshooting skill detail",
+        "security": [
+          {
+            "userSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspaceId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "4b930d98-add9-4924-ab26-3c16d96ec373"
+            }
+          },
+          {
+            "in": "path",
+            "name": "targetId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "5b006e4c-509c-458a-9f02-5aafbdc01ade"
+            }
+          },
+          {
+            "in": "path",
+            "name": "skillId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "5d33c08a-2a12-4f48-bf42-1c9f956f5aa3"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Target skill detail, including Markdown files.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "type": "object",
+                      "required": [
+                        "id",
+                        "workspaceId",
+                        "targetId",
+                        "targetType",
+                        "name",
+                        "description",
+                        "enabled",
+                        "validationStatus",
+                        "validationErrors",
+                        "bundleStats",
+                        "source",
+                        "createdAt",
+                        "updatedAt"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "workspaceId": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "targetId": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "targetType": {
+                          "type": "string",
+                          "enum": [
+                            "kubernetes",
+                            "virtual_machine"
+                          ]
+                        },
+                        "clusterId": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "description": {
+                          "type": "string"
+                        },
+                        "enabled": {
+                          "type": "boolean"
+                        },
+                        "validationStatus": {
+                          "type": "string",
+                          "enum": [
+                            "valid",
+                            "invalid"
+                          ]
+                        },
+                        "validationErrors": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "bundleStats": {
+                          "type": "object",
+                          "required": [
+                            "fileCount",
+                            "totalBytes"
+                          ],
+                          "properties": {
+                            "fileCount": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 16
+                            },
+                            "totalBytes": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 131072
+                            }
+                          }
+                        },
+                        "source": {
+                          "type": "object",
+                          "required": [
+                            "type",
+                            "syncStatus"
+                          ],
+                          "properties": {
+                            "type": {
+                              "type": "string",
+                              "enum": [
+                                "manual",
+                                "git_import"
+                              ]
+                            },
+                            "repoUrl": {
+                              "type": "string",
+                              "format": "uri"
+                            },
+                            "ref": {
+                              "type": "string"
+                            },
+                            "subpath": {
+                              "type": "string"
+                            },
+                            "commitSha": {
+                              "type": "string"
+                            },
+                            "syncStatus": {
+                              "type": "string",
+                              "enum": [
+                                "not_applicable",
+                                "current",
+                                "modified"
+                              ]
+                            }
+                          }
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "updatedAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        }
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "files"
+                      ],
+                      "properties": {
+                        "files": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": [
+                              "path",
+                              "content",
+                              "sizeBytes"
+                            ],
+                            "properties": {
+                              "path": {
+                                "type": "string",
+                                "example": "SKILL.md"
+                              },
+                              "content": {
+                                "type": "string"
+                              },
+                              "sizeBytes": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 32768
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "workspaces"
+        ],
+        "summary": "Update target troubleshooting skill enablement and/or Markdown files",
+        "security": [
+          {
+            "userSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspaceId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "4b930d98-add9-4924-ab26-3c16d96ec373"
+            }
+          },
+          {
+            "in": "path",
+            "name": "targetId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "5b006e4c-509c-458a-9f02-5aafbdc01ade"
+            }
+          },
+          {
+            "in": "path",
+            "name": "skillId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "5d33c08a-2a12-4f48-bf42-1c9f956f5aa3"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "files": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "path",
+                        "content"
+                      ],
+                      "properties": {
+                        "path": {
+                          "type": "string",
+                          "example": "SKILL.md"
+                        },
+                        "content": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Target skill updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "type": "object",
+                      "required": [
+                        "id",
+                        "workspaceId",
+                        "targetId",
+                        "targetType",
+                        "name",
+                        "description",
+                        "enabled",
+                        "validationStatus",
+                        "validationErrors",
+                        "bundleStats",
+                        "source",
+                        "createdAt",
+                        "updatedAt"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "workspaceId": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "targetId": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "targetType": {
+                          "type": "string",
+                          "enum": [
+                            "kubernetes",
+                            "virtual_machine"
+                          ]
+                        },
+                        "clusterId": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "description": {
+                          "type": "string"
+                        },
+                        "enabled": {
+                          "type": "boolean"
+                        },
+                        "validationStatus": {
+                          "type": "string",
+                          "enum": [
+                            "valid",
+                            "invalid"
+                          ]
+                        },
+                        "validationErrors": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "bundleStats": {
+                          "type": "object",
+                          "required": [
+                            "fileCount",
+                            "totalBytes"
+                          ],
+                          "properties": {
+                            "fileCount": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 16
+                            },
+                            "totalBytes": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 131072
+                            }
+                          }
+                        },
+                        "source": {
+                          "type": "object",
+                          "required": [
+                            "type",
+                            "syncStatus"
+                          ],
+                          "properties": {
+                            "type": {
+                              "type": "string",
+                              "enum": [
+                                "manual",
+                                "git_import"
+                              ]
+                            },
+                            "repoUrl": {
+                              "type": "string",
+                              "format": "uri"
+                            },
+                            "ref": {
+                              "type": "string"
+                            },
+                            "subpath": {
+                              "type": "string"
+                            },
+                            "commitSha": {
+                              "type": "string"
+                            },
+                            "syncStatus": {
+                              "type": "string",
+                              "enum": [
+                                "not_applicable",
+                                "current",
+                                "modified"
+                              ]
+                            }
+                          }
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "updatedAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        }
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "files"
+                      ],
+                      "properties": {
+                        "files": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": [
+                              "path",
+                              "content",
+                              "sizeBytes"
+                            ],
+                            "properties": {
+                              "path": {
+                                "type": "string",
+                                "example": "SKILL.md"
+                              },
+                              "content": {
+                                "type": "string"
+                              },
+                              "sizeBytes": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 32768
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "workspaces"
+        ],
+        "summary": "Delete a target troubleshooting skill",
+        "security": [
+          {
+            "userSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspaceId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "4b930d98-add9-4924-ab26-3c16d96ec373"
+            }
+          },
+          {
+            "in": "path",
+            "name": "targetId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "5b006e4c-509c-458a-9f02-5aafbdc01ade"
+            }
+          },
+          {
+            "in": "path",
+            "name": "skillId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "5d33c08a-2a12-4f48-bf42-1c9f956f5aa3"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Target skill deleted."
+          },
+          "400": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/targets/{targetId}/skills/{skillId}/reimport": {
+      "post": {
+        "tags": [
+          "workspaces"
+        ],
+        "summary": "Reimport a GitHub-backed target troubleshooting skill snapshot",
+        "security": [
+          {
+            "userSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspaceId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "4b930d98-add9-4924-ab26-3c16d96ec373"
+            }
+          },
+          {
+            "in": "path",
+            "name": "targetId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "5b006e4c-509c-458a-9f02-5aafbdc01ade"
+            }
+          },
+          {
+            "in": "path",
+            "name": "skillId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "5d33c08a-2a12-4f48-bf42-1c9f956f5aa3"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "force": {
+                    "type": "boolean",
+                    "default": false
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Target skill reimported.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "type": "object",
+                      "required": [
+                        "id",
+                        "workspaceId",
+                        "targetId",
+                        "targetType",
+                        "name",
+                        "description",
+                        "enabled",
+                        "validationStatus",
+                        "validationErrors",
+                        "bundleStats",
+                        "source",
+                        "createdAt",
+                        "updatedAt"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "workspaceId": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "targetId": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "targetType": {
+                          "type": "string",
+                          "enum": [
+                            "kubernetes",
+                            "virtual_machine"
+                          ]
+                        },
+                        "clusterId": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "description": {
+                          "type": "string"
+                        },
+                        "enabled": {
+                          "type": "boolean"
+                        },
+                        "validationStatus": {
+                          "type": "string",
+                          "enum": [
+                            "valid",
+                            "invalid"
+                          ]
+                        },
+                        "validationErrors": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "bundleStats": {
+                          "type": "object",
+                          "required": [
+                            "fileCount",
+                            "totalBytes"
+                          ],
+                          "properties": {
+                            "fileCount": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 16
+                            },
+                            "totalBytes": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 131072
+                            }
+                          }
+                        },
+                        "source": {
+                          "type": "object",
+                          "required": [
+                            "type",
+                            "syncStatus"
+                          ],
+                          "properties": {
+                            "type": {
+                              "type": "string",
+                              "enum": [
+                                "manual",
+                                "git_import"
+                              ]
+                            },
+                            "repoUrl": {
+                              "type": "string",
+                              "format": "uri"
+                            },
+                            "ref": {
+                              "type": "string"
+                            },
+                            "subpath": {
+                              "type": "string"
+                            },
+                            "commitSha": {
+                              "type": "string"
+                            },
+                            "syncStatus": {
+                              "type": "string",
+                              "enum": [
+                                "not_applicable",
+                                "current",
+                                "modified"
+                              ]
+                            }
+                          }
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "updatedAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        }
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "files"
+                      ],
+                      "properties": {
+                        "files": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": [
+                              "path",
+                              "content",
+                              "sizeBytes"
+                            ],
+                            "properties": {
+                              "path": {
+                                "type": "string",
+                                "example": "SKILL.md"
+                              },
+                              "content": {
+                                "type": "string"
+                              },
+                              "sizeBytes": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 32768
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
                 }
               }
             }
@@ -8853,7 +11434,7 @@
         "tags": [
           "workspaces"
         ],
-        "summary": "List append-only telemetry history for multiple clusters",
+        "summary": "List compact telemetry history for multiple clusters",
         "security": [
           {
             "userSession": []
@@ -9045,7 +11626,7 @@
         "tags": [
           "workspaces"
         ],
-        "summary": "List append-only cluster telemetry history",
+        "summary": "List compact cluster telemetry history",
         "security": [
           {
             "userSession": []
@@ -9095,7 +11676,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Cluster CPU and memory history derived from append-only snapshots.",
+            "description": "Cluster CPU and memory history derived from compact metric samples.",
             "content": {
               "application/json": {
                 "schema": {
@@ -14228,11 +16809,11 @@
           }
         }
       },
-      "Investigation": {
+      "Issue": {
         "type": "object",
         "additionalProperties": true
       },
-      "InvestigationPage": {
+      "IssuePage": {
         "type": "object",
         "required": [
           "items"
@@ -14241,7 +16822,28 @@
           "items": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/Investigation"
+              "$ref": "#/components/schemas/Issue"
+            }
+          },
+          "nextCursor": {
+            "type": "string"
+          }
+        }
+      },
+      "IssueObservation": {
+        "type": "object",
+        "additionalProperties": true
+      },
+      "IssueObservationPage": {
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IssueObservation"
             }
           },
           "nextCursor": {
@@ -14766,7 +17368,7 @@
         },
         "additionalProperties": true
       },
-      "ToolCatalog": {
+      "McpCatalog": {
         "type": "object",
         "properties": {
           "permissions": {
@@ -14785,10 +17387,50 @@
         },
         "additionalProperties": true
       },
-      "ToolSetting": {
+      "TargetToolCatalog": {
         "type": "object",
         "properties": {
-          "name": {
+          "workspaceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "targetId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "targetType": {
+            "type": "string",
+            "enum": [
+              "kubernetes",
+              "virtual_machine"
+            ]
+          },
+          "permissions": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TargetTool"
+            }
+          }
+        },
+        "additionalProperties": true
+      },
+      "TargetTool": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "enum": [
+              "web_search"
+            ]
+          },
+          "label": {
+            "type": "string"
+          },
+          "description": {
             "type": "string"
           },
           "enabled": {
@@ -14800,6 +17442,31 @@
               "read",
               "write"
             ]
+          },
+          "runtimeKind": {
+            "type": "string",
+            "enum": [
+              "provider_native"
+            ]
+          },
+          "visibility": {
+            "type": "object",
+            "properties": {
+              "appearsInAssistantToolList": {
+                "type": "boolean"
+              },
+              "appearsInRunEnabledTools": {
+                "type": "boolean"
+              },
+              "appearsInToolCalls": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": true
+          },
+          "config": {
+            "type": "object",
+            "additionalProperties": true
           }
         },
         "additionalProperties": true
@@ -14828,6 +17495,18 @@
             "type": "string"
           },
           "enabled": {
+            "type": "boolean"
+          },
+          "isSystem": {
+            "type": "boolean"
+          },
+          "canDelete": {
+            "type": "boolean"
+          },
+          "canEditConnection": {
+            "type": "boolean"
+          },
+          "canToggle": {
             "type": "boolean"
           },
           "authType": {
@@ -15117,11 +17796,47 @@
           "adminApiEnabled": {
             "type": "boolean"
           },
-          "workspacePlans": {
+          "planCatalog": {
             "type": "object",
             "additionalProperties": true
           },
-          "quotas": {
+          "roleTemplateKeys": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "authModes": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "retention": {
+            "type": "object",
+            "properties": {
+              "conversationDays": {
+                "type": "integer"
+              },
+              "webhookHistoryDays": {
+                "type": "integer"
+              },
+              "workspaceAuditDays": {
+                "type": "integer"
+              },
+              "targetMetricHistoryDays": {
+                "type": "integer"
+              }
+            },
+            "additionalProperties": true
+          },
+          "auditLogging": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "runPolicy": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "featureFlags": {
             "type": "object",
             "additionalProperties": true
           }

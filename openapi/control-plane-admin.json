@@ -7,8 +7,7 @@
   },
   "servers": [
     {
-      "url": "https://api.example.com",
-      "description": "Self-host deployment"
+      "url": "https://api.acornops.dev"
     }
   ],
   "tags": [
@@ -4086,11 +4085,11 @@
           }
         }
       },
-      "Investigation": {
+      "Issue": {
         "type": "object",
         "additionalProperties": true
       },
-      "InvestigationPage": {
+      "IssuePage": {
         "type": "object",
         "required": [
           "items"
@@ -4099,7 +4098,28 @@
           "items": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/Investigation"
+              "$ref": "#/components/schemas/Issue"
+            }
+          },
+          "nextCursor": {
+            "type": "string"
+          }
+        }
+      },
+      "IssueObservation": {
+        "type": "object",
+        "additionalProperties": true
+      },
+      "IssueObservationPage": {
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IssueObservation"
             }
           },
           "nextCursor": {
@@ -4624,7 +4644,7 @@
         },
         "additionalProperties": true
       },
-      "ToolCatalog": {
+      "McpCatalog": {
         "type": "object",
         "properties": {
           "permissions": {
@@ -4643,10 +4663,50 @@
         },
         "additionalProperties": true
       },
-      "ToolSetting": {
+      "TargetToolCatalog": {
         "type": "object",
         "properties": {
-          "name": {
+          "workspaceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "targetId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "targetType": {
+            "type": "string",
+            "enum": [
+              "kubernetes",
+              "virtual_machine"
+            ]
+          },
+          "permissions": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TargetTool"
+            }
+          }
+        },
+        "additionalProperties": true
+      },
+      "TargetTool": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "enum": [
+              "web_search"
+            ]
+          },
+          "label": {
+            "type": "string"
+          },
+          "description": {
             "type": "string"
           },
           "enabled": {
@@ -4658,6 +4718,31 @@
               "read",
               "write"
             ]
+          },
+          "runtimeKind": {
+            "type": "string",
+            "enum": [
+              "provider_native"
+            ]
+          },
+          "visibility": {
+            "type": "object",
+            "properties": {
+              "appearsInAssistantToolList": {
+                "type": "boolean"
+              },
+              "appearsInRunEnabledTools": {
+                "type": "boolean"
+              },
+              "appearsInToolCalls": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": true
+          },
+          "config": {
+            "type": "object",
+            "additionalProperties": true
           }
         },
         "additionalProperties": true
@@ -4686,6 +4771,18 @@
             "type": "string"
           },
           "enabled": {
+            "type": "boolean"
+          },
+          "isSystem": {
+            "type": "boolean"
+          },
+          "canDelete": {
+            "type": "boolean"
+          },
+          "canEditConnection": {
+            "type": "boolean"
+          },
+          "canToggle": {
             "type": "boolean"
           },
           "authType": {
@@ -4975,11 +5072,47 @@
           "adminApiEnabled": {
             "type": "boolean"
           },
-          "workspacePlans": {
+          "planCatalog": {
             "type": "object",
             "additionalProperties": true
           },
-          "quotas": {
+          "roleTemplateKeys": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "authModes": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "retention": {
+            "type": "object",
+            "properties": {
+              "conversationDays": {
+                "type": "integer"
+              },
+              "webhookHistoryDays": {
+                "type": "integer"
+              },
+              "workspaceAuditDays": {
+                "type": "integer"
+              },
+              "targetMetricHistoryDays": {
+                "type": "integer"
+              }
+            },
+            "additionalProperties": true
+          },
+          "auditLogging": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "runPolicy": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "featureFlags": {
             "type": "object",
             "additionalProperties": true
           }

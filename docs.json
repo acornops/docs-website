@@ -136,7 +136,10 @@
                 "pages": [
                   "GET /api/v1/workspaces/{workspaceId}/targets",
                   "GET /api/v1/workspaces/{workspaceId}/targets/{targetId}",
-                  "GET /api/v1/workspaces/{workspaceId}/investigations",
+                  "GET /api/v1/workspaces/{workspaceId}/issues",
+                  "GET /api/v1/workspaces/{workspaceId}/issues/{issueId}",
+                  "GET /api/v1/workspaces/{workspaceId}/issues/{issueId}/observations",
+                  "GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/issues",
                   "GET /api/v1/workspaces/{workspaceId}/kubernetes-clusters",
                   "POST /api/v1/workspaces/{workspaceId}/kubernetes-clusters",
                   "GET /api/v1/workspaces/{workspaceId}/kubernetes-clusters/{clusterId}",
@@ -183,15 +186,16 @@
               {
                 "group": "Tools and MCP servers",
                 "pages": [
-                  "GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/tools/catalog",
-                  "PATCH /api/v1/workspaces/{workspaceId}/targets/{targetId}/tools/{toolName}",
-                  "GET /api/v1/workspaces/{workspaceId}/kubernetes-clusters/{clusterId}/tools/catalog",
+                  "GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/catalog",
+                  "GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/tools",
+                  "PATCH /api/v1/workspaces/{workspaceId}/targets/{targetId}/tools/{toolId}",
                   "GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers",
                   "POST /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers",
                   "PATCH /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}",
                   "DELETE /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}",
                   "POST /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}/test-connection",
-                  "GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}/tools"
+                  "GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}/tools",
+                  "PATCH /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}/tools/{toolName}"
                 ]
               },
               {
