@@ -36,5 +36,5 @@ Use these repositories as source material when updating public docs:
 - control-plane API and auth: `control-plane`,
 - execution run lifecycle: `execution-engine`,
 - LLM gateway and MCP behavior: `llm-gateway`,
-- k8s agent behavior: `k8s-agent`,
-- VM agent behavior: `vm-agent`.
+- AgentK behavior: `agentk`,
+- AgentV behavior: `agentv`.

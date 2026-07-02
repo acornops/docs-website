@@ -207,7 +207,7 @@ Database init jobs run before services start. Treat init failures as deployment 
 
 ## Kubernetes clusters
 
-Each connected Kubernetes cluster gets the `acornops-k8s-agent` Helm chart. Register the cluster in the management console, then run the generated install command returned by the control plane.
+Each connected Kubernetes cluster gets the `acornops-agentk` Helm chart. Register the cluster in the management console, then run the generated install command returned by the control plane.
 
 The agent:
 
@@ -221,9 +221,9 @@ Connected Kubernetes clusters do not need public inbound access.
 
 ## VM targets
 
-Each Linux/systemd VM gets the `acornops-vm-agent` systemd service. Register the VM in the management console, then run the generated install instructions returned by the control plane.
+Each Linux/systemd VM gets the `acornops-agentv` systemd service. Register the VM in the management console, then run the generated install instructions returned by the control plane.
 
-The VM agent:
+The AgentV:
 
 - connects outbound to the control plane,
 - authenticates with the generated agent key,
@@ -241,8 +241,8 @@ Before using a deployment for production operations, verify:
 - OIDC login returns to the expected callback route,
 - `GET /api/v1/me` returns the current user from the same host used by the management console session,
 - the first workspace can be created,
-- a registered k8s agent shows as connected,
-- a registered VM agent shows as connected and reports host inventory,
+- a registered AgentK shows as connected,
+- a registered AgentV shows as connected and reports host inventory,
 - a read-only troubleshooting run can stream events to the management console,
 - internal execution-engine and LLM-gateway endpoints are not publicly reachable,
 - Kubernetes high availability behavior has been exercised in a non-production environment when you run multiple replicas.

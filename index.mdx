@@ -31,8 +31,8 @@ AcornOps is self-hosted for production use. A public demo is available at `https
 - A control plane that owns auth, sessions, workspaces, the target core, target registration, agent connections, run state, and API authorization.
 - An execution engine that performs troubleshooting runs and streams progress back to the control plane.
 - An LLM gateway that enforces run-scoped model and tool permissions before provider or remote MCP traffic leaves the platform.
-- A k8s agent that runs inside each connected Kubernetes cluster and connects outbound to the control plane.
-- A VM agent that runs on Linux/systemd hosts and connects outbound to the control plane.
+- A AgentK that runs inside each connected Kubernetes cluster and connects outbound to the control plane.
+- A AgentV that runs on Linux/systemd hosts and connects outbound to the control plane.
 
 <CardGroup cols={2}>
   <Card title="Start with deployment" icon="rocket" href="/quickstart">
@@ -51,7 +51,7 @@ AcornOps is self-hosted for production use. A public demo is available at `https
 1. Deploy the central platform with either the Kubernetes chart or VM Compose stack.
 2. Sign in to the management console and create a workspace.
 3. Register a Kubernetes cluster or Linux VM from that workspace.
-4. Install the generated k8s agent or VM agent command.
+4. Install the generated AgentK or AgentV command.
 5. Review findings, manage available tools, and start troubleshooting sessions.
 
 ## Platform components
@@ -69,10 +69,10 @@ AcornOps is self-hosted for production use. A public demo is available at `https
   <Card title="LLM gateway" icon="message-bot" href="/architecture">
     Provider routing, model access, MCP registry, secrets handling, and request auditing.
   </Card>
-  <Card title="k8s agent" icon="plug" href="/kubernetes-clusters">
+  <Card title="AgentK" icon="plug" href="/kubernetes-clusters">
     Outbound Kubernetes connector for snapshots, logs, and tool execution.
   </Card>
-  <Card title="VM agent" icon="server" href="/vm-targets">
+  <Card title="AgentV" icon="server" href="/vm-targets">
     Outbound Linux/systemd connector for host snapshots, logs, and read-only tools.
   </Card>
 </CardGroup>

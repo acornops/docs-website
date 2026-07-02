@@ -12806,7 +12806,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Replacement VM agent key and updated systemd install instructions.",
+            "description": "Replacement AgentV key and updated systemd install instructions.",
             "content": {
               "application/json": {
                 "schema": {
@@ -13244,7 +13244,7 @@
         "tags": [
           "workspaces"
         ],
-        "summary": "Read bounded logs from the connected VM agent",
+        "summary": "Read bounded logs from the connected AgentV",
         "security": [
           {
             "userSession": []
@@ -13302,7 +13302,7 @@
         ],
         "responses": {
           "200": {
-            "description": "VM log entries returned by the connected VM agent.",
+            "description": "VM log entries returned by the connected AgentV.",
             "content": {
               "application/json": {
                 "schema": {

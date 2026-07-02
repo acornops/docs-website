@@ -19,8 +19,8 @@ flowchart LR
   ExecutionEngine --> LLMGateway["LLM gateway"]
   LLMGateway --> Postgres
   LLMGateway --> Redis
-  WorkloadAgent["k8s agent"] -->|Outbound WebSocket| ControlPlane
-  VMAgent["VM agent"] -->|Outbound WebSocket| ControlPlane
+  WorkloadAgent["AgentK"] -->|Outbound WebSocket| ControlPlane
+  VMAgent["AgentV"] -->|Outbound WebSocket| ControlPlane
   LLMGateway --> Providers["LLM providers"]
   LLMGateway --> RemoteMcp["Remote MCP servers"]
 ```
@@ -33,8 +33,8 @@ flowchart LR
 | Control plane | Auth, workspaces, target core, Kubernetes and VM APIs, agent WebSockets, run state, webhooks, API authorization | `https://api.example.com/api/v1` |
 | Execution engine | Run lifecycle, orchestration loop, event emission, cancellation, tool-call coordination | Internal only |
 | LLM gateway | Provider routing, run-scoped model access, MCP registry, secret lookup, gateway auditing | Internal only |
-| k8s agent | Kubernetes cluster snapshots, logs, and builtin Kubernetes tool execution | Outbound only |
-| VM agent | Linux/systemd host snapshots, logs, and read-only builtin VM tool execution | Outbound only |
+| AgentK | Kubernetes cluster snapshots, logs, and builtin Kubernetes tool execution | Outbound only |
+| AgentV | Linux/systemd host snapshots, logs, and read-only builtin VM tool execution | Outbound only |
 
 ## Runtime flow
 
@@ -87,8 +87,8 @@ Troubleshooting conversations are owner-write and viewer-read. The user who star
 | Workspaces, members, audit events, targets, Kubernetes clusters, VMs, sessions, runs, invitations, webhooks | Control plane |
 | Run reservations and worker coordination | Execution engine with Redis |
 | Provider credentials, MCP registry, gateway request records | LLM gateway |
-| Live Kubernetes discovery and builtin tool behavior | k8s agent |
-| Live VM host discovery and read-only builtin tool behavior | VM agent |
+| Live Kubernetes discovery and builtin tool behavior | AgentK |
+| Live VM host discovery and read-only builtin tool behavior | AgentV |
 
 Agent snapshots are persisted by the control plane and exposed to the management console. Kubernetes snapshots include resources, events, and metrics when available. VM snapshots include host inventory, health findings, metrics, and bounded logs.
 
@@ -96,4 +96,4 @@ Agent snapshots are persisted by the control plane and exposed to the management
 
 The Kubernetes chart defaults the management console, control plane, execution engine, and LLM gateway to multiple replicas when backed by external Postgres and Redis. The control plane uses Redis for agent routing, command routing between pods, run event fanout, and renewed scheduler leases. If a control-plane pod stops while an agent command is active, that command may fail; the agent reconnects and later commands continue through an available pod.
 
-The k8s agent supports active-passive high availability through Kubernetes Lease leader election. When `replicaCount` is greater than one, enable leader election so exactly one agent runtime connects at a time.
+The AgentK supports active-passive high availability through Kubernetes Lease leader election. When `replicaCount` is greater than one, enable leader election so exactly one agent runtime connects at a time.

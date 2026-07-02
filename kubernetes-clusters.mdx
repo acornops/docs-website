@@ -1,9 +1,9 @@
 ---
 title: "Kubernetes clusters"
-description: "Install, scope, secure, and verify the k8s agent in connected Kubernetes clusters"
+description: "Install, scope, secure, and verify the AgentK in connected Kubernetes clusters"
 ---
 
-Every Kubernetes cluster that AcornOps observes runs a k8s agent. The agent opens an outbound WebSocket to the control plane, reports cluster state, and executes allowed Kubernetes tools during troubleshooting runs.
+Every Kubernetes cluster that AcornOps observes runs a AgentK. The agent opens an outbound WebSocket to the control plane, reports cluster state, and executes allowed Kubernetes tools during troubleshooting runs.
 
 ## Registration flow
 
@@ -64,7 +64,7 @@ Each cluster has an effective write confirmation policy:
 
 In the management console, this policy is managed from Cluster Settings alongside namespace scope.
 
-When confirmations are required, the run pauses before each write-capable tool call and waits for an authorized user to approve or reject the pending write. Approval executes that one queued write once; rejection and timeout do not call the k8s agent.
+When confirmations are required, the run pauses before each write-capable tool call and waits for an authorized user to approve or reject the pending write. Approval executes that one queued write once; rejection and timeout do not call the AgentK.
 
 This approval resource is channel-agnostic. The management console renders it in chat, and bot adapters can render the same approval payload and call the same decision endpoint, as long as the click is attributable to a real AcornOps user with read-write run permission.
 
