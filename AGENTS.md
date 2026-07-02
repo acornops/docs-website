@@ -37,3 +37,16 @@ For work that touches multiple AcornOps repositories, start the agent from the `
 - Public docs should explain what operators and users need to run and use AcornOps.
 - Component internals belong in the relevant repository README, developer guide, or `docs/contracts`.
 - Do not add placeholder pages, sample APIs, or vendor template content.
+
+## Shared Skills
+
+- Shared skills live in `.agents/skills/shared`.
+- Repository-owned skills live in `.agents/skills/local` when needed.
+- Agent tools may not auto-discover nested skills. When a task matches a skill description, open the relevant `SKILL.md` from `.agents/skills/shared` or `.agents/skills/local` before editing.
+- Do not edit `.agents/skills/shared` here; update shared skills in the parent `acornops-workspace` repo and sync them into this repo.
+
+## Handoff And Vendor Neutrality
+
+- Include exact commands run, pass or fail result for each command, skipped checks, docs impact, residual risk, and branch or PR links when applicable.
+- Use Conventional Commits for commit subjects and pull request titles.
+- Keep this harness vendor-neutral. Do not add required vendor-specific instruction files such as `CLAUDE.md`, `GEMINI.md`, `.cursor`, or `.cursorrules`.
