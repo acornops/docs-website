@@ -7190,6 +7190,100 @@
           }
         }
       },
+      "ExternalWebhookRouteSubscription": {
+        "type": "object",
+        "required": [
+          "workspaceId",
+          "workspaceName",
+          "webhookId",
+          "eventTypes",
+          "enabled",
+          "status",
+          "updatedAt"
+        ],
+        "properties": {
+          "workspaceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "workspaceName": {
+            "type": "string"
+          },
+          "webhookId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "targetId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "eventTypes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "enabled",
+              "disabled"
+            ]
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "signingSecret": {
+            "type": "string",
+            "description": "Returned only by the connect endpoint after AcornOps rotates the webhook signing secret."
+          }
+        },
+        "additionalProperties": true
+      },
+      "ExternalWebhookRouteConnection": {
+        "type": "object",
+        "required": [
+          "status",
+          "connectedAt",
+          "lastSyncedAt",
+          "subscriptions"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "unconfigured",
+              "configured",
+              "connected"
+            ]
+          },
+          "connectedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "lastSyncedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "subscriptions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExternalWebhookRouteSubscription"
+            }
+          }
+        },
+        "additionalProperties": true
+      },
       "AdminMe": {
         "type": "object",
         "required": [

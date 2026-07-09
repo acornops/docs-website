@@ -7958,6 +7958,248 @@
         }
       }
     },
+    "/api/v1/external-integrations/webhook-routes/connect": {
+      "post": {
+        "tags": [
+          "webhooks"
+        ],
+        "summary": "Connect an external integration webhook route and rotate matching signing secrets",
+        "security": [
+          {
+            "externalIntegrationClientToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-acornops-external-user-id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "external-user-1"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "deliveryUrl"
+                ],
+                "properties": {
+                  "deliveryUrl": {
+                    "type": "string",
+                    "format": "uri",
+                    "example": "https://bot.example.com/acornops/webhooks/routes/route-token"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "External webhook route state. Connected subscriptions include freshly rotated signing secrets.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExternalWebhookRouteConnection"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Requires a linked external integration credential.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/external-integrations/webhook-routes/status": {
+      "get": {
+        "tags": [
+          "webhooks"
+        ],
+        "summary": "Fetch live external integration webhook route status without returning signing secrets",
+        "security": [
+          {
+            "externalIntegrationClientToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-acornops-external-user-id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "external-user-1"
+            }
+          },
+          {
+            "in": "query",
+            "name": "deliveryUrl",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uri",
+              "example": "https://bot.example.com/acornops/webhooks/routes/route-token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "External webhook route state. Signing secrets are never included.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExternalWebhookRouteConnection"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Requires a linked external integration credential.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/workspaces/{workspaceId}/webhooks": {
       "get": {
         "tags": [
@@ -14290,13 +14532,27 @@
           "workflows"
         ],
         "summary": "List workflow definitions for a workspace",
-        "description": "Returns system and user workflow definitions visible to management-console. Requires read_workspace_data.",
+        "description": "Returns system and user workflow definitions visible to management-console. External integration callers receive only active read-only workflows without approval gates that their linked user grant can run.",
         "security": [
           {
             "userSession": []
+          },
+          {
+            "externalIntegrationClientToken": []
           }
         ],
         "parameters": [
+          {
+            "in": "header",
+            "name": "x-acornops-external-user-id",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            "description": "Required only for external integration client-token requests. Must identify a linked external integration user."
+          },
           {
             "in": "path",
             "name": "workspaceId",
@@ -16424,12 +16680,27 @@
           "workflows"
         ],
         "summary": "Get a workflow definition",
+        "description": "External integration callers can fetch only active read-only workflows without approval gates that their linked user grant can run.",
         "security": [
           {
             "userSession": []
+          },
+          {
+            "externalIntegrationClientToken": []
           }
         ],
         "parameters": [
+          {
+            "in": "header",
+            "name": "x-acornops-external-user-id",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            "description": "Required only for external integration client-token requests. Must identify a linked external integration user."
+          },
           {
             "in": "path",
             "name": "workflowId",
@@ -16951,12 +17222,27 @@
           "workflows"
         ],
         "summary": "Create a workflow session",
+        "description": "External integration callers can create sessions only for active read-only workflows without approval gates when read_workspace_data, create_sessions, and create_read_only_runs are granted.",
         "security": [
           {
             "userSession": []
+          },
+          {
+            "externalIntegrationClientToken": []
           }
         ],
         "parameters": [
+          {
+            "in": "header",
+            "name": "x-acornops-external-user-id",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            "description": "Required only for external integration client-token requests. Must identify a linked external integration user."
+          },
           {
             "in": "path",
             "name": "workflowId",
@@ -17083,12 +17369,27 @@
           "workflows"
         ],
         "summary": "Post a workflow session message and dispatch a run",
+        "description": "External integration callers can dispatch runs only for externally runnable read-only workflow sessions.",
         "security": [
           {
             "userSession": []
+          },
+          {
+            "externalIntegrationClientToken": []
           }
         ],
         "parameters": [
+          {
+            "in": "header",
+            "name": "x-acornops-external-user-id",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            "description": "Required only for external integration client-token requests. Must identify a linked external integration user."
+          },
           {
             "in": "path",
             "name": "sessionId",
@@ -21248,13 +21549,27 @@
           "sessions"
         ],
         "summary": "Stream target chat activity",
-        "description": "Long-lived SSE stream for browser-facing target chat activity. Frames use event: chat_activity, id: activity event id, and JSON data with resource identifiers. Supports Last-Event-ID and the optional after query parameter for resume replay; connections without a resume cursor are live-only.",
+        "description": "Long-lived SSE stream for target chat activity. Browser callers use the session cookie. External integration callers may use the external integration client token plus x-acornops-external-user-id when the linked user and bot allowlist grant read_workspace_data. Frames use event: chat_activity, id: activity event id, and JSON data with resource identifiers. Supports Last-Event-ID and the optional after query parameter for resume replay; connections without a resume cursor are live-only.",
         "security": [
           {
             "userSession": []
+          },
+          {
+            "externalIntegrationClientToken": []
           }
         ],
         "parameters": [
+          {
+            "in": "header",
+            "name": "x-acornops-external-user-id",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            "description": "Required only for external integration client-token requests. Must identify a linked external integration user."
+          },
           {
             "in": "path",
             "name": "workspaceId",
@@ -27508,6 +27823,100 @@
             "type": "string"
           }
         }
+      },
+      "ExternalWebhookRouteSubscription": {
+        "type": "object",
+        "required": [
+          "workspaceId",
+          "workspaceName",
+          "webhookId",
+          "eventTypes",
+          "enabled",
+          "status",
+          "updatedAt"
+        ],
+        "properties": {
+          "workspaceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "workspaceName": {
+            "type": "string"
+          },
+          "webhookId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "targetId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "eventTypes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "enabled",
+              "disabled"
+            ]
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "signingSecret": {
+            "type": "string",
+            "description": "Returned only by the connect endpoint after AcornOps rotates the webhook signing secret."
+          }
+        },
+        "additionalProperties": true
+      },
+      "ExternalWebhookRouteConnection": {
+        "type": "object",
+        "required": [
+          "status",
+          "connectedAt",
+          "lastSyncedAt",
+          "subscriptions"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "unconfigured",
+              "configured",
+              "connected"
+            ]
+          },
+          "connectedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "lastSyncedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "subscriptions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExternalWebhookRouteSubscription"
+            }
+          }
+        },
+        "additionalProperties": true
       },
       "AdminMe": {
         "type": "object",

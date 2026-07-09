@@ -10,7 +10,7 @@ Use this path when you want to build around AcornOps rather than only operate th
 | Surface | Use it for | Notes |
 | --- | --- | --- |
 | Control-plane API | Workspaces, targets, Kubernetes clusters, VMs, sessions, runs, approvals, tool settings, MCP server settings | Public API under your deployment host, such as `https://api.example.com/api/v1`; v1 calls require an authenticated AcornOps user session. The public demo API is `https://api.demo.acornops.dev/api/v1`. |
-| Webhooks | Event-driven bots and workflow automation | Verify every delivery signature before processing the payload. |
+| Webhooks | Event-driven bots and workflow automation | Create subscriptions in the management console or browser API. Verify every delivery signature before processing the payload. |
 | Run events and SSE | Custom run timelines or signed-in user experiences | Use replayable run events and `GET /api/v1/runs/{runId}/stream` for live updates. |
 | MCP server configuration | Connecting external tool providers | Add remote MCP servers through the control-plane API or management console, then enable discovered tools. |
 
@@ -51,7 +51,7 @@ External integration clients should not store browser cookies, OIDC tokens, raw 
 
 An external integration adapter usually follows this flow:
 
-1. Subscribe to the AcornOps webhook events the bot needs.
+1. Ask a workspace admin to create a webhook subscription for the events the bot needs.
 2. Verify `AcornOps-Signature` using the subscription secret.
 3. Map the event to a channel, thread, incident, or user-visible card.
 4. For read-only context, link to the management console or fetch allowed public API data from a client flow that has an authenticated user session.
@@ -64,6 +64,10 @@ Approval decisions are intentionally not just webhook acknowledgements. The firs
 
 Webhook delivery is best-effort and signed with HMAC-SHA256. Consumers should handle duplicates and out-of-order delivery.
 
+Workspace users with `permissions.manage_webhooks` can create, edit, disable, delete, and inspect delivery history for outgoing webhooks from Workspace Settings. The create response returns the signing secret once. Store that secret in your integration and do not put it in a delivery URL.
+
+Webhook subscriptions store concrete event types. The management console may offer event group shortcuts, but it expands those groups before saving the subscription.
+
 Each delivery includes:
 
 - `AcornOps-Event-Id`
@@ -74,6 +78,37 @@ Each delivery includes:
 Target-scoped events include `targetId` and `targetType`. Kubernetes events also include `clusterId`, which matches the Kubernetes target ID.
 
 The signature input is `timestamp + "." + raw_json_body`, encoded as `v1=<hex>`.
+
+## External webhook route connect/status
+
+Some bot adapters create one delivery route per external user or destination, then ask the AcornOps user to subscribe workspace events to that route URL. After the user links the external account and creates the webhook subscriptions, the bot can claim live subscription metadata for that route.
+
+Connect a route:
+
+```http
+POST /api/v1/external-integrations/webhook-routes/connect
+Authorization: Bearer <external-integration-client-token>
+x-acornops-external-user-id: <external-user-id>
+Content-Type: application/json
+```
+
+```json
+{
+  "deliveryUrl": "https://bot.example.com/acornops/webhooks/routes/route-token"
+}
+```
+
+AcornOps returns only subscriptions created by the linked AcornOps user for that delivery URL where the user still has `permissions.manage_webhooks`. Each successful connect rotates the matching signing secrets and returns the fresh `signingSecret` values in that response. Treat reconnect as the documented secret recovery and rotation flow.
+
+Check route status:
+
+```http
+GET /api/v1/external-integrations/webhook-routes/status?deliveryUrl=<url-encoded-delivery-url>
+Authorization: Bearer <external-integration-client-token>
+x-acornops-external-user-id: <external-user-id>
+```
+
+Status responses return `unconfigured`, `configured`, or `connected` plus current workspace/event/enabled state. Status never includes signing secrets.
 
 Write approval integrations should handle:
 
