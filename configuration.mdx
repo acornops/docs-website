@@ -240,4 +240,22 @@ Remote MCP server `publicHeaders` are for non-secret metadata only. Credentials 
 
 Webhook signing secrets are generated per subscription and returned only once at creation time. The control plane stores encrypted webhook secrets and signs deliveries with HMAC-SHA256.
 
-Webhook delivery is best-effort. Consumers should handle duplicate events and should verify signatures before processing payloads.
+Webhook events and delivery jobs are durable in control-plane Postgres. Every
+control-plane replica can claim work with expiring database leases; Redis is not
+required for webhook delivery. Consumers should handle duplicate events and
+verify signatures before processing payloads.
+
+| Kubernetes value | Compose variable | Default |
+| --- | --- | --- |
+| `components.controlPlane.webhookDelivery.enabled` | `WEBHOOK_WORKER_ENABLED` | `true` |
+| `components.controlPlane.webhookDelivery.batchSize` | `WEBHOOK_WORKER_BATCH_SIZE` | `50` |
+| `components.controlPlane.webhookDelivery.concurrency` | `WEBHOOK_WORKER_CONCURRENCY` | `20` |
+| `components.controlPlane.webhookDelivery.perOriginConcurrency` | `WEBHOOK_WORKER_PER_ORIGIN_CONCURRENCY` | `4` |
+| `components.controlPlane.webhookDelivery.maxAttempts` | `WEBHOOK_MAX_ATTEMPTS` | `10` |
+| `components.controlPlane.webhookDelivery.maxRetryAgeSeconds` | `WEBHOOK_MAX_RETRY_AGE_SECONDS` | `86400` |
+| `components.controlPlane.webhookDelivery.maxPayloadBytes` | `WEBHOOK_MAX_PAYLOAD_BYTES` | `65536` |
+| `components.controlPlane.webhookDelivery.maxSubscriptionsPerWorkspace` | `WEBHOOK_MAX_SUBSCRIPTIONS_PER_WORKSPACE` | `100` |
+
+Disable the worker to pause claims during maintenance; event enqueue remains
+active. Keep insecure HTTP webhook delivery enabled only in explicit local
+development.

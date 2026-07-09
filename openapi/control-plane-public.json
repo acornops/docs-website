@@ -25,7 +25,7 @@
     },
     {
       "name": "webhooks",
-      "description": "Best-effort webhook subscription and delivery history endpoints."
+      "description": "Durable webhook subscriptions, lifecycle-aware delivery, and attempt history."
     },
     {
       "name": "sessions",
@@ -27794,11 +27794,28 @@
             "type": "string",
             "enum": [
               "success",
-              "failed"
+              "failed",
+              "paused",
+              "superseded",
+              "cancelled"
             ]
           },
           "responseStatus": {
             "type": "integer"
+          },
+          "attemptNumber": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "willRetry": {
+            "type": "boolean"
+          },
+          "nextAttemptAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "terminalReason": {
+            "type": "string"
           },
           "deliveredAt": {
             "type": "string",

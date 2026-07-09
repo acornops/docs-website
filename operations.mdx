@@ -46,6 +46,8 @@ Verify the platform from the outside in:
 - remote MCP server discovery and connection tests pass for configured servers,
 - webhooks record delivery attempts for subscribed events.
 - workspace automation diagnostics report no dispatch older than 30 seconds, scheduler lag over 60 seconds, stale approvals, or unexpected `needs_review` runs.
+- webhook backlog, retries, superseded issue notifications, terminal failures,
+  and lease recovery remain within expected bounds.
 
 For production, keep component API docs disabled unless you intentionally expose them on a protected network.
 
@@ -62,6 +64,7 @@ For production, keep component API docs disabled unless you intentionally expose
 | Model calls fail | LLM-gateway logs, provider keys, run JWT claims, provider allow-list |
 | MCP tools fail | Gateway egress policy, MCP server discovery, public header validation, auth secret lookup |
 | Webhook verification fails | Consumer raw-body handling, timestamp, signature header, subscription secret |
+| Webhook backlog grows | Worker pause setting, Postgres health, retry metrics, destination status |
 
 ## Rate limits and budgets
 
