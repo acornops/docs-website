@@ -1,0 +1,17 @@
+/* Mintlify suppresses transitions while changing themes. Keep the large,
+   persistent surfaces in sync so the page changes as one calm state update. */
+html #background-color,
+html #navbar,
+html #sidebar {
+  transition-duration: 140ms !important;
+  transition-property: background-color, border-color, color !important;
+  transition-timing-function: cubic-bezier(0.2, 0, 0, 1) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html #background-color,
+  html #navbar,
+  html #sidebar {
+    transition: none !important;
+  }
+}
