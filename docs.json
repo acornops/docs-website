@@ -64,6 +64,7 @@
               "quickstart",
               "deployment",
               "configuration",
+              "automation",
               "kubernetes-clusters",
               "vm-targets"
             ]
@@ -147,7 +148,6 @@
                   "DELETE /api/v1/workspaces/{workspaceId}/kubernetes-clusters/{clusterId}",
                   "POST /api/v1/workspaces/{workspaceId}/kubernetes-clusters/{clusterId}/rotate-agent-key",
                   "GET /api/v1/workspaces/{workspaceId}/kubernetes-clusters/{clusterId}/resources",
-                  "GET /api/v1/workspaces/{workspaceId}/kubernetes-clusters/{clusterId}/findings",
                   "GET /api/v1/workspaces/{workspaceId}/kubernetes-clusters/metrics/history",
                   "GET /api/v1/workspaces/{workspaceId}/kubernetes-clusters/{clusterId}/metrics/history",
                   "GET /api/v1/workspaces/{workspaceId}/kubernetes-clusters/{clusterId}/pods/{namespace}/{podName}/logs",
@@ -158,7 +158,6 @@
                   "DELETE /api/v1/workspaces/{workspaceId}/virtual-machines/{vmId}",
                   "POST /api/v1/workspaces/{workspaceId}/virtual-machines/{vmId}/rotate-agent-key",
                   "GET /api/v1/workspaces/{workspaceId}/virtual-machines/{vmId}/resources",
-                  "GET /api/v1/workspaces/{workspaceId}/virtual-machines/{vmId}/findings",
                   "GET /api/v1/workspaces/{workspaceId}/virtual-machines/{vmId}/metrics/history",
                   "GET /api/v1/workspaces/{workspaceId}/virtual-machines/{vmId}/logs"
                 ]

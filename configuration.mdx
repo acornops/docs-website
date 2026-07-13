@@ -50,6 +50,17 @@ Optional provider and secret-backend keys include:
 
 Generate unique values for every internal token and encryption key per environment.
 
+## Automation runtime
+
+| Environment variable | Helm value | Default | Purpose |
+| --- | --- | --- | --- |
+| `AUTOMATION_RUNTIME_MODE` | `automation.runtimeMode` | `off` in production | Select `off`, `shadow`, `canary`, or `on`. |
+| `AUTOMATION_CANARY_WORKSPACE_IDS` | `automation.canaryWorkspaceIds` | empty | Comma-separated workspace IDs eligible in `canary` mode. |
+| `AUTOMATION_WORKER_INTERVAL_MS` | `automation.workerIntervalMs` | `1000` | Poll interval for durable schedules and dispatch intent. |
+| `AGENT_WRITE_CONFIRMATION_TIMEOUT_SECONDS` | `agent.runtime.writeConfirmationTimeoutSeconds` | `900` | Expires Agent, Workflow, and target write approvals after 15 minutes. |
+
+See [Agents and workflows](/automation) for rollout order and delivery guarantees.
+
 `EXTERNAL_INTEGRATION_CLIENTS_JSON` stores descriptors such as client id, provider,
 display name, enabled flag, and lowercase SHA-256 token hash. Generate raw
 bearer tokens out of band and store only their hashes in this Secret value. Raw
@@ -177,10 +188,10 @@ Write-capable Kubernetes agent tools require confirmation by default. VM built-i
 | Setting | Default | Purpose |
 | --- | --- | --- |
 | `AGENT_WRITE_CONFIRMATION_REQUIRED` | `true` | Requires approval before write-capable tools execute. |
-| `AGENT_WRITE_CONFIRMATION_TIMEOUT_SECONDS` | `300` | Bounds how long a paused run waits for a decision. |
+| `AGENT_WRITE_CONFIRMATION_TIMEOUT_SECONDS` | `900` | Bounds how long a paused run waits for a decision. |
 | `TARGET_CHAT_RECENT_ACTIVITY_WINDOW_SECONDS` | `300` | Controls the recent activity window used for target chat warnings. |
 | `agent.runtime.writeConfirmationRequired` | `true` | Helm value rendered into `AGENT_WRITE_CONFIRMATION_REQUIRED`. |
-| `agent.runtime.writeConfirmationTimeoutSeconds` | `300` | Helm value rendered into `AGENT_WRITE_CONFIRMATION_TIMEOUT_SECONDS`. |
+| `agent.runtime.writeConfirmationTimeoutSeconds` | `900` | Helm value rendered into `AGENT_WRITE_CONFIRMATION_TIMEOUT_SECONDS`. |
 | `components.controlPlane.recentActivity.windowSeconds` | `300` | Helm value rendered into `TARGET_CHAT_RECENT_ACTIVITY_WINDOW_SECONDS`. |
 
 Clusters can inherit the deployment default or set a per-cluster override. Required confirmations are enforced by the backend runtime before tool execution. Browser chat cards and bot surfaces only submit explicit approve or reject decisions.

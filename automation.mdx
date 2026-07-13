@@ -1,0 +1,63 @@
+---
+title: "Agents and workflows"
+description: "Run durable standalone Agents and sequential Workflows"
+---
+
+Every workspace receives four system Agents and three system Workflows. System templates are versioned independently from user-created Agents, Workflows, and clones.
+
+Template readiness is explicit:
+
+- `ready` means you can launch with the selected inputs.
+- `needs_setup` lists prerequisites such as a target or external MCP server.
+- `blocked` identifies a policy or capability mismatch that an administrator must resolve.
+
+## Built-in workflows
+
+| Workflow | Prerequisite | Behavior |
+| --- | --- | --- |
+| Cluster triage | An online Kubernetes target with the required AgentK tools | Reads inventory, events, logs, and metrics from the selected target. |
+| Repository operation | A connected workspace MCP server with the canonical repository tools and credentials | Inspects first, then requires approval for the exact repository, base, branch, and change plan before creating a branch, commit, and draft change request. |
+| Incident report | Explicit access to selected, retained chat sessions | Persists versioned report source and provenance. PDF bytes are rendered for each authorized download and are never retained. |
+
+Workflow v1 is sequential. Each executable step selects exactly one Agent. A terminal step failure stops the execution; an authorized resume creates a new attempt for that step and retains the earlier audit history.
+
+## Delivery guarantees
+
+The control plane acknowledges a run only after Postgres commits the run and its dispatch intent. Workers claim work with database row locks, so multiple replicas can recover pending work after a restart. Dispatch is at least once, and the execution engine treats the run and step idempotency keys as stable identities.
+
+Transient dispatch and read-only failures retry up to three times with backoff. AcornOps does not automatically repeat a write when the result is uncertain. Such attempts enter `needs_review` and require an authorized resume.
+
+Approvals expire after 15 minutes by default. Expiry fails the attempt and does not grant the requested capability.
+
+## Agent triggers
+
+Standalone Agents support `manual`, `workflow_step`, `schedule`, `webhook`, and `target_event` triggers. `audit_event` and `external_adapter` are not accepted in this release.
+
+Creating a webhook trigger returns its HMAC secret once. Store it immediately; later Agent responses never include the plaintext or ciphertext. Send JSON events to the returned URL with:
+
+- `x-acornops-timestamp`: Unix seconds or an ISO timestamp within five minutes,
+- `x-acornops-event-id`: a stable, unique event identifier, and
+- `x-acornops-signature`: the SHA-256 HMAC of `<timestamp>.<raw JSON body>`.
+
+The control plane rejects repeated event IDs, invalid signatures, payloads over 256 KiB, and sustained delivery above the per-trigger limit. A `202` response means the event and its durable delivery record committed; Agent dispatch happens asynchronously and is idempotent for that event.
+
+## Rollout modes
+
+Set `AUTOMATION_RUNTIME_MODE` or Helm `automation.runtimeMode` to:
+
+- `off` to stop new automation dispatch while preserving durable state,
+- `shadow` to create and inspect durable intent without dispatch,
+- `canary` to dispatch only workspaces in `AUTOMATION_CANARY_WORKSPACE_IDS`, or
+- `on` to dispatch all eligible workspaces.
+
+Keep the mode `off` until migrations and template backfill complete. Use `shadow`, then `canary`, before enabling all workspaces.
+
+The main `/ready` endpoint continues to reflect Postgres and Redis correctness. External MCP readiness appears on Agent and Workflow templates and does not remove the whole control plane from service.
+
+## Diagnostics and alerts
+
+Authorized workspace readers can inspect `GET /api/v1/workspaces/{workspaceId}/automation/diagnostics`. The response includes runtime enablement, dispatch state and oldest pending age, Agent and Workflow states, active-run count, trigger deliveries, scheduler lag, pending approval age, template readiness reasons, and retained report-source count.
+
+Scrape `/metrics` and load `observability/prometheus/alerts/control-plane-automation.rules.yaml` from the deployment repository. The supplied rules cover dispatch older than the 30-second objective, scheduler lag over 60 seconds, approvals older than 15 minutes, `needs_review`, trigger rejection, MCP failures, PDF rendering failures, and elevated terminal failures.
+
+Diagnostics and metrics contain IDs, states, counts, and bounded reasons only. Prompts, chat bodies, tool arguments, webhook payloads, report contents, PDF bytes, credentials, and continuation state must not be logged or exported as labels.

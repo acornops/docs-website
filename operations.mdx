@@ -26,11 +26,11 @@ Inspect durable state:
 
 | Store | Contains |
 | --- | --- |
-| Control-plane Postgres | Workspaces, users, members, targets, Kubernetes clusters, VMs, sessions, runs, invitations, webhooks |
+| Control-plane Postgres | Workspaces, users, members, targets, sessions, Agents, Workflows, schedules, trigger deliveries, approvals, attempts, append-only run events, dispatch intent, report sources, invitations, and webhooks |
 | LLM-gateway Postgres | MCP registry, gateway metadata, encrypted provider or MCP secrets when using database-backed secrets |
 | External secret manager | Provider keys and MCP auth secrets when Vault or another manager is enabled |
 
-Redis is used for coordination, rate limits, control-plane agent ownership, cross-pod command routing, run event fanout, and renewed scheduler leases. Size it for expected run concurrency and event volume.
+Redis is used for coordination, rate limits, control-plane agent ownership, cross-pod command routing, and run event fanout. Postgres claims and leases are authoritative for automation scheduling and dispatch.
 
 ## Health checks
 
@@ -45,6 +45,7 @@ Verify the platform from the outside in:
 - the LLM gateway is ready with a fresh JWKS cache,
 - remote MCP server discovery and connection tests pass for configured servers,
 - webhooks record delivery attempts for subscribed events.
+- workspace automation diagnostics report no dispatch older than 30 seconds, scheduler lag over 60 seconds, stale approvals, or unexpected `needs_review` runs.
 
 For production, keep component API docs disabled unless you intentionally expose them on a protected network.
 
@@ -56,6 +57,8 @@ For production, keep component API docs disabled unless you intentionally expose
 | Console cannot call API | Management console runtime config, CORS, ingress, and cookie settings |
 | Agent disconnected | target agent logs, control-plane WebSocket logs, agent key, outbound network policy |
 | Runs stuck pending | Control-plane dispatch logs, execution-engine logs, Redis connectivity |
+| Agent or Workflow dispatch delayed | Workspace automation diagnostics, `control_plane_automation_runtime` gauges, control-plane outbox worker logs, execution-engine readiness |
+| Run needs review | Approval and terminal audit records; confirm whether a write result was uncertain before authorizing resume |
 | Model calls fail | LLM-gateway logs, provider keys, run JWT claims, provider allow-list |
 | MCP tools fail | Gateway egress policy, MCP server discovery, public header validation, auth secret lookup |
 | Webhook verification fails | Consumer raw-body handling, timestamp, signature header, subscription secret |
