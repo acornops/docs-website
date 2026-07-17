@@ -66,12 +66,17 @@ provider, display name, enabled flag, lowercase SHA-256 token hash, and optional
 `allowedCapabilities`. Generate raw bearer tokens out of band and store only
 their hashes in this Secret value. Raw external integration client tokens do not
 authorize general control-plane API calls; they are accepted only by the external
-integration account-link, resolve, revoke, and linked-user bot endpoints.
+integration account-link, linked-user bot, and external webhook route
+connect/status endpoints.
 
 `allowedCapabilities` is an operator-side ceiling for that registered client. If
 you omit it, AcornOps uses the default external integration ceiling:
 `read_workspace_data`, `create_sessions`, and `create_read_only_runs`. Users
-still approve per-workspace grants when they link the external account.
+still approve per-workspace grants when they link the external account. Add
+`create_read_write_runs` only when the client may request write-capable
+troubleshooting runs; keep `read_workspace_data` and `create_sessions` because
+run creation depends on them. Approval decisions still require an authenticated
+AcornOps browser session.
 
 ## Internal transport TLS
 

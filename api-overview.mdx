@@ -21,7 +21,7 @@ The browser API uses a `SameSite=Lax` session cookie. Mutating requests that car
 
 Default production installs support OIDC plus username/password login, with self-service signup disabled and password reset enabled. When self-service password signup is enabled, email verification is required unless an operator explicitly allows unverified signup for a private deployment.
 
-Runtime service-to-service calls use separate bearer tokens and are not part of the public browser API. External integration account-link endpoints and external webhook route connect/status endpoints are narrow exceptions: they accept an installed external integration client bearer token and derive the client from `EXTERNAL_INTEGRATION_CLIENTS_JSON`.
+Runtime service-to-service calls use separate bearer tokens and are not part of the public browser API. External integration account-link, linked-user bot, and external webhook route connect/status endpoints are narrow exceptions: they accept an installed external integration client bearer token and derive the client from `EXTERNAL_INTEGRATION_CLIENTS_JSON`.
 
 ## Endpoint families
 
@@ -40,7 +40,7 @@ Admin endpoints are documented separately in the Admin API reference. They use t
 
 ## Integration boundaries
 
-AcornOps v1 does not expose a public PAT or broad bot service-account credential for the control-plane API. Keep user actions attributable by calling privileged endpoints from a real authenticated user session. External integration client bearer tokens are only for external integration link lifecycle, linked-user bot endpoints, and external webhook route connect/status. They must not be treated as authority for general workspace actions.
+AcornOps v1 does not expose a public PAT or broad bot service-account credential for the control-plane API. Keep privileged decisions attributable by calling decision endpoints from a real authenticated user session. External integration client bearer tokens are only for external integration link lifecycle, linked-user bot endpoints, and external webhook route connect/status. They must not be treated as authority for general workspace actions. Deployments may explicitly grant a linked external integration `create_read_write_runs` so it can request a write-capable troubleshooting run, but write approval decisions still require an authenticated AcornOps user session.
 
 Internal service tokens such as `ORCH_SERVICE_TOKEN`, `EXECUTION_ENGINE_DISPATCH_TOKEN`, and `LLM_GATEWAY_ADMIN_TOKEN` are platform credentials. They are not public integration credentials.
 

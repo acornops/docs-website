@@ -22,12 +22,14 @@ The public control-plane API is session-based. Browser clients use the same `Sam
 
 AcornOps v1 does not expose a public PAT or broad bot service-account credential for the control-plane API. Installed external integration clients authenticate with raw bearer tokens whose SHA-256 hashes are configured in `EXTERNAL_INTEGRATION_CLIENTS_JSON`.
 
-For v1 integrations, keep user actions attributable:
+For v1 integrations, keep privileged decisions attributable:
 
 - use webhooks for bot notifications and workflow triggers,
-- send users to the management console or an authenticated client flow for privileged actions,
+- send users to the management console or an authenticated client flow for privileged approvals and management actions,
 - call approval endpoints only as a real AcornOps user with the required workspace permission,
 - avoid shared bot-user decisions for write approvals.
+
+Deployments may explicitly add `create_read_write_runs` to a registered external integration client's allowed capabilities and the linked user's workspace grant. That lets the integration request a read-write troubleshooting run when the linked user's workspace role also allows it. Write-capable tools still pause on AcornOps approval gates, and the approval or rejection should be performed in the management console by the real AcornOps user.
 
 Internal service tokens such as `ORCH_SERVICE_TOKEN`, `EXECUTION_ENGINE_DISPATCH_TOKEN`, and `LLM_GATEWAY_ADMIN_TOKEN` are platform credentials. External integration client bearer tokens are narrow adapter credentials, not public PATs. The built-in MCP bridge uses the run-scoped JWT minted for the active execution.
 
@@ -54,9 +56,9 @@ An external integration adapter usually follows this flow:
 1. Ask a workspace admin to create a webhook subscription for the events the bot needs.
 2. Verify `AcornOps-Signature` using the subscription secret.
 3. Map the event to a channel, thread, incident, or user-visible card.
-4. For read-only context, link to the management console or fetch allowed public API data from a client flow that has an authenticated user session.
-5. For write approvals, render approve and reject controls only when the click can be tied back to a real AcornOps user.
-6. Submit approval decisions to `POST /api/v1/runs/{runId}/approvals/{approvalId}/decision`.
+4. For allowed bot context, link to the management console or fetch permitted public API data using the linked external integration credential.
+5. For write approvals, render the pending approval from run events and direct the user to the management console unless the click can be authenticated as a real AcornOps user.
+6. Submit approval decisions to `POST /api/v1/runs/{runId}/approvals/{approvalId}/decision` only with a real AcornOps user session.
 
 Approval decisions are intentionally not just webhook acknowledgements. The first recorded decision wins; conflicting later decisions return the current approval state.
 
@@ -151,6 +153,12 @@ Write approval integrations should handle:
 
 - `run.tool_approval_requested.v1`
 - `run.tool_approval_decided.v1`
+
+When a run stream or webhook reports a pending write approval, send the user to:
+
+```text
+{MANAGEMENT_CONSOLE_BASE_URL}/workspaces/{workspaceId}/approvals?runId={runId}&approvalId={approvalId}
+```
 
 MCP server integrations may also care about:
 
