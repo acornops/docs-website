@@ -17389,7 +17389,7 @@
           "workflows"
         ],
         "summary": "Post a workflow session message and dispatch a run",
-        "description": "External integration callers can dispatch runs only for externally runnable read-only workflow sessions.",
+        "description": "External integration callers may append only to a Workflow session created by the exact same integration link and client. The current Workflow must remain active. Each message recompiles access against current effective permissions while retaining the session-pinned Workflow version, creates a new execution, and requires a new clientRequestId and fresh approvals.",
         "security": [
           {
             "userSession": []
@@ -17441,7 +17441,7 @@
                   },
                   "clientRequestId": {
                     "type": "string",
-                    "description": "Optional idempotency key supplied by the client."
+                    "description": "Idempotency key supplied by the client. Required and unique per external integration message."
                   },
                   "targetId": {
                     "type": "string",
@@ -17557,13 +17557,28 @@
         "tags": [
           "workflows"
         ],
-        "summary": "Get workflow execution and step attempts",
+        "summary": "Get a sanitized workflow execution and step attempts",
+        "description": "Any browser user or linked external integration with effective read_workspace_data for the execution workspace may inspect this DTO, regardless of execution origin. Internal snapshots, input context, compiled scopes, continuation state, prompts, occurrence keys, internal claims, and integration provenance are excluded.",
         "security": [
           {
             "userSession": []
+          },
+          {
+            "externalIntegrationClientToken": []
           }
         ],
         "parameters": [
+          {
+            "in": "header",
+            "name": "x-acornops-external-user-id",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            "description": "Required only for external integration client-token requests. Must identify a linked external integration user."
+          },
           {
             "in": "path",
             "name": "executionId",
@@ -17575,19 +17590,162 @@
         ],
         "responses": {
           "200": {
-            "description": "Workflow execution with retained attempts.",
+            "description": "Sanitized execution metadata and retained attempt summaries.",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
+                  "required": [
+                    "execution",
+                    "attempts"
+                  ],
                   "properties": {
                     "execution": {
-                      "type": "object"
+                      "type": "object",
+                      "required": [
+                        "id",
+                        "workspaceId",
+                        "workflowId",
+                        "workflowVersion",
+                        "workflowSessionId",
+                        "status",
+                        "currentStepIndex",
+                        "triggerType",
+                        "errorCode",
+                        "startedAt",
+                        "endedAt",
+                        "createdAt",
+                        "updatedAt"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "workspaceId": {
+                          "type": "string"
+                        },
+                        "workflowId": {
+                          "type": "string"
+                        },
+                        "workflowVersion": {
+                          "type": "integer"
+                        },
+                        "workflowSessionId": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string"
+                        },
+                        "currentStepIndex": {
+                          "type": "integer"
+                        },
+                        "triggerType": {
+                          "type": "string"
+                        },
+                        "errorCode": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "maxLength": 128
+                        },
+                        "startedAt": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "format": "date-time"
+                        },
+                        "endedAt": {
+                          "type": [
+                            "string",
+                            "null"
+                          ],
+                          "format": "date-time"
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "updatedAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        }
+                      },
+                      "additionalProperties": false
                     },
                     "attempts": {
                       "type": "array",
                       "items": {
-                        "type": "object"
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "executionId",
+                          "stepIndex",
+                          "attemptNumber",
+                          "status",
+                          "requestedAt"
+                        ],
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "executionId": {
+                            "type": "string"
+                          },
+                          "workflowStepId": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "stepIndex": {
+                            "type": "integer"
+                          },
+                          "attemptNumber": {
+                            "type": "integer"
+                          },
+                          "status": {
+                            "type": "string"
+                          },
+                          "targetId": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "targetType": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "requestedAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "startedAt": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "format": "date-time"
+                          },
+                          "endedAt": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "format": "date-time"
+                          },
+                          "errorCode": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          }
+                        },
+                        "additionalProperties": false
                       }
                     }
                   }
@@ -17616,7 +17774,7 @@
             }
           },
           "403": {
-            "description": "Error response.",
+            "description": "The caller lacks effective read_workspace_data for the execution workspace.",
             "content": {
               "application/json": {
                 "schema": {
@@ -17626,7 +17784,146 @@
             }
           },
           "404": {
+            "description": "Workflow execution not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
             "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workflow-executions/{executionId}/stream": {
+      "get": {
+        "tags": [
+          "workflows"
+        ],
+        "summary": "Stream aggregate workflow execution events",
+        "description": "Workspace-readable replayable SSE stream across execution, step/run, accepted run event, approval reference, output metadata, and terminal state changes. Frames use event: workflow_execution and a durable monotonic id. Resume with Last-Event-ID or after; replay is deduplicated before live Redis-backed fanout.",
+        "security": [
+          {
+            "userSession": []
+          },
+          {
+            "externalIntegrationClientToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-acornops-external-user-id",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            "description": "Required only for external integration client-token requests. Must identify a linked external integration user."
+          },
+          {
+            "in": "path",
+            "name": "executionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "after",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "description": "Durable execution event id after which replay begins. Overrides Last-Event-ID when supplied."
+          },
+          {
+            "in": "header",
+            "name": "Last-Event-ID",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Last durable execution event id received by the client."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "SSE stream. Data envelopes contain id, schemaVersion, executionId, type, occurredAt, optional runId/runEventSeq/stepIndex/approvalId, and a redacted payload.",
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The caller lacks effective read_workspace_data for the execution workspace.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Workflow execution not found.",
             "content": {
               "application/json": {
                 "schema": {
@@ -17903,9 +18200,24 @@
         "security": [
           {
             "userSession": []
+          },
+          {
+            "externalIntegrationClientToken": []
           }
         ],
+        "description": "External integrations may retrieve safe report metadata only when the report execution originated from the exact same active integration link and client.",
         "parameters": [
+          {
+            "in": "header",
+            "name": "x-acornops-external-user-id",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            "description": "Required only for external integration client-token requests. Must identify a linked external integration user."
+          },
           {
             "in": "path",
             "name": "reportId",
@@ -17917,7 +18229,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Report metadata without report source or PDF bytes.",
+            "description": "Safe report metadata without report source, provenance, or PDF bytes.",
             "content": {
               "application/json": {
                 "schema": {
@@ -17962,7 +18274,7 @@
             }
           },
           "404": {
-            "description": "Error response.",
+            "description": "Report not found or not owned by the external integration origin.",
             "content": {
               "application/json": {
                 "schema": {
@@ -18013,9 +18325,24 @@
         "security": [
           {
             "userSession": []
+          },
+          {
+            "externalIntegrationClientToken": []
           }
         ],
+        "description": "External integrations may download only reports whose execution originated from the exact same active integration link and client.",
         "parameters": [
+          {
+            "in": "header",
+            "name": "x-acornops-external-user-id",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            "description": "Required only for external integration client-token requests. Must identify a linked external integration user."
+          },
           {
             "in": "path",
             "name": "reportId",
@@ -18068,7 +18395,7 @@
             }
           },
           "404": {
-            "description": "Error response.",
+            "description": "Report not found or not owned by the external integration origin.",
             "content": {
               "application/json": {
                 "schema": {
@@ -22396,7 +22723,7 @@
           "sessions"
         ],
         "summary": "Append user message and trigger run dispatch",
-        "description": "External integration callers may append messages only to sessions owned by the linked AcornOps user. They may trigger read-only runs by default, or read-write runs only when the registered client allowedCapabilities, user-approved workspace grant, and linked user workspace role all include create_read_write_runs. Approval decisions still require a browser user session.",
+        "description": "External integration callers may append messages only to sessions owned by the linked AcornOps user. They may trigger read-only runs by default, or read-write runs only when the registered client allowedCapabilities, user-approved workspace grant, and linked user workspace role all include create_read_write_runs. The exact originating integration link and client may decide approvals created by its own troubleshooting or Workflow execution after explicit linked-user confirmation.",
         "security": [
           {
             "userSession": []
@@ -22502,7 +22829,7 @@
         },
         "responses": {
           "202": {
-            "description": "Run accepted for processing.",
+            "description": "Run accepted for processing. The response includes the provider, model, and reasoning effort frozen on the accepted run.",
             "content": {
               "application/json": {
                 "schema": {
@@ -22711,7 +23038,7 @@
           "runs"
         ],
         "summary": "List write-tool approvals for a run",
-        "description": "Returns pending and decided write-tool approvals for visibility. External integration callers may read approval state but cannot decide approvals.",
+        "description": "Returns pending and decided write-tool approvals. Approval listing follows workspace-read visibility. An external integration may decide a troubleshooting approval or a Workflow pre-step/runtime tool_write approval only when the execution originated through the exact same link and client. Approval requires effective create_read_write_runs; the origin may reject with current workspace read access after write permission is removed.",
         "security": [
           {
             "userSession": []
@@ -22833,13 +23160,27 @@
           "runs"
         ],
         "summary": "Approve or reject a pending write-tool approval",
-        "description": "Requires a real AcornOps user with create_read_write_runs for approval. Bots may relay this decision only when they can authenticate and attribute that user.",
+        "description": "A linked external integration may decide only a troubleshooting write approval or Workflow pre-step/runtime tool_write approval whose run execution was requested through that exact integration link and client. Approvals require effective create_read_write_runs. The exact origin may reject while retaining workspace read access if write permission was removed. Browser-created, other-link/client, standalone Agent, scheduled, and system-triggered approvals remain unavailable.",
         "security": [
           {
             "userSession": []
+          },
+          {
+            "externalIntegrationClientToken": []
           }
         ],
         "parameters": [
+          {
+            "in": "header",
+            "name": "x-acornops-external-user-id",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            "description": "Required only for external integration client-token requests. Must identify a linked external integration user."
+          },
           {
             "in": "path",
             "name": "runId",
@@ -22918,7 +23259,7 @@
             }
           },
           "403": {
-            "description": "The authenticated user cannot approve write runs.",
+            "description": "The actor lacks the permission needed for the decision, or an external integration is not the exact run/execution origin.",
             "content": {
               "application/json": {
                 "schema": {
@@ -26032,6 +26373,37 @@
         },
         "additionalProperties": true
       },
+      "ChatRuntimeSelection": {
+        "type": "object",
+        "required": [
+          "provider",
+          "model",
+          "reasoningEffort"
+        ],
+        "properties": {
+          "provider": {
+            "type": "string",
+            "enum": [
+              "openai",
+              "anthropic",
+              "gemini"
+            ]
+          },
+          "model": {
+            "type": "string"
+          },
+          "reasoningEffort": {
+            "type": "string",
+            "enum": [
+              "off",
+              "low",
+              "medium",
+              "high"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
       "TargetSummary": {
         "type": "object",
         "required": [
@@ -26779,6 +27151,9 @@
             },
             "additionalProperties": true
           },
+          "lastRuntimeSelection": {
+            "$ref": "#/components/schemas/ChatRuntimeSelection"
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time"
@@ -26868,7 +27243,8 @@
         "type": "object",
         "required": [
           "message_id",
-          "run_id"
+          "run_id",
+          "runtimeSelection"
         ],
         "properties": {
           "message_id": {
@@ -26878,6 +27254,9 @@
           "run_id": {
             "type": "string",
             "format": "uuid"
+          },
+          "runtimeSelection": {
+            "$ref": "#/components/schemas/ChatRuntimeSelection"
           }
         }
       },

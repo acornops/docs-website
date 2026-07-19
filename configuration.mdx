@@ -74,9 +74,12 @@ you omit it, AcornOps uses the default external integration ceiling:
 `read_workspace_data`, `create_sessions`, and `create_read_only_runs`. Users
 still approve per-workspace grants when they link the external account. Add
 `create_read_write_runs` only when the client may request write-capable
-troubleshooting runs; keep `read_workspace_data` and `create_sessions` because
-run creation depends on them. Approval decisions still require an authenticated
-AcornOps browser session.
+troubleshooting runs or active read-write/approval-gated Workflows; keep
+`read_workspace_data` and `create_sessions` because run creation depends on
+them. The same linked integration and client may decide approvals only for
+troubleshooting runs or Workflow executions it originated, and only after an
+explicit linked-user confirmation. Browser-created, other-link/client,
+standalone Agent, scheduled, and system-triggered approvals remain denied.
 
 ## Internal transport TLS
 

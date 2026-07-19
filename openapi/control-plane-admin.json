@@ -5378,6 +5378,37 @@
         },
         "additionalProperties": true
       },
+      "ChatRuntimeSelection": {
+        "type": "object",
+        "required": [
+          "provider",
+          "model",
+          "reasoningEffort"
+        ],
+        "properties": {
+          "provider": {
+            "type": "string",
+            "enum": [
+              "openai",
+              "anthropic",
+              "gemini"
+            ]
+          },
+          "model": {
+            "type": "string"
+          },
+          "reasoningEffort": {
+            "type": "string",
+            "enum": [
+              "off",
+              "low",
+              "medium",
+              "high"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
       "TargetSummary": {
         "type": "object",
         "required": [
@@ -6125,6 +6156,9 @@
             },
             "additionalProperties": true
           },
+          "lastRuntimeSelection": {
+            "$ref": "#/components/schemas/ChatRuntimeSelection"
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time"
@@ -6214,7 +6248,8 @@
         "type": "object",
         "required": [
           "message_id",
-          "run_id"
+          "run_id",
+          "runtimeSelection"
         ],
         "properties": {
           "message_id": {
@@ -6224,6 +6259,9 @@
           "run_id": {
             "type": "string",
             "format": "uuid"
+          },
+          "runtimeSelection": {
+            "$ref": "#/components/schemas/ChatRuntimeSelection"
           }
         }
       },
