@@ -1,9 +1,9 @@
 ---
 title: "VM targets"
-description: "Register Linux/systemd VMs, install the AgentV, and verify read-only host troubleshooting"
+description: "Register Linux/systemd VMs, install AgentV, verify diagnostics, and optionally allowlist service restarts"
 ---
 
-Every Linux VM that AcornOps observes runs the AgentV. The agent opens an outbound WebSocket to the control plane, reports host snapshots, and executes read-only VM tools during troubleshooting runs.
+Every Linux VM that AcornOps observes runs the unprivileged AgentV. The agent opens an outbound WebSocket, reports bounded host snapshots, and executes strict VM tools. It remains read-only unless you separately enable the root-owned action helper for exact service units.
 
 ## Register a VM
 
@@ -24,17 +24,18 @@ The AgentV authenticates with the issued agent key and connects to:
 wss://api.example.com/api/v1/agent/connect
 ```
 
-Replace `example.com` with your deployment domain. The public demo agent route is `wss://api.demo.acornops.dev/api/v1/agent/connect`. The initial AgentV supports Linux with systemd. It is read-only: it can inspect host state and logs, but it cannot modify services, packages, files, users, firewall rules, or kernel settings.
+Replace `example.com` with your deployment domain. The public demo agent route is `wss://api.demo.acornops.dev/api/v1/agent/connect`. AgentV supports current Debian/Ubuntu and RHEL-family systemd hosts. Other distributions report degraded or unsupported collectors rather than claiming full support.
 
 ## Inventory and findings
 
 VM snapshots populate:
 
 - host summary and OS metadata,
+- mounted filesystem capacity,
 - process inventory,
 - systemd service inventory,
 - listening ports,
-- metrics history,
+- collector health and metrics history,
 - findings derived from host health signals.
 
 The management console shows this data on the VM detail page. VM logs are fetched live through the connected agent and are bounded by source and limit.
@@ -44,20 +45,26 @@ The management console shows this data on the VM detail page. VM logs are fetche
 The VM built-in tools include:
 
 - `get_host_summary`
+- `list_filesystems`
 - `list_processes`
 - `get_process`
 - `list_services`
-- `get_service_status`
-- `get_logs`
-- `search_logs`
-- `check_port`
-- `list_listening_ports`
+- `get_service`
+- `query_logs`
+- `list_listeners`
+- `restart_service` when all local, remote, and approval gates permit it
 
 VM targets also support target-scoped remote MCP servers. Add servers from the VM detail page under **MCP Servers**, test discovery, then enable reviewed tools.
 
 ## Troubleshooting chat
 
-VM troubleshooting runs are read-only and can only use tools enabled for that VM target.
+VM troubleshooting runs can only use tools enabled for that target and run mode. `restart_service` is excluded from read-only runs, requires human approval in read-write runs, and is still unavailable unless `ACORNOPS_AGENT_WRITE_ENABLED=true`, the helper socket is enabled, and `/etc/acornops/agentv-actions.json` contains the exact unit. Arbitrary commands, globs, AgentV's own units, and unrestricted `systemctl` are not supported.
+
+After installation, run `acornops-agentv-doctor`. It checks configuration,
+required binaries, journal access, helper policy, filesystem access, and TLS.
+The installer adds the dedicated user to `systemd-journal` when available;
+otherwise log capability is reported as degraded instead of returning an empty
+successful result.
 
 VM conversations follow the same collaboration rules as Kubernetes target conversations. The creator can send follow-ups. Other users with target read access can open the conversation and watch active runs live, but the composer stays view-only. Starting a new VM conversation after recent target chat activity shows an inline warning so operators can review or continue the relevant investigation before creating a separate thread.
 

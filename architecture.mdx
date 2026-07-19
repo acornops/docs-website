@@ -34,7 +34,7 @@ flowchart LR
 | Execution engine | Run lifecycle, orchestration loop, event emission, cancellation, tool-call coordination | Internal only |
 | LLM gateway | Provider routing, run-scoped model access, MCP registry, secret lookup, gateway auditing | Internal only |
 | AgentK | Kubernetes cluster snapshots, logs, and builtin Kubernetes tool execution | Outbound only |
-| AgentV | Linux/systemd host snapshots, logs, and read-only builtin VM tool execution | Outbound only |
+| AgentV | Bounded Linux/systemd snapshots and strict built-in tools; optional local helper for allowlisted service restart | Network outbound only |
 
 ## Runtime flow
 
@@ -88,7 +88,7 @@ Troubleshooting conversations are owner-write and viewer-read. The user who star
 | Run reservations and worker coordination | Execution engine with Redis |
 | Provider credentials, MCP registry, gateway request records | LLM gateway |
 | Live Kubernetes discovery and builtin tool behavior | AgentK |
-| Live VM host discovery and read-only builtin tool behavior | AgentV |
+| Live VM host discovery, strict tool behavior, and helper protocol | AgentV |
 
 Agent snapshots are persisted by the control plane and exposed to the management console. Kubernetes snapshots include resources, events, and metrics when available. VM snapshots include host inventory, health findings, metrics, and bounded logs.
 

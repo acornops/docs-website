@@ -18,7 +18,7 @@ If you are building a bot or workflow adapter that reacts to AcornOps events, st
 | Source | Owner | How tools appear |
 | --- | --- | --- |
 | Builtin Kubernetes tools | AgentK | The connected agent advertises tools and AcornOps shows them in the target tool catalog. |
-| Builtin VM tools | AgentV | The agent advertises read-only Linux/systemd tools over `tools/list`; the control plane synchronizes them into the gateway for the VM target. |
+| Builtin VM tools | AgentV | The agent advertises strict Linux/systemd tools over `tools/list`; the control plane synchronizes complete input, output, artifact, timeout, and capability contracts. |
 | Remote MCP servers | LLM gateway | Owners or admins add a server URL; the gateway discovers tools from that server's `tools/list` response. |
 
 Newly discovered remote MCP tools stay disabled until an owner or admin enables each tool with an explicit `read` or `write` capability.
@@ -39,19 +39,21 @@ Read-only runs cannot execute write-capable tools. Write-capable tools also requ
 
 ## Builtin VM tools
 
-The current builtin VM tool set is read-only:
+The current builtin VM tool set is:
 
 - `get_host_summary`
+- `list_filesystems`
 - `list_processes`
 - `get_process`
 - `list_services`
-- `get_service_status`
-- `get_logs`
-- `search_logs`
-- `check_port`
-- `list_listening_ports`
+- `get_service`
+- `query_logs`
+- `list_listeners`
+- `restart_service` (write, disabled by default)
 
-VM runs cannot execute write-capable tools.
+Read-only VM runs cannot execute `restart_service`. A read-write run still
+requires remote policy, local enablement, a reachable helper with an exact unit
+allowlist, and human approval.
 
 ## Remote MCP server setup
 
@@ -112,6 +114,6 @@ Use allow-lists for trusted internal MCP endpoints instead of enabling broad pri
 
 When write confirmations are required, the run pauses before a write-capable tool call. An authorized user must approve or reject the specific pending write before it runs.
 
-The default timeout is 300 seconds. Rejection and timeout do not call the AgentK. Approval executes the queued write once. VM runs are read-only and do not request write approvals.
+The default timeout is 300 seconds. Rejection and timeout do not call the target agent. Approval executes the queued write once. AgentV restart requests use stable operation IDs and never automatically retry an unknown outcome.
 
 See [Kubernetes clusters](/kubernetes-clusters#write-confirmation-policy) for Kubernetes write confirmation behavior, [VM targets](/vm-targets#tools-and-mcp) for VM tool behavior, and the API reference sidebar for public endpoint schemas.

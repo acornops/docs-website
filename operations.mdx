@@ -75,7 +75,7 @@ Use both platform and gateway limits:
 - per-window LLM request limits,
 - per-window tool-call limits.
 
-Keep read-write runs limited to roles and Kubernetes clusters where remediation is expected. VM troubleshooting runs are read-only.
+Keep read-write runs limited to roles and targets where remediation is expected. AgentV exposes only `restart_service`, and only when the host helper and exact local allowlist are enabled.
 
 ## Secret rotation
 

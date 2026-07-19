@@ -5,6 +5,19 @@ description: "Configure hosts, secrets, OIDC, model access, MCP egress, and runt
 
 Configuration is split between public host settings, Kubernetes or Compose deployment values, and secret values. Keep secrets out of source control and inject them through the platform secret mechanism for your deployment target.
 
+## Target and assistant settings
+
+The platform chart keeps target connectivity, assistant behavior, and target-specific installation settings separate:
+
+| Helm section | Configures | Does not configure |
+| --- | --- | --- |
+| `agentGateway` | Shared control-plane WebSocket routing and snapshot policy for AgentK and AgentV | Either target-side daemon |
+| `assistantRuntime` | AI assistant budgets, limits, timeouts, and write-approval defaults | AgentK or AgentV collection behavior |
+| `targetAgents.agentk.helm` | AgentK Helm install commands generated for Kubernetes targets | AgentV, which uses a systemd installation archive |
+| `builtinTargetMcp` | The internal MCP identity used to expose both AgentK and AgentV tools | A standalone MCP deployment |
+
+There is intentionally no generic `agent` section and no empty AgentV Helm section. Each name identifies one responsibility and one target scope.
+
 ## Public hosts
 
 | Setting | Example self-host value | Used by |
@@ -57,7 +70,7 @@ Generate unique values for every internal token and encryption key per environme
 | `AUTOMATION_RUNTIME_MODE` | `automation.runtimeMode` | `off` in production | Select `off`, `shadow`, `canary`, or `on`. |
 | `AUTOMATION_CANARY_WORKSPACE_IDS` | `automation.canaryWorkspaceIds` | empty | Comma-separated workspace IDs eligible in `canary` mode. |
 | `AUTOMATION_WORKER_INTERVAL_MS` | `automation.workerIntervalMs` | `1000` | Poll interval for durable schedules and dispatch intent. |
-| `AGENT_WRITE_CONFIRMATION_TIMEOUT_SECONDS` | `agent.runtime.writeConfirmationTimeoutSeconds` | `900` | Expires Agent, Workflow, and target write approvals after 15 minutes. |
+| `ASSISTANT_WRITE_CONFIRMATION_TIMEOUT_SECONDS` | `assistantRuntime.writeConfirmationTimeoutSeconds` | `900` | Expires Agent, Workflow, and target write approvals after 15 minutes. |
 
 See [Agents and workflows](/automation) for rollout order and delivery guarantees.
 
@@ -183,15 +196,15 @@ The LLM gateway validates run-scoped JWTs against the control plane's JWKS endpo
 
 ## Write confirmations
 
-Write-capable Kubernetes agent tools require confirmation by default. VM built-in tools are read-only. The deployment default is controlled by:
+Write-capable AgentK and AgentV tools require confirmation by default. AgentV's only built-in write is the separately gated `restart_service`. The deployment default is controlled by:
 
 | Setting | Default | Purpose |
 | --- | --- | --- |
-| `AGENT_WRITE_CONFIRMATION_REQUIRED` | `true` | Requires approval before write-capable tools execute. |
-| `AGENT_WRITE_CONFIRMATION_TIMEOUT_SECONDS` | `900` | Bounds how long a paused run waits for a decision. |
+| `ASSISTANT_WRITE_CONFIRMATION_REQUIRED` | `true` | Requires approval before write-capable tools execute. |
+| `ASSISTANT_WRITE_CONFIRMATION_TIMEOUT_SECONDS` | `900` | Bounds how long a paused run waits for a decision. |
 | `TARGET_CHAT_RECENT_ACTIVITY_WINDOW_SECONDS` | `300` | Controls the recent activity window used for target chat warnings. |
-| `agent.runtime.writeConfirmationRequired` | `true` | Helm value rendered into `AGENT_WRITE_CONFIRMATION_REQUIRED`. |
-| `agent.runtime.writeConfirmationTimeoutSeconds` | `900` | Helm value rendered into `AGENT_WRITE_CONFIRMATION_TIMEOUT_SECONDS`. |
+| `assistantRuntime.writeConfirmationRequired` | `true` | Helm value rendered into `ASSISTANT_WRITE_CONFIRMATION_REQUIRED`. |
+| `assistantRuntime.writeConfirmationTimeoutSeconds` | `900` | Helm value rendered into `ASSISTANT_WRITE_CONFIRMATION_TIMEOUT_SECONDS`. |
 | `components.controlPlane.recentActivity.windowSeconds` | `300` | Helm value rendered into `TARGET_CHAT_RECENT_ACTIVITY_WINDOW_SECONDS`. |
 
 Clusters can inherit the deployment default or set a per-cluster override. Required confirmations are enforced by the backend runtime before tool execution. Browser chat cards and bot surfaces only submit explicit approve or reject decisions.
