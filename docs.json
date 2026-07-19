@@ -64,6 +64,7 @@
               "quickstart",
               "deployment",
               "configuration",
+              "catalog-registries",
               "automation",
               "kubernetes-clusters",
               "vm-targets"
@@ -183,18 +184,21 @@
                 ]
               },
               {
-                "group": "Tools and MCP servers",
+                "group": "Agent capabilities and target tools",
                 "pages": [
-                  "GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/catalog",
                   "GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/tools",
                   "PATCH /api/v1/workspaces/{workspaceId}/targets/{targetId}/tools/{toolId}",
-                  "GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers",
-                  "POST /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers",
-                  "PATCH /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}",
-                  "DELETE /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}",
-                  "POST /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}/test-connection",
-                  "GET /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}/tools",
-                  "PATCH /api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}/tools/{toolName}"
+                  "GET /api/v1/workspaces/{workspaceId}/agents/{agentId}/mcp/servers",
+                  "POST /api/v1/workspaces/{workspaceId}/agents/{agentId}/mcp/servers",
+                  "POST /api/v1/workspaces/{workspaceId}/agents/{agentId}/mcp/servers/import",
+                  "PATCH /api/v1/workspaces/{workspaceId}/agents/{agentId}/mcp/servers/{serverId}",
+                  "DELETE /api/v1/workspaces/{workspaceId}/agents/{agentId}/mcp/servers/{serverId}",
+                  "POST /api/v1/workspaces/{workspaceId}/agents/{agentId}/mcp/servers/{serverId}/test-connection",
+                  "GET /api/v1/workspaces/{workspaceId}/agents/{agentId}/mcp/servers/{serverId}/tools",
+                  "PATCH /api/v1/workspaces/{workspaceId}/agents/{agentId}/mcp/servers/{serverId}/tools/{toolName}",
+                  "GET /api/v1/workspaces/{workspaceId}/agents/{agentId}/skills",
+                  "POST /api/v1/workspaces/{workspaceId}/agents/{agentId}/skills",
+                  "POST /api/v1/workspaces/{workspaceId}/agents/{agentId}/skills/import"
                 ]
               },
               {

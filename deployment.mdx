@@ -5,6 +5,8 @@ description: "Deploy AcornOps through Kubernetes, VM Compose, workload agents, a
 
 AcornOps deployment has two independent steps: deploy the central platform, then connect each Kubernetes cluster or Linux VM with an outbound agent.
 
+Starter automation is part of control-plane workspace provisioning in every environment. It is independent of optional local target fixtures such as `SEED_DEVELOPMENT_DATA`: each workspace receives starter v1 once, and required startup backfill completes before the control plane reports ready.
+
 ## Kubernetes
 
 Use the `acornops-platform` Helm chart to deploy the central platform into a Kubernetes cluster. The chart deploys:
@@ -204,6 +206,21 @@ Before starting the stack:
 - Confirm the reverse proxy terminates TLS for the console and API hosts.
 
 Database init jobs run before services start. Treat init failures as deployment blockers.
+
+### Workflow V2 database cutover
+
+Before installing the Workflow V2 stack, export both secret-free inventories:
+
+```bash
+scripts/agent-capability-cutover-preflight.sh env/vm/.env.prod ./agent-capability-preflight
+```
+
+Retain and review `control-plane.json` and `llm-gateway.json`. If the control-plane
+report sets `resetRequired: true`, the migration Job aborts before mutation.
+Back up, drop, and recreate the external control-plane database explicitly, then
+retry with the complete pinned contract-v2 stack matrix. Workflow V1 data is not
+preserved or deleted automatically. This is not a rolling upgrade, and mixed
+gateway, control-plane, or execution-engine versions are unsupported.
 
 ## Kubernetes clusters
 

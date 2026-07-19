@@ -46,7 +46,7 @@ flowchart LR
 6. The execution engine fetches run context from the control plane, streams model requests through the LLM gateway, and calls allowed tools.
 7. The control plane records run events and streams them back to the management console.
 
-Remote MCP servers use the same run-scoped tool permission model. The gateway discovers remote tools from `tools/list`, stores discovered tools disabled by default, and forwards calls with platform scope headers plus any configured non-secret public headers.
+Remote MCP servers use the same run-scoped tool permission model. Each installation belongs to one Agent. The gateway discovers remote tools from `tools/list`, stores them pending explicit review, and invokes only an exact `{serverId, toolName}` reference allowed by the pinned Agent version.
 
 ## Auth and trust boundaries
 
@@ -68,7 +68,7 @@ Remote MCP credentials are secret-backed. Non-secret `publicHeaders` may be forw
 
 ## Workspace and role model
 
-A workspace contains members, audit events, targets, Kubernetes clusters, VMs, MCP server settings, tool settings, sessions, runs, and webhooks. Server responses include role-derived permissions so clients can show available actions without reimplementing authorization rules.
+A workspace contains members, audit events, targets, Kubernetes clusters, VMs, MCP registries, Agents with independently installed capabilities, sessions, runs, and webhooks. Server responses include role-derived permissions so clients can show available actions without reimplementing authorization rules.
 
 The deployment defines the supported workspace role templates. `owner` is always present, protected, and required. Deployments can disable non-owner built-ins (`admin`, `operator`, `viewer`, `auditor`) and define custom lowercase snake_case roles with supported workspace capabilities. Workspaces assign members and invitations from this deployment catalog; they cannot edit capability sets or role availability.
 

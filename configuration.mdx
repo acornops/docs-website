@@ -211,6 +211,17 @@ Clusters can inherit the deployment default or set a per-cluster override. Requi
 
 In the management console, per-cluster write confirmation policy is managed from Cluster Settings.
 
+## Workflow runtime and report retention
+
+Workflow execution duration and PDF report retention are deployment-wide. Workflow definitions cannot override them.
+
+| Helm value | Rendered environment variable | Default | Purpose |
+| --- | --- | --- | --- |
+| `agent.runtime.maxRuntimeMs` | `AGENT_MAX_RUNTIME_MS` | `600000` | Maximum execution duration for Workflow and target-chat runs. |
+| `components.controlPlane.reportArtifacts.maxRetentionDays` | `TARGET_CHAT_REPORT_RETENTION_DAYS` | `30` | Retention period for Workflow and target-chat PDF reports. Accepts `1` through `365`. |
+
+The Workflow options API returns each effective value as a singleton policy list. Legacy mutation fields remain accepted for compatibility but cannot override deployment configuration.
+
 ## Audit logging lifecycle
 
 Workspace audit logging is deployment-wide. There is no workspace-level or user-level override.
@@ -230,7 +241,7 @@ Retention always runs for persisted rows, even when logging mode is `disabled`. 
 
 ## MCP egress policy
 
-Remote MCP servers are configured per target. The management console presents MCP server settings on Kubernetes cluster and VM target pages. In production, the gateway should require HTTPS and block private, local, and reserved network targets unless you intentionally allow specific hosts.
+Remote MCP servers can be installed at workspace scope for Agent and Workflow use, or at exact target scope for one Kubernetes cluster or VM. In production, the gateway should require HTTPS and block private, local, and reserved network targets unless you intentionally allow specific hosts.
 
 Use allow-lists for trusted internal MCP endpoints instead of broad private-network access.
 
@@ -243,6 +254,8 @@ Use allow-lists for trusted internal MCP endpoints instead of broad private-netw
 | `networkPolicies.extraEgress.llmGateway` | N/A | Additional gateway egress for private MCP targets, webhook targets, or approved provider routes. |
 
 Remote MCP server `publicHeaders` are for non-secret metadata only. Credentials belong in secret-backed auth fields, and platform scope headers are reserved.
+
+MCP registry policy uses `components.llmGateway.catalog`. The Official MCP Registry is disabled by default and must be enabled explicitly. Configure internal registries through `bootstrapSources`, use `secretKeyRef` for registry credentials, and keep bootstrap routing set to `direct`. Personal MCP authentication is PAT-only in V1 and has no deployment-level client or callback configuration. See [MCP registries](/catalog-registries) for complete examples and lifecycle behavior.
 
 ## Webhooks
 

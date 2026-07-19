@@ -1,37 +1,114 @@
 ---
 title: "Agents and workflows"
-description: "Run durable standalone Agents and sequential Workflows"
+description: "Run one specialist directly or let AcornOps coordinate several"
 ---
 
-Every workspace receives four system Agents and three system Workflows. System templates are versioned independently from user-created Agents, Workflows, and clones.
+Every workspace receives the versioned starter automation bundle during provisioning. The workspace, owner membership, definitions, completed installation marker, and audit events commit atomically before workspace creation returns. On startup, the control plane backfills missing installations and upgrades surviving definitions in place before it reports ready.
 
-Template readiness is explicit:
+Definitions record an origin of `manual` or `template`. Origin does not add capabilities, bypass authorization, alter readiness, or choose a different execution path. Visible template-created definitions may be disabled, duplicated, or deleted, but their definition fields and version history are immutable; duplicate one before editing. A completed installation marker remains as a tombstone, so deleting starter content does not silently recreate it. An explicit **Use template** reinstall is required to restore deleted template content.
+
+Readiness is explicit for every definition:
 
 - `ready` means you can launch with the selected inputs.
-- `needs_setup` lists prerequisites such as a target or external MCP server.
+- `needs_setup` lists missing live prerequisites such as a target, reviewed capability mapping, or installed integration.
 - `blocked` identifies a policy or capability mismatch that an administrator must resolve.
 
-## Built-in workflows
+Missing configuration never activates fallback Agents, tools, MCP servers, credentials, or workflows.
 
-| Workflow | Prerequisite | Behavior |
+## Specialist Agents
+
+Workspace administrators create specialist Agents through the editor or API. A specialist receives reviewed semantic capabilities and exact operational resources from the live catalog.
+
+Coordination is system-owned. Managers do not appear in Agent lists, workflow options, search, configuration, or public Agent responses. You cannot create, select, or access one directly.
+
+A coordinated workflow asks AcornOps to perform work for a semantic capability and exact target. The control plane chooses an eligible selected specialist by reviewed mapping priority and stable Agent ID. It intersects the selected Agents, target compatibility, principal permissions, workspace policy, and connection readiness. Semantic labels never authorize tools on their own.
+
+Coordination is one level deep and allows at most four concurrent child runs and eight child runs total. These limits are server-owned. Writes require approval for the exact tool and arguments. AcornOps does not automatically retry after execution starts or after a write has an uncertain result. Successful child results remain available if another child fails; required and optional failures are reported separately.
+
+## Workflow V2
+
+A Workflow contains a prompt, required `agentIds`, optional target constraints, a semantic capability policy, and schedule or trigger configuration. Agent selection is a set; array order has no routing meaning and IDs must be unique and non-empty.
+
+Select one Agent to run the workflow directly. Select two or more Agents for AcornOps to coordinate. Workflow responses derive `executionMode` as `direct` or `coordinated`. Requests that send `entryAgentId`, `delegationPolicy`, or `executionMode` are rejected.
+
+Creating a Workflow session records a non-executable capability ceiling. It does not resolve exact target resources. When an operator launches a run, the control plane pins the execution mode, selected Agent versions, one exact target when required, and exact reviewed catalog resources. Semantic capability IDs such as `target.diagnostics.read` describe routing requirements but never authorize a tool by themselves. Existing runs keep their pinned execution mode when you edit a Workflow. Future runs use the new selection. Disabling an Agent or losing review blocks future runs while preserving already-pinned runs.
+
+The capability policy has two explicit modes:
+
+- `inherit` uses the selected Agents' current combined reviewed ceiling. `semanticCapabilityIds` must be empty. Each new session resolves and pins the effective set, so an Agent grant or revocation affects future sessions without expanding an existing run.
+- `restrict` uses `semanticCapabilityIds` as an explicit subset of the selected Agents' combined ceiling. An empty array intentionally creates a zero-capability workflow.
+
+Stored workflows created before this field existed migrate to `restrict` to prevent privilege expansion. Legacy API requests that omit the field keep the old restricted interpretation. The management console always sends the mode explicitly.
+
+Manual Workflow defaults are server-owned. When policy fields are omitted, the control plane uses read-only mode, inherited Agent capabilities, workspace metadata context, workspace-data permission, and no approval requirements. The management console sends only the operator-controlled restriction choice and semantic subset.
+
+Execution duration and PDF report retention are deployment policies, not per-Workflow settings. `AGENT_MAX_RUNTIME_MS` sets the execution limit. `TARGET_CHAT_REPORT_RETENTION_DAYS` sets retention for both Workflow and target-chat reports. Legacy API requests may still include `maxRuntimeSeconds` or `retentionDays`, but the control plane ignores those values and returns the effective deployment policy.
+
+Direct readiness checks the selected specialist. Coordinated readiness requires an eligible selected specialist mapping for every effective capability.
+
+Before **Launch**, the console requests a capability preview. Definition review
+keeps semantic capabilities separate from direct MCP servers, installed skills,
+and directly attached tools. For target-bound Workflows, the preview evaluates
+the current target and capability-mapping snapshot, then lists the exact read
+and write tools available for the selected target. Write rows identify their
+approval requirement. Credentialed MCP dependencies appear in a **Required
+auth** row with the server name, personal or workspace ownership, credential
+label, and required setup information. The preview never returns the credential
+value. The preview does not create a session or reserve access;
+launch revalidates current authority and the dispatched run's compiled scope is
+the final source of truth.
+
+Targets outside the Workflow scope are omitted. Offline targets remain visible
+as unavailable. Targets that cannot satisfy a required mapping or access mode
+remain visible as unsupported and cannot be selected. AgentV currently
+advertises diagnostics only, so virtual machines are available for Target
+diagnostics but disabled for Target remediation with an explicit write-support
+explanation.
+
+The template drawer exposes these Workflow records:
+
+| Workflow | Install mode | Inputs and behavior |
 | --- | --- | --- |
-| Cluster triage | An online Kubernetes target with the required AgentK tools | Reads inventory, events, logs, and metrics from the selected target. |
-| Repository operation | A connected workspace MCP server with the canonical repository tools and credentials | Inspects first, then requires approval for the exact repository, base, branch, and change plan before creating a branch, commit, and draft change request. |
-| Incident report | Explicit access to selected, retained chat sessions | Persists versioned report source and provenance. PDF bytes are rendered for each authorized download and are never retained. |
+| Target diagnostics | Automatic, active | One exact Kubernetes or virtual-machine target and optional focus. Reads only diagnostic tools compiled for that target. |
+| Incident report | Automatic, active | Selected `@chat[...]` references and an optional title. Creates an authenticated PDF artifact retained for the deployment-configured period. |
+| Target remediation | Opt-in, paused | One exact Kubernetes target and requested change. Approval is required before every write. |
+| Incident investigation | Opt-in, paused | One exact target, selected chats, and an investigation question. Coordinates diagnostics and reporting. |
 
-Workflow v1 is sequential. Each executable step selects exactly one Agent. A terminal step failure stops the execution; an authorized resume creates a new attempt for that step and retains the earlier audit history.
+Template manifests contain prose, safe policy defaults, semantic requirements, and symbolic relationships only. Provisioning generates record IDs and resolves relationships inside the workspace transaction. It does not contain workspace or target IDs, MCP server IDs or URLs, external tool aliases, skill installation IDs, credentials, or connection assumptions. Upgrades replace Managed response with Incident investigation in place while preserving IDs, status, schedules, and tombstones.
+
+## Create a custom workflow
+
+AcornOps does not install a repository-review Agent or workflow. When you need a repository-oriented or other external workflow:
+
+1. Create a specialist Agent with the instructions and permission mode you need.
+2. Attach a compatible MCP server from the Agent's **MCP** page.
+3. Connect personal authentication when required, discover its tools, and review each exact tool.
+4. Create a workflow and select that Agent.
+5. Preview the effective scope before activation.
+
+The same user-created path works for any compatible MCP integration; there is no provider-specific workflow template or hidden Agent identity.
+
+Visible starter Workflows can be deleted. Deleting a starter specialist Agent first returns a conflict that lists dependent Workflows; remove it from those Workflows, then delete the Agent. AcornOps keeps its coordination infrastructure available even when no coordinated Workflow exists.
+
+For a coordinated execution, `GET /api/v1/workflow-executions/{executionId}` includes an `AcornOps coordination` summary. Each child shows its capability, target, selected Agent, status, and a bounded failure when applicable. The response excludes internal coordinator identity, task prompts, compiled scopes, results, credentials, and tool arguments.
+
+## Target-native chat
+
+Kubernetes and virtual-machine chat does not select, pin, or hand off to a workspace Agent. Each session automatically uses the target's generic assistant.
+
+At run creation, AcornOps queries the live target capability registry and pins the exact native tools, target MCP tools, and target skill snapshots permitted by the user, requested tool-access mode, AgentK or AgentV advertisement, and current target/workspace policy. Configured third-party target MCP tools are eligible when their real connection is ready. Authorization is rechecked before every tool call, and target instructions come from the target adapter contract rather than a workspace Agent profile.
 
 ## Delivery guarantees
 
-The control plane acknowledges a run only after Postgres commits the run and its dispatch intent. Workers claim work with database row locks, so multiple replicas can recover pending work after a restart. Dispatch is at least once, and the execution engine treats the run and step idempotency keys as stable identities.
+The control plane acknowledges a run only after Postgres commits the run and its dispatch intent. Workers claim work with database row locks, so multiple replicas can recover pending work after a restart. Dispatch is at least once, and the execution engine treats the run idempotency key as a stable identity.
 
-Transient dispatch and read-only failures retry up to three times with backoff. AcornOps does not automatically repeat a write when the result is uncertain. Such attempts enter `needs_review` and require an authorized resume.
+Dispatch, continuation, approval, and tool execution consume the persisted compiled scope and may only narrow it. Membership, RBAC, status, connection readiness, and token validity are rechecked at dispatch; live authorization is rechecked before every tool call.
 
 Approvals expire after 15 minutes by default. Expiry fails the attempt and does not grant the requested capability.
 
 ## Agent triggers
 
-Standalone Agents support `manual`, `workflow_step`, `schedule`, `webhook`, and `target_event` triggers. `audit_event` and `external_adapter` are not accepted in this release.
+Standalone Agents support `manual`, `workflow`, `schedule`, `webhook`, and `target_event` triggers. `audit_event` and `external_adapter` are not accepted in this release.
 
 Creating a webhook trigger returns its HMAC secret once. Store it immediately; later Agent responses never include the plaintext or ciphertext. Send JSON events to the returned URL with:
 
@@ -50,14 +127,14 @@ Set `AUTOMATION_RUNTIME_MODE` or Helm `automation.runtimeMode` to:
 - `canary` to dispatch only workspaces in `AUTOMATION_CANARY_WORKSPACE_IDS`, or
 - `on` to dispatch all eligible workspaces.
 
-Keep the mode `off` until migrations and template backfill complete. Use `shadow`, then `canary`, before enabling all workspaces.
+Keep the mode `off` until migrations and the required startup starter upgrade complete, then use `shadow` and `canary` before enabling all eligible workspaces. Incident Report is provisioned active; the other starter Workflows retain their configured state.
 
-The main `/ready` endpoint continues to reflect Postgres and Redis correctness. External MCP readiness appears on Agent and Workflow templates and does not remove the whole control plane from service.
+The main `/ready` endpoint continues to reflect Postgres and Redis correctness. External MCP readiness appears on Agent and Workflow records and does not remove the whole control plane from service.
 
 ## Diagnostics and alerts
 
-Authorized workspace readers can inspect `GET /api/v1/workspaces/{workspaceId}/automation/diagnostics`. The response includes runtime enablement, dispatch state and oldest pending age, Agent and Workflow states, active-run count, trigger deliveries, scheduler lag, pending approval age, template readiness reasons, and retained report-source count.
+Authorized workspace readers can inspect `GET /api/v1/workspaces/{workspaceId}/automation/diagnostics`. The response includes runtime enablement, dispatch state and oldest pending age, visible Agent and Workflow states, active-run count, trigger deliveries, scheduler lag, pending approval age, template readiness reasons, and retained report-source count. System-owned coordination records are not exposed through this workspace-facing response.
 
-Scrape `/metrics` and load `observability/prometheus/alerts/control-plane-automation.rules.yaml` from the deployment repository. The supplied rules cover dispatch older than the 30-second objective, scheduler lag over 60 seconds, approvals older than 15 minutes, `needs_review`, trigger rejection, MCP failures, PDF rendering failures, and elevated terminal failures.
+Scrape `/metrics` and load `observability/prometheus/alerts/control-plane-automation.rules.yaml` from the deployment repository. Starter provisioning reports `control_plane_automation_template_seed_total{template_id,outcome}`. The supplied rules cover dispatch older than the 30-second objective, scheduler lag over 60 seconds, approvals older than 15 minutes, `needs_review`, trigger rejection, MCP failures, personal-credential cleanup retries, MCP-readiness schedule pauses, PDF rendering failures, and elevated terminal failures.
 
 Diagnostics and metrics contain IDs, states, counts, and bounded reasons only. Prompts, chat bodies, tool arguments, webhook payloads, report contents, PDF bytes, credentials, and continuation state must not be logged or exported as labels.
