@@ -22170,6 +22170,10 @@
             "type": "boolean",
             "default": true
           },
+          "toggleable": {
+            "type": "boolean",
+            "default": true
+          },
           "origin": {
             "type": "string",
             "enum": [
