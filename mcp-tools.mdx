@@ -19,7 +19,7 @@ Built-in cluster and VM tools are AcornOps built-in target tools. They are not w
 AcornOps ships these code-owned semantic capabilities:
 
 - `target.diagnostics.read` routes to read-only built-in tools advertised by AgentK or AgentV for one exact target.
-- `chat.sessions.read_selected` reads only the incident chats selected for a Workflow run.
+- `prompt.resources.read` reads only exact prompt-resource binding IDs pinned to a Workflow run.
 - `reports.pdf.generate` creates a bounded report artifact from approved Workflow evidence.
 
 `scm.repository.read` is a supported semantic capability, but it is not built in. It needs a reviewed repository integration.
@@ -45,7 +45,7 @@ Newly discovered remote MCP tools stay disabled until an owner or admin enables 
 
 The native catalog currently contains:
 
-- `chat.sessions.read_selected`, which reads bounded evidence only from same-workspace chats explicitly selected for the Workflow run. It requires the `selected_chat_sessions` context grant and approval.
+- `prompt.resources.read`, exposed to the model as `_acornops_read_prompt_resources`, dispatches bounded evidence loads through registered providers. It accepts binding IDs rather than arbitrary resource IDs and cannot expand the run's signed resource bindings.
 - `reports.pdf.generate`, which creates a bounded, provenance-linked PDF report with authenticated download and idempotency per run and tool call.
 
 Native tools are code-owned, so granting or revoking one requires `manage_agents`, not `manage_mcp`. Assignment updates the Agent version, reviewed semantic mapping, and dependent Workflow readiness together. Managers cannot receive operational tools.
@@ -87,7 +87,7 @@ allowlist, and human approval.
 
 ## Remote MCP server setup
 
-Under **Agents → Agent detail → Capabilities** or a target's **MCP servers** page, choose **Add MCP server**. **Browse registries** opens destination-bound discovery; **Connect by URL** opens the existing form for that Agent or target. Every installation belongs to exactly one destination. Unauthenticated installations can discover during an administrator connection test. Authenticated installations discover only through each user's personal PAT connection.
+Under **Agents → Agent detail → Capabilities** or a target's **MCP servers** page, choose **Add MCP server**. **Browse registries** opens destination-bound discovery; **Connect by URL** opens the existing form for that Agent or target. Every installation belongs to exactly one destination. Unauthenticated installations can discover during an administrator connection test. Authenticated installations discover through the exact workspace or individual connection selected for that installation.
 
 For **Connect by URL**, enter the actual remote Streamable HTTP endpoint, for example `https://mcp.internal.example/mcp`. The URL must be absolute HTTPS and cannot contain a username, password, or fragment. Non-secret query parameters are supported; credentials must use the authentication fields. Registry roots, `/v0.1` API URLs, `server.json`, GitHub repositories, npm or PyPI packages, containers, and stdio commands are not accepted.
 
@@ -103,10 +103,11 @@ Tools are authorized by server ID plus tool name. Two installed servers can ther
 | `url` | HTTPS MCP server endpoint in production. |
 | `enabled` | Turns server use on or off without deleting configuration. |
 | `publicHeaders` | Optional non-secret headers sent to the remote MCP server. |
-| Authentication requirement | `none` or `personal`; in V1, `personal` means a PAT connection. |
+| Authentication | Bearer token or a validated custom header for authenticated endpoints. |
+| Credential ownership | No credential, workspace-managed, or individual. |
 | Target constraints | Optional authoritative target types and target IDs within the Agent's own target ceiling. |
 
-Agent and target records never store PATs. The gateway encrypts each acting user's credential separately for the exact installation. A change to the effective URL, auth type, header name, or prefix invalidates every connection before the new destination can be used; metadata-only catalog reimports retain connections.
+Agent and target records never store credential plaintext or secret references. The gateway encrypts each connection value separately for the exact installation and owner. A change to the effective URL, authentication metadata, public headers, catalog trust, or credential ownership blocks invocation and invalidates affected connections before the new configuration can be used.
 
 ## Public header policy
 
@@ -128,7 +129,7 @@ When the gateway calls a remote MCP server, it applies headers in this order:
 
 1. configured `publicHeaders`,
 2. platform scope headers,
-3. the installation-formatted auth header derived from the current user's personal connection.
+3. the installation-formatted auth header derived from the exact resolved workspace or individual connection.
 
 Discovery and connection tests include `x-workspace-id`, `x-target-id`, and `x-target-type`. Runtime tool calls also include `x-run-id`.
 
@@ -149,26 +150,52 @@ Use allow-lists for trusted internal MCP endpoints instead of enabling broad pri
 
 Registry synchronization uses the same hostname, DNS, TLS, private-network, and CA controls. An air-gapped deployment can disable the official registry and use only an internal v0.1-compatible registry.
 
-## Personal connections
+## Credential connections
 
-An MCP installation can require a separate PAT connection for each user. A user who can read the Agent or target and has any run capability can manage only their own PAT; installation administration remains restricted. Select **Connect PAT**, confirm the destination origin and bearer or custom-header mode, enter the masked PAT, and grant explicit storage consent. AcornOps accepts at most 8 KiB of UTF-8 without trimming or normalization and rejects control characters. It verifies the PAT through authenticated tool discovery before exposing tools to a run.
+An authenticated MCP installation selects workspace-managed or individual
+ownership. Workspace credentials require `manage_mcp`; a user who can read the
+Agent or target and has a run capability can manage only their own individual
+credential. Select **Connect credential**, confirm the destination origin and
+header mode, enter the masked value, and grant explicit storage consent. AcornOps
+accepts at most 8 KiB of UTF-8 without trimming or normalization, rejects control
+characters, and verifies through authenticated tool discovery.
 
 For an authenticated manual installation, AcornOps creates the installation
-first and then opens **Connect PAT**. Pending-tool review appears only after the
+first and then opens **Connect credential** for the selected ownership mode. Pending-tool review appears only after the
 connection succeeds and discovery returns. Closing a failed connection dialog
 does not remove the installation or hide its real error state. Unauthenticated
 installations continue directly to discovery and pending-tool review.
 
 After Connect or Verify succeeds, the management console refreshes the owning
 Agent or target installation and its discovered tools without leaving the page.
-If that refresh fails, the PAT remains connected and the console warns that the
+If that refresh fails, the credential remains connected and the console warns that the
 tool list may be stale with a separate retry action. A `429` response can include
 `Retry-After`; the console shows the remaining delay and keeps Connect and Verify
 disabled until that delay expires.
 
-Target and Agent installations never share or copy connections. Each successful discovery replaces only that user's tool snapshot; an empty tool list is still a connected result. Tools discovered by different users are added to the installation catalog as disabled and pending, and one user can never remove or globally disable tools another user discovered. Readiness fails only when an exact approved tool required by the run is absent from the acting user's snapshot.
+Target and Agent installations never share or copy connections. Each successful
+discovery replaces only the resolved owner's tool snapshot; an empty tool list is
+still a connected result. Newly discovered tools are added disabled and pending.
+Readiness fails when an exact approved tool is absent from the resolved
+workspace or individual connection snapshot.
 
-Workflows own no credentials; a workflow reuses its selected Agent's connection. Scheduled user-principal workflows are supported, while service principals fail with `MCP_PAT_USER_PRINCIPAL_REQUIRED` in V1. A readiness failure auto-pauses a schedule before it creates a run; repair the connection and manually re-enable the schedule. Missing or erroneous connections fail closed, and a remote `401` or `403` clears the snapshot and marks the stored connection erroneous until the user verifies, replaces, or disconnects it. Subsequent calls fail before contacting upstream.
+Workflows own no credentials; a workflow reuses its selected Agent installation.
+Workspace mode supports scheduled service principals, while individual mode
+requires a user and otherwise fails with
+`MCP_INDIVIDUAL_USER_PRINCIPAL_REQUIRED`. Missing or erroneous connections fail
+closed. A remote `401` or `403` clears the exact owner's snapshot and marks that
+connection erroneous until it is verified, replaced, or disconnected.
+
+Changing credential ownership is destructive. Switching to individual mode
+removes the workspace credential; switching to workspace mode invalidates every
+individual connection. The gateway blocks invocation while cleanup is in
+progress and never falls back to the previous owner type. Connect and verify a
+new workspace credential before resuming unattended work. Use a dedicated,
+least-privilege service or bot identity rather than an employee credential.
+
+Administrators can see workspace connection status and can manage that
+installation-owned credential. They cannot list, read, export, replace, or
+disconnect another user's individual credential.
 
 When target chat, a direct Agent run, or a workflow message fails MCP readiness,
 the console links to the exact Agent or target installation and highlights its
@@ -181,7 +208,10 @@ A schedule whose last MCP outcome was `auto_paused` shows the bounded reason and
 an Agent MCP recovery link. Repair MCP before selecting **Resume**; AcornOps does
 not resume the schedule automatically.
 
-Create least-privilege PATs that expose only the tools needed for the current work. Replace and Verify a PAT after provider-side rotation or revocation. Personal MCP PATs are separate from platform OIDC: OIDC signs users into AcornOps and does not authorize a remote MCP server. V1 has no MCP OAuth callback, refresh token, service-principal PAT, or shared external credential.
+Create least-privilege credentials that expose only the tools needed for the
+current work. Replace and verify after provider-side rotation or revocation.
+Remote MCP credentials are separate from platform OIDC: OIDC signs users into
+AcornOps and does not authorize a remote MCP server.
 
 For source control or any other external system, create your own specialist Agent and connect the compatible MCP server by registry or URL. AcornOps discovers tools as untrusted and disabled; an administrator reviews their read/write classification and enables only the exact tools the Agent should use. AcornOps does not ship provider-specific source-control profiles, Agents, or workflows.
 
@@ -195,7 +225,7 @@ An Agent sets the maximum permission mode. A workflow or `/permissions` may only
 - **Ask before changes** runs reads automatically and requires approval for every write. This is the default.
 - **Auto-run allowed changes** may run only administrator-approved, non-destructive writes automatically. High-risk and destructive actions always require approval.
 
-Every invocation intersects current principal RBAC, the pinned Agent snapshot, workflow/session restrictions, target constraints, reviewed tool state, permission mode, and a connected installation-specific PAT state.
+Every invocation intersects current principal RBAC, the pinned Agent snapshot, workflow/session restrictions, target constraints, reviewed tool state, permission mode, and the exact resolved installation connection state.
 
 ## Write confirmations
 

@@ -255,7 +255,7 @@ Use allow-lists for trusted internal MCP endpoints instead of broad private-netw
 
 Remote MCP server `publicHeaders` are for non-secret metadata only. Credentials belong in secret-backed auth fields, and platform scope headers are reserved.
 
-MCP registry policy uses `components.llmGateway.catalog`. The Official MCP Registry is disabled by default and must be enabled explicitly. Configure internal registries through `bootstrapSources`, use `secretKeyRef` for registry credentials, and keep bootstrap routing set to `direct`. Personal MCP authentication is PAT-only in V1 and has no deployment-level client or callback configuration. See [MCP registries](/catalog-registries) for complete examples and lifecycle behavior.
+MCP registry policy uses `components.llmGateway.catalog`. The Official MCP Registry is disabled by default and must be enabled explicitly. Configure internal registries through `bootstrapSources`, use `secretKeyRef` for registry credentials, and keep bootstrap routing set to `direct`. MCP installations select workspace-managed or individual credential ownership and require no deployment-level callback configuration. See [MCP registries](/catalog-registries) for complete examples and lifecycle behavior.
 
 ## Webhooks
 

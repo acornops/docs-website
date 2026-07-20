@@ -5,7 +5,10 @@ description: "Deploy AcornOps through Kubernetes, VM Compose, workload agents, a
 
 AcornOps deployment has two independent steps: deploy the central platform, then connect each Kubernetes cluster or Linux VM with an outbound agent.
 
-Starter automation is part of control-plane workspace provisioning in every environment. It is independent of optional local target fixtures such as `SEED_DEVELOPMENT_DATA`: each workspace receives starter v1 once, and required startup backfill completes before the control plane reports ready.
+Starter automation is part of current-version control-plane workspace
+provisioning in every environment. It is independent of optional local target
+fixtures such as `SEED_DEVELOPMENT_DATA`; each new workspace receives the final
+starter bundle once, with no startup upgrade or repair pass.
 
 ## Kubernetes
 
@@ -207,19 +210,11 @@ Before starting the stack:
 
 Database init jobs run before services start. Treat init failures as deployment blockers.
 
-### Workflow V2 database cutover
+### Greenfield database epoch
 
-Before installing the Workflow V2 stack, export both secret-free inventories:
-
-```bash
-scripts/agent-capability-cutover-preflight.sh env/vm/.env.prod ./agent-capability-preflight
-```
-
-Retain and review `control-plane.json` and `llm-gateway.json`. If the control-plane
-report sets `resetRequired: true`, the migration Job aborts before mutation.
-Back up, drop, and recreate the external control-plane database explicitly, then
-retry with the complete pinned contract-v2 stack matrix. Workflow V1 data is not
-preserved or deleted automatically. This is not a rolling upgrade, and mixed
+This version is not a rolling database upgrade. Back up if needed, then drop and
+recreate the external control-plane and gateway databases before installing the
+complete pinned stack matrix. Pre-release data is not preserved, and mixed
 gateway, control-plane, or execution-engine versions are unsupported.
 
 ## Kubernetes clusters

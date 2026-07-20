@@ -52,15 +52,24 @@ An empty workflow restriction grants no capability. It does not inherit all Agen
 
 Runtime tool identity includes both the stable server ID and tool name. This keeps tools with the same name on different servers independently selectable and prevents name-only authorization.
 
-## Personal authorization
+## Credential ownership
 
-Remote MCP authorization is PAT-only in V1 and is scoped to one user and one installation. Importing or enabling a server does not authorize anyone to run it.
+Authenticated MCP installations explicitly select `workspace` or `individual`
+credential ownership. Importing or enabling a server does not authorize it by
+itself.
 
-When an installation has `authScope: personal`, select **Connect PAT**, enter the upstream personal access token, and grant storage consent. AcornOps stores the credential encrypted in the LLM gateway and immediately performs authenticated tool discovery. The installation determines whether the PAT is sent as a bearer token or in its configured custom header; connection responses never return the credential.
+Workspace-managed credentials are installation-owned and can be used by user or
+service principals. Individual credentials are scoped to one user and one
+installation and require a user principal. Select the matching **Connect
+credential** action, enter the write-only credential, and grant storage consent.
+AcornOps stores it encrypted in the LLM gateway and immediately performs
+authenticated tool discovery. Responses never return the secret or its name.
 
-Interactive runs use the initiating user's current connection. Scheduled user-principal workflows reuse the connection for their selected Agent. Service principals cannot access personal-auth MCP servers in V1 and fail with `MCP_PAT_USER_PRINCIPAL_REQUIRED`. AcornOps rechecks current membership, RBAC, and connection status before every run; it never falls back to the Agent owner or trigger creator.
-
-A target and an Agent require separate PAT connections, even for the same upstream server. AcornOps never deduplicates connections by URL, copies PATs between installations, or compares whether two installations use the same token. A failed verification retains the encrypted PAT in an error state so the user can Verify again, Replace PAT, or Disconnect. An upstream `401` or `403` marks the connection erroneous for subsequent runs.
+A target and an Agent always have separate connections, even for the same
+upstream server. AcornOps never deduplicates connections by URL or copies
+credentials between installations. Failed verification retains an encrypted
+error-state credential so an authorized owner can verify, replace, or disconnect
+it. An upstream `401` or `403` marks that exact connection erroneous.
 
 ## Kubernetes configuration
 
@@ -91,7 +100,10 @@ components:
       allowPrivateNetworks: true
 ```
 
-The chart renders a secret-free bootstrap JSON document. Each registry `secretKeyRef` is injected into a separate environment variable and copied into the configured gateway secret backend. Personal MCP PATs are entered by users and have no Helm client or callback configuration.
+The chart renders a secret-free bootstrap JSON document. Each registry
+`secretKeyRef` is injected into a separate environment variable and copied into
+the configured gateway secret backend. Runtime MCP credentials are entered
+through the console and have no Helm client or callback configuration.
 
 ## Air-gapped self-hosting
 

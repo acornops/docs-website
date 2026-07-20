@@ -10,22 +10,19 @@ This page covers day-two operations for the central platform and connected Kuber
 For production-style environments:
 
 1. Select one pinned stack matrix whose execution contract version is exactly 2.
-2. Confirm Postgres and Redis availability, then run the secret-free Workflow V2 reset preflight.
-3. If preflight reports `WORKFLOW_V2_DATABASE_RESET_REQUIRED`, pause deployment, back up the control-plane database, and explicitly drop and recreate it.
-4. Deploy gateway, control plane, execution engine, deployment metadata, and documentation as one stack. Do not roll any image independently.
-5. Smoke test OIDC sign-in, workspace listing, agent connectivity, built-in tools, approval receipt execution, personal PAT lifecycle, and a read-only run.
+2. Confirm Postgres and Redis availability, then explicitly recreate the pre-release control-plane and gateway databases for this greenfield schema epoch.
+3. Deploy gateway, control plane, execution engine, deployment metadata, and documentation as one stack. Do not roll any image independently.
+4. Smoke test OIDC sign-in, workspace listing, agent connectivity, built-in tools, approval receipt execution, workspace and individual credential lifecycles, and a read-only run.
 
 Pin image tags during upgrades so deployments are reproducible.
 
-Workflow schema epoch 2 is a first-install/reset cutover, not a rolling upgrade.
-The migration never deletes incompatible Workflow V1 data. Use the deployment
-repository's `scripts/agent-capability-cutover-preflight.sh` to retain exact,
-secret-free per-table counts and reset status.
+This version is a first-install/reset cutover, not a rolling database upgrade.
+The final baselines intentionally contain no pre-release data conversion paths.
 
 For external Postgres, take a provider snapshot or `pg_dump`, then use an
 administrative connection to drop and recreate the control-plane database. For
-local Compose, run `task local-reset`. Returning to V1 requires restoring the
-pre-cutover backup and the complete pinned V1 matrix; an application-only
+local Compose, run `task local-reset`. Returning to an older schema requires
+restoring a matching database backup and complete pinned image matrix; an application-only
 rollback is unsafe across schema epochs.
 
 Control-plane rollouts keep the service available through multiple replicas. Connected agents reconnect to an available pod during the rollout, but commands that are already running can fail or time out and may need to be retried.
@@ -53,7 +50,7 @@ Verify the platform from the outside in:
 - target agents can connect over WebSocket,
 - a run streams events through `GET /api/v1/runs/{runId}/stream`,
 - the LLM gateway is ready with a fresh JWKS cache,
-- remote MCP discovery and personal connection tests pass when the kill switch is enabled,
+- remote MCP discovery and workspace/individual connection tests pass when the kill switch is enabled,
 - webhooks record delivery attempts for subscribed events.
 - workspace automation diagnostics report no dispatch older than 30 seconds, scheduler lag over 60 seconds, stale approvals, or unexpected `needs_review` runs.
 
@@ -98,7 +95,7 @@ Rotate secrets with service-specific rollout plans:
 | Internal service tokens | Rotate paired services together or support overlap during rollout |
 | Agent keys | Use the control-plane agent-key rotation flow per target |
 | Provider API keys | Update the gateway secret backend, then verify a read-only run |
-| Personal MCP PAT | Revoke or rotate the acting user's least-privilege PAT, replace it on the exact installation, then Verify; service identities cannot use PAT connections |
+| MCP credential | Revoke or rotate the least-privilege credential on the exact installation, then Verify; service identities require workspace-managed mode |
 | Webhook signing secrets | Create or rotate the subscription secret and update the consumer |
 
 Do not reuse internal service tokens across environments.
