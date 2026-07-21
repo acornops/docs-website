@@ -104,6 +104,8 @@ The control plane owns OIDC login and callback handling:
 
 - Login entrypoint: `GET /api/v1/auth/oidc/login?return_to=<management-console-url>`
 - Callback entrypoint: `GET /api/v1/auth/oidc/callback`
+- Logout handoff: `GET /api/v1/auth/oidc/logout/start`
+- Post-logout callback: `GET /api/v1/auth/oidc/logout/callback`
 
 For Kubernetes and VM Compose settings that derive the redirect URI from your console URL, register this redirect URI with your provider:
 
@@ -113,6 +115,13 @@ https://console.example.com/api/v1/auth/oidc/callback
 
 That URL is still served by the control plane through the console host's `/api` proxy. If you override `auth.oidc.redirectUri` or `OIDC_REDIRECT_URI`, register the exact override value instead. Registering only `https://api.example.com/api/v1/auth/oidc/callback` will fail unless your deployment is configured to use that URL as the OIDC redirect URI.
 
+Register this exact post-logout redirect URI when your provider supports
+RP-initiated logout:
+
+```text
+https://console.example.com/api/v1/auth/oidc/logout/callback
+```
+
 Common OIDC settings:
 
 | Setting | Notes |
@@ -120,9 +129,61 @@ Common OIDC settings:
 | Issuer URL | Provider issuer used for discovery and token validation |
 | Public issuer URL | Optional override when internal and public issuer URLs differ |
 | Client ID | OIDC client configured for AcornOps |
-| Client secret | Stored in the platform secret bundle |
+| Client secret | Referenced by `auth.oidc.clientSecret.existingSecret` and `key`; it is not required when OIDC is disabled |
 | Scopes | Defaults to `openid profile email` |
 | Token endpoint auth method | Defaults to client-secret based auth |
+| Admission policy | `auth.oidc.admission` or `OIDC_ADMISSION_POLICY_JSON`; an empty policy allows any authenticated OIDC identity |
+| End-session endpoint override | Public browser-facing logout endpoint for split internal/public provider routing |
+| Post-logout redirect URI | Exact callback registered with the provider |
+
+`OIDC_PROVIDER_NAME` is a stable persisted identity namespace, not only a
+display label. Do not reuse the same value for an unrelated issuer. AcornOps
+matches returning identities by that provider namespace and the verified
+`sub` claim; it never attaches a previously unseen subject to an existing
+account based only on an email collision. Such users must sign in with the
+account's existing method and explicitly connect SSO when that capability is
+available.
+
+The former `OIDC_REQUIRE_VERIFIED_EMAIL` setting has been removed and is
+rejected at startup. Express that requirement with
+`requireVerifiedEmail: true` in the admission policy.
+
+Admission rules are combined with AND semantics. You can require a literal
+`email_verified=true`, allow exact email domains, and require claims using
+`exists`, `equals`, `contains`, or `intersects`. Claim paths are arrays, which
+keeps nested and namespaced claims unambiguous:
+
+```yaml
+auth:
+  oidc:
+    enabled: true
+    clientSecret:
+      existingSecret: acornops-platform-secrets
+      key: OIDC_CLIENT_SECRET
+    admission:
+      requireVerifiedEmail: true
+      allowedEmailDomains: [example.com]
+      requiredClaims:
+        - path: [groups]
+          operator: intersects
+          values: [acornops-users, platform-sre]
+    logout:
+      endSessionEndpointOverride: https://identity.example.com/realms/acornops/protocol/openid-connect/logout
+      postLogoutRedirectUri: https://console.example.com/api/v1/auth/oidc/logout/callback
+```
+
+The control plane compares admission claims from the verified ID token and
+subject-bound UserInfo response without type coercion. A conflicting value
+fails closed. Admission runs before account creation, identity linking, or
+session creation.
+
+Logout deletes the current AcornOps session before redirecting to the provider.
+Other AcornOps browser sessions are not revoked. The provider may still treat
+RP-initiated logout as termination of its broader SSO session; that behavior is
+provider-dependent.
+If the provider has no usable end-session endpoint, AcornOps completes local
+logout and warns that the provider SSO session may remain active. In that case,
+the next login can authenticate without showing the provider login screen.
 
 ## Password auth
 

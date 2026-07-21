@@ -117,4 +117,18 @@ Replace `example.com` with domains you control. The public demo uses `https://co
 
 Default OIDC settings use the console-host callback, such as `https://console.example.com/api/v1/auth/oidc/callback`, so browser session cookies are set on the console origin. If you override the redirect URI, update the provider allow-list and deployment config together.
 
+Also register `https://console.example.com/api/v1/auth/oidc/logout/callback`
+as an exact post-logout redirect. If logout reports that only the AcornOps
+session was cleared, verify the provider discovery document exposes
+`end_session_endpoint` or configure the public
+`auth.oidc.logout.endSessionEndpointOverride`. Never use an internal service
+hostname for the browser-facing logout endpoint.
+
+Keep query strings out of edge and ingress access logs. OIDC callbacks and
+logout handoffs carry short-lived authorization codes, state values, or opaque
+single-use handles in the query string, while a provider-controlled referrer
+could include its complete logout URL. The supplied Compose Nginx proxy logs
+only the normalized URI path and omits referrers; configure equivalent
+redaction when using a separate ingress controller or external load balancer.
+
 Root `acornops.dev` is reserved outside the platform API surface. Public documentation is served directly from `docs.acornops.dev`.
