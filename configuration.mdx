@@ -133,6 +133,7 @@ Common OIDC settings:
 | Scopes | Defaults to `openid profile email` |
 | Token endpoint auth method | Defaults to client-secret based auth |
 | Admission policy | `auth.oidc.admission` or `OIDC_ADMISSION_POLICY_JSON`; an empty policy allows any authenticated OIDC identity |
+| Explicit prelinks | `OIDC_PRELINKED_IDENTITIES_JSON` supplied through the control-plane environment; each mapping requires the exact provider subject, email, display name, and verification boolean |
 | End-session endpoint override | Public browser-facing logout endpoint for split internal/public provider routing |
 | Post-logout redirect URI | Exact callback registered with the provider |
 
@@ -143,6 +144,14 @@ matches returning identities by that provider namespace and the verified
 account based only on an email collision. Such users must sign in with the
 account's existing method and explicitly connect SSO when that capability is
 available.
+
+Controlled fixtures and bootstrap deployments can explicitly prelink accounts
+with `OIDC_PRELINKED_IDENTITIES_JSON`. Reconciliation runs atomically before
+the server accepts traffic, is idempotent for the same mapping, and fails
+startup if an email or provider subject is already mapped differently. It does
+not weaken admission: every subsequent login is still evaluated against the
+configured admission policy. Never derive this configuration from email alone;
+obtain the exact `sub` from the provider's administrative data.
 
 The former `OIDC_REQUIRE_VERIFIED_EMAIL` setting has been removed and is
 rejected at startup. Express that requirement with
