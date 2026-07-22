@@ -74,12 +74,17 @@ Generate unique values for every internal token and encryption key per environme
 
 See [Agents and workflows](/automation) for rollout order and delivery guarantees.
 
-`EXTERNAL_INTEGRATION_CLIENTS_JSON` stores descriptors such as client id, provider,
-display name, enabled flag, and lowercase SHA-256 token hash. Generate raw
-bearer tokens out of band and store only their hashes in this Secret value. Raw
-external integration client tokens do not authorize general control-plane API
-calls; they are accepted only by the external integration account-link, resolve,
-revoke, and linked-user bot endpoints.
+`EXTERNAL_INTEGRATION_CLIENTS_JSON` stores descriptors such as client id,
+provider, display name, enabled flag, lowercase SHA-256 token hash, and optional
+`allowedCapabilities`. Generate raw bearer tokens out of band and store only
+their hashes in this Secret value. Raw external integration client tokens do not
+authorize general control-plane API calls; they are accepted only by the external
+integration account-link, resolve, revoke, and linked-user bot endpoints.
+
+`allowedCapabilities` is an operator-side ceiling for that registered client. If
+you omit it, AcornOps uses the default external integration ceiling:
+`read_workspace_data`, `create_sessions`, and `create_read_only_runs`. Users
+still approve per-workspace grants when they link the external account.
 
 ## Internal transport TLS
 
