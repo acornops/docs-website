@@ -17245,9 +17245,6 @@
         "security": [
           {
             "userSession": []
-          },
-          {
-            "externalIntegrationClientToken": []
           }
         ],
         "parameters": [
