@@ -21,7 +21,7 @@ The browser API uses a `SameSite=Lax` session cookie. Mutating requests that car
 
 Default production installs support OIDC plus username/password login, with self-service signup disabled and password reset enabled. When self-service password signup is enabled, email verification is required unless an operator explicitly allows unverified signup for a private deployment.
 
-Runtime service-to-service calls use separate bearer tokens and are not part of the public browser API. The external integration account-link endpoints are the narrow exception: they accept an installed external integration client bearer token, derive the client from `EXTERNAL_INTEGRATION_CLIENTS_JSON`, and only create, preview, complete, resolve, unlink, or revoke external user links.
+Runtime service-to-service calls use separate bearer tokens and are not part of the public browser API. Installed external integration clients are a narrow exception: account-link lifecycle, explicitly documented linked-user reads and read-only Workflow session operations, and webhook route connect/status accept a registered client bearer token and derive the client from `EXTERNAL_INTEGRATION_CLIENTS_JSON`.
 
 ## Endpoint families
 
@@ -34,13 +34,13 @@ The API reference is grouped by these areas:
 | Targets and inventory | Target summaries, Kubernetes clusters, VMs, resources, findings, metrics, logs, and agent-key rotation. |
 | Sessions and runs | Target conversations, run state, replayable events, SSE streams, approvals, cancellation, and recent chat activity. |
 | Tools and MCP servers | Target tool catalogs, tool settings, remote MCP server configuration, connection tests, and discovered MCP tools. |
-| Webhooks | Workspace and target-scoped webhook subscriptions, history, and delivery verification. |
+| Webhooks | Workspace and target-scoped webhook subscriptions, external route claim/status, history, and delivery verification. |
 
 Admin endpoints are documented separately in the Admin API reference. They use the `/admin/v1` route namespace and are for operator administration, not normal browser workflows.
 
 ## Integration boundaries
 
-AcornOps v1 does not expose a public PAT or broad bot service-account credential for the control-plane API. Keep user actions attributable by calling privileged endpoints from a real authenticated user session. External integration client bearer tokens are only for the external integration link, resolve, revoke, and linked-user bot endpoints and must not be treated as authority for general workspace actions.
+AcornOps v1 does not expose a public PAT or broad bot service-account credential for the control-plane API. Keep user actions attributable by calling privileged endpoints from a real authenticated user session. External integration client bearer tokens are only for external integration link lifecycle, linked-user bot endpoints, and external webhook route connect/status. They must not be treated as authority for general workspace actions.
 
 Internal service tokens such as `ORCH_SERVICE_TOKEN`, `EXECUTION_ENGINE_DISPATCH_TOKEN`, and `LLM_GATEWAY_ADMIN_TOKEN` are platform credentials. They are not public integration credentials.
 

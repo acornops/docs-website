@@ -337,3 +337,28 @@ MCP registry policy uses `components.llmGateway.catalog`. The Official MCP Regis
 Webhook signing secrets are generated per subscription and returned only once at creation time. The control plane stores encrypted webhook secrets and signs deliveries with HMAC-SHA256.
 
 Webhook delivery is best-effort. Consumers should handle duplicate events and should verify signatures before processing payloads.
+
+Webhook delivery URLs must use HTTPS. Public destinations work by default. Private-address delivery requires an explicit hostname allowlist in addition to any packet-level egress rule:
+
+| Kubernetes value | Local or VM Compose variable | Default | Purpose |
+| --- | --- | --- | --- |
+| `components.controlPlane.webhookEgress.allowedPrivateHosts` | `WEBHOOK_EGRESS_ALLOWED_PRIVATE_HOSTS_JSON` | `[]` | Allows exact DNS hostnames or leading-wildcard hostname patterns to resolve to private addresses for webhook delivery. |
+| `networkPolicies.webhooks.to` | N/A | Deployment-specific | Allows the corresponding Kubernetes destination selectors or CIDRs at the network layer. |
+
+For a private Mattermost bot at `mattermost-bot.internal`, configure the application-level hostname exactly:
+
+```yaml
+components:
+  controlPlane:
+    webhookEgress:
+      allowedPrivateHosts:
+        - mattermost-bot.internal
+```
+
+For local or VM Compose, use the equivalent JSON array:
+
+```dotenv
+WEBHOOK_EGRESS_ALLOWED_PRIVATE_HOSTS_JSON='["mattermost-bot.internal"]'
+```
+
+An exact entry matches only that hostname. A leading `*.` entry matches subdomains, including deeper descendants, but not the bare suffix. The allowlist is additive: public destinations remain available. AcornOps still rejects HTTP, embedded credentials, IP-literal URLs, localhost, metadata services, hard-blocked reserved destinations, mixed allowed/disallowed DNS answers, and redirects. It validates DNS and pins an allowed address before connecting. There is no broad insecure-development webhook switch.
