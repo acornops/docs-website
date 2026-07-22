@@ -1229,7 +1229,7 @@
         "description": "Authenticated browser-session endpoint used by the management console to display safe consent metadata before explicit approval.",
         "security": [
           {
-            "sessionCookie": []
+            "userSession": []
           }
         ],
         "requestBody": {
@@ -1248,6 +1248,28 @@
                     "minLength": 1,
                     "maxLength": 256,
                     "example": "intlink_random_abc123"
+                  },
+                  "workspaceGrants": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "workspaceId",
+                        "capabilities"
+                      ],
+                      "additionalProperties": false,
+                      "properties": {
+                        "workspaceId": {
+                          "type": "string"
+                        },
+                        "capabilities": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
                   }
                 }
               }
@@ -1452,14 +1474,7 @@
             }
           },
           "403": {
-            "description": "Error response.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
+            "$ref": "#/components/responses/Error403"
           },
           "404": {
             "description": "External integration link not found.",
@@ -1472,34 +1487,13 @@
             }
           },
           "409": {
-            "description": "Error response.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
+            "$ref": "#/components/responses/Error409"
           },
           "429": {
-            "description": "Error response.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
+            "$ref": "#/components/responses/Error429"
           },
           "500": {
-            "description": "Error response.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
+            "$ref": "#/components/responses/Error500"
           }
         }
       }
@@ -3264,9 +3258,15 @@
         "security": [
           {
             "userSession": []
+          },
+          {
+            "externalIntegrationClientToken": []
           }
         ],
         "parameters": [
+          {
+            "$ref": "#/components/parameters/HeaderXAcornopsExternalUserId2"
+          },
           {
             "$ref": "#/components/parameters/PathRunId"
           }
@@ -3312,13 +3312,19 @@
           "runs"
         ],
         "summary": "List write-tool approvals for a run",
-        "description": "Returns pending and decided write-tool approvals for visibility.",
+        "description": "Returns pending and decided write-tool approvals for visibility. External integration callers may read approval state but cannot decide approvals.",
         "security": [
           {
             "userSession": []
+          },
+          {
+            "externalIntegrationClientToken": []
           }
         ],
         "parameters": [
+          {
+            "$ref": "#/components/parameters/HeaderXAcornopsExternalUserId2"
+          },
           {
             "$ref": "#/components/parameters/PathRunId"
           }
@@ -3519,9 +3525,15 @@
         "security": [
           {
             "userSession": []
+          },
+          {
+            "externalIntegrationClientToken": []
           }
         ],
         "parameters": [
+          {
+            "$ref": "#/components/parameters/HeaderXAcornopsExternalUserId2"
+          },
           {
             "$ref": "#/components/parameters/PathRunId"
           }
@@ -3570,9 +3582,15 @@
         "security": [
           {
             "userSession": []
+          },
+          {
+            "externalIntegrationClientToken": []
           }
         ],
         "parameters": [
+          {
+            "$ref": "#/components/parameters/HeaderXAcornopsExternalUserId2"
+          },
           {
             "$ref": "#/components/parameters/PathRunId"
           }
@@ -3706,9 +3724,15 @@
         "security": [
           {
             "userSession": []
+          },
+          {
+            "externalIntegrationClientToken": []
           }
         ],
         "parameters": [
+          {
+            "$ref": "#/components/parameters/HeaderXAcornopsExternalUserId2"
+          },
           {
             "$ref": "#/components/parameters/PathSessionId"
           }
@@ -3799,9 +3823,15 @@
         "security": [
           {
             "userSession": []
+          },
+          {
+            "externalIntegrationClientToken": []
           }
         ],
         "parameters": [
+          {
+            "$ref": "#/components/parameters/HeaderXAcornopsExternalUserId2"
+          },
           {
             "$ref": "#/components/parameters/PathSessionId"
           },
@@ -3851,12 +3881,19 @@
           "sessions"
         ],
         "summary": "Append user message and trigger run dispatch",
+        "description": "External integration callers may append messages only to sessions owned by the linked AcornOps user and may trigger read-only troubleshooting runs only.",
         "security": [
           {
             "userSession": []
+          },
+          {
+            "externalIntegrationClientToken": []
           }
         ],
         "parameters": [
+          {
+            "$ref": "#/components/parameters/HeaderXAcornopsExternalUserId2"
+          },
           {
             "$ref": "#/components/parameters/PathSessionId"
           }
@@ -5282,6 +5319,9 @@
         ],
         "parameters": [
           {
+            "$ref": "#/components/parameters/HeaderXAcornopsExternalUserId"
+          },
+          {
             "$ref": "#/components/parameters/QueryLimit"
           },
           {
@@ -5423,6 +5463,9 @@
           }
         ],
         "parameters": [
+          {
+            "$ref": "#/components/parameters/HeaderXAcornopsExternalUserId"
+          },
           {
             "$ref": "#/components/parameters/PathWorkspaceId"
           }
@@ -9353,6 +9396,9 @@
         ],
         "parameters": [
           {
+            "$ref": "#/components/parameters/HeaderXAcornopsExternalUserId"
+          },
+          {
             "$ref": "#/components/parameters/PathWorkspaceId"
           },
           {
@@ -9475,6 +9521,9 @@
         ],
         "parameters": [
           {
+            "$ref": "#/components/parameters/HeaderXAcornopsExternalUserId"
+          },
+          {
             "$ref": "#/components/parameters/PathWorkspaceId"
           },
           {
@@ -9546,6 +9595,9 @@
         ],
         "parameters": [
           {
+            "$ref": "#/components/parameters/HeaderXAcornopsExternalUserId"
+          },
+          {
             "$ref": "#/components/parameters/PathWorkspaceId"
           },
           {
@@ -9612,12 +9664,19 @@
           "workspaces"
         ],
         "summary": "List clusters in a workspace",
+        "description": "Browser callers use the session cookie. Phase-1 external integration callers may use the external integration client token plus x-acornops-external-user-id for a linked external user with bot-scoped read_workspace_data.",
         "security": [
           {
             "userSession": []
+          },
+          {
+            "externalIntegrationClientToken": []
           }
         ],
         "parameters": [
+          {
+            "$ref": "#/components/parameters/HeaderXAcornopsExternalUserId"
+          },
           {
             "$ref": "#/components/parameters/PathWorkspaceId"
           },
@@ -9797,12 +9856,19 @@
           "workspaces"
         ],
         "summary": "Get cluster details and latest snapshot summary",
+        "description": "Browser callers use the session cookie. External integration callers may use the external integration client token plus x-acornops-external-user-id when the linked user and bot allowlist grant read_workspace_data.",
         "security": [
           {
             "userSession": []
+          },
+          {
+            "externalIntegrationClientToken": []
           }
         ],
         "parameters": [
+          {
+            "$ref": "#/components/parameters/HeaderXAcornopsExternalUserId"
+          },
           {
             "$ref": "#/components/parameters/PathWorkspaceId"
           },
@@ -10251,12 +10317,19 @@
           "workspaces"
         ],
         "summary": "List snapshot-derived cluster resources",
+        "description": "Browser callers use the session cookie. External integration callers may use the external integration client token plus x-acornops-external-user-id when the linked user and bot allowlist grant read_workspace_data.",
         "security": [
           {
             "userSession": []
+          },
+          {
+            "externalIntegrationClientToken": []
           }
         ],
         "parameters": [
+          {
+            "$ref": "#/components/parameters/HeaderXAcornopsExternalUserId"
+          },
           {
             "$ref": "#/components/parameters/PathWorkspaceId"
           },
@@ -10437,9 +10510,15 @@
         "security": [
           {
             "userSession": []
+          },
+          {
+            "externalIntegrationClientToken": []
           }
         ],
         "parameters": [
+          {
+            "$ref": "#/components/parameters/HeaderXAcornopsExternalUserId2"
+          },
           {
             "$ref": "#/components/parameters/PathWorkspaceId"
           },
@@ -10512,12 +10591,19 @@
           "sessions"
         ],
         "summary": "Create troubleshooting session for cluster",
+        "description": "External integration callers may create sessions only when the linked user role and bot allowlist grant create_sessions.",
         "security": [
           {
             "userSession": []
+          },
+          {
+            "externalIntegrationClientToken": []
           }
         ],
         "parameters": [
+          {
+            "$ref": "#/components/parameters/HeaderXAcornopsExternalUserId2"
+          },
           {
             "$ref": "#/components/parameters/PathWorkspaceId"
           },
@@ -11540,6 +11626,9 @@
         ],
         "parameters": [
           {
+            "$ref": "#/components/parameters/HeaderXAcornopsExternalUserId"
+          },
+          {
             "$ref": "#/components/parameters/PathWorkspaceId"
           },
           {
@@ -11622,6 +11711,9 @@
           }
         ],
         "parameters": [
+          {
+            "$ref": "#/components/parameters/HeaderXAcornopsExternalUserId"
+          },
           {
             "$ref": "#/components/parameters/PathWorkspaceId"
           },
@@ -11756,9 +11848,15 @@
         "security": [
           {
             "userSession": []
+          },
+          {
+            "externalIntegrationClientToken": []
           }
         ],
         "parameters": [
+          {
+            "$ref": "#/components/parameters/HeaderXAcornopsExternalUserId2"
+          },
           {
             "$ref": "#/components/parameters/PathWorkspaceId"
           },
@@ -11822,9 +11920,15 @@
         "security": [
           {
             "userSession": []
+          },
+          {
+            "externalIntegrationClientToken": []
           }
         ],
         "parameters": [
+          {
+            "$ref": "#/components/parameters/HeaderXAcornopsExternalUserId2"
+          },
           {
             "$ref": "#/components/parameters/PathWorkspaceId"
           },
@@ -11902,6 +12006,9 @@
           }
         ],
         "parameters": [
+          {
+            "$ref": "#/components/parameters/HeaderXAcornopsExternalUserId"
+          },
           {
             "$ref": "#/components/parameters/PathWorkspaceId"
           },
@@ -12005,6 +12112,9 @@
           }
         ],
         "parameters": [
+          {
+            "$ref": "#/components/parameters/HeaderXAcornopsExternalUserId"
+          },
           {
             "$ref": "#/components/parameters/PathWorkspaceId"
           },
@@ -13554,9 +13664,15 @@
         "security": [
           {
             "userSession": []
+          },
+          {
+            "externalIntegrationClientToken": []
           }
         ],
         "parameters": [
+          {
+            "$ref": "#/components/parameters/HeaderXAcornopsExternalUserId2"
+          },
           {
             "$ref": "#/components/parameters/PathWorkspaceId"
           },
@@ -13629,12 +13745,19 @@
           "sessions"
         ],
         "summary": "Create troubleshooting session for target",
+        "description": "External integration callers may create sessions only when the linked user role and bot allowlist grant create_sessions.",
         "security": [
           {
             "userSession": []
+          },
+          {
+            "externalIntegrationClientToken": []
           }
         ],
         "parameters": [
+          {
+            "$ref": "#/components/parameters/HeaderXAcornopsExternalUserId2"
+          },
           {
             "$ref": "#/components/parameters/PathWorkspaceId"
           },
@@ -16178,6 +16301,9 @@
         ],
         "parameters": [
           {
+            "$ref": "#/components/parameters/HeaderXAcornopsExternalUserId"
+          },
+          {
             "$ref": "#/components/parameters/PathWorkspaceId"
           },
           {
@@ -16348,6 +16474,9 @@
           }
         ],
         "parameters": [
+          {
+            "$ref": "#/components/parameters/HeaderXAcornopsExternalUserId"
+          },
           {
             "$ref": "#/components/parameters/PathWorkspaceId"
           },
@@ -16600,9 +16729,6 @@
         "security": [
           {
             "userSession": []
-          },
-          {
-            "externalIntegrationClientToken": []
           }
         ],
         "parameters": [
@@ -16660,6 +16786,7 @@
           "workspaces"
         ],
         "summary": "List snapshot-derived VM inventory items",
+        "description": "Browser callers use the session cookie. External integration callers may use the external integration client token plus x-acornops-external-user-id when the linked user and bot allowlist grant read_workspace_data.",
         "security": [
           {
             "userSession": []
@@ -16669,6 +16796,9 @@
           }
         ],
         "parameters": [
+          {
+            "$ref": "#/components/parameters/HeaderXAcornopsExternalUserId"
+          },
           {
             "$ref": "#/components/parameters/PathWorkspaceId"
           },
@@ -16936,9 +17066,6 @@
         "security": [
           {
             "userSession": []
-          },
-          {
-            "externalIntegrationClientToken": []
           }
         ],
         "parameters": [
@@ -16991,9 +17118,6 @@
         "security": [
           {
             "userSession": []
-          },
-          {
-            "externalIntegrationClientToken": []
           }
         ],
         "parameters": [
@@ -17159,9 +17283,6 @@
         "security": [
           {
             "userSession": []
-          },
-          {
-            "externalIntegrationClientToken": []
           }
         ],
         "parameters": [
@@ -17345,9 +17466,6 @@
         "security": [
           {
             "userSession": []
-          },
-          {
-            "externalIntegrationClientToken": []
           }
         ],
         "parameters": [
@@ -17839,6 +17957,28 @@
   },
   "components": {
     "parameters": {
+      "HeaderXAcornopsExternalUserId": {
+        "in": "header",
+        "name": "x-acornops-external-user-id",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "description": "Required only for external integration client-token requests. Must identify a linked external integration user."
+      },
+      "HeaderXAcornopsExternalUserId2": {
+        "in": "header",
+        "name": "x-acornops-external-user-id",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "description": "Required only for linked external integration requests. Must identify the linked external user."
+      },
       "HeaderXCsrfToken": {
         "name": "x-csrf-token",
         "in": "header",
@@ -20208,6 +20348,39 @@
           }
         }
       },
+      "ExternalIntegrationGrantableWorkspace": {
+        "type": "object",
+        "required": [
+          "workspaceId",
+          "workspaceName",
+          "role",
+          "grantedCapabilities",
+          "grantableCapabilities"
+        ],
+        "properties": {
+          "workspaceId": {
+            "type": "string"
+          },
+          "workspaceName": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          },
+          "grantedCapabilities": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "grantableCapabilities": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
       "ExternalIntegrationLinkCompletion": {
         "type": "object",
         "required": [
@@ -20239,6 +20412,17 @@
           "expiresAt": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "ExternalIntegrationLinkGrantUpdate": {
+        "type": "object",
+        "required": [
+          "link"
+        ],
+        "properties": {
+          "link": {
+            "$ref": "#/components/schemas/ExternalIntegrationLinkSummary"
           }
         }
       },
@@ -20456,7 +20640,8 @@
           "externalUserId",
           "linkedAt",
           "lastAuthenticatedAt",
-          "expiresAt"
+          "expiresAt",
+          "grants"
         ],
         "properties": {
           "id": {
@@ -20486,6 +20671,50 @@
             "format": "date-time"
           },
           "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "grants": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExternalIntegrationWorkspaceGrant"
+            }
+          },
+          "grantableWorkspaces": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExternalIntegrationGrantableWorkspace"
+            }
+          }
+        }
+      },
+      "ExternalIntegrationWorkspaceGrant": {
+        "type": "object",
+        "required": [
+          "workspaceId",
+          "capabilities",
+          "grantedByUserId",
+          "createdAt",
+          "updatedAt"
+        ],
+        "properties": {
+          "workspaceId": {
+            "type": "string"
+          },
+          "capabilities": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "grantedByUserId": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
             "type": "string",
             "format": "date-time"
           }
