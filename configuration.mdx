@@ -336,7 +336,21 @@ MCP registry policy uses `components.llmGateway.catalog`. The Official MCP Regis
 
 Webhook signing secrets are generated per subscription and returned only once at creation time. The control plane stores encrypted webhook secrets and signs deliveries with HMAC-SHA256.
 
-Webhook delivery is best-effort. Consumers should handle duplicate events and should verify signatures before processing payloads.
+Webhook events and delivery jobs are durable in control-plane Postgres. Every
+control-plane replica can claim work with expiring database leases; Redis is not
+required for webhook delivery. Delivery remains at least once, so consumers
+must handle duplicates and verify signatures before processing payloads.
+
+| Kubernetes value | Local or VM Compose variable | Default | Purpose |
+| --- | --- | --- | --- |
+| `components.controlPlane.webhookDelivery.enabled` | `WEBHOOK_WORKER_ENABLED` | `true` | Enables new delivery-job claims. Set to `false` during maintenance without stopping event enqueue. |
+| `components.controlPlane.webhookDelivery.batchSize` | `WEBHOOK_WORKER_BATCH_SIZE` | `50` | Maximum jobs claimed in one worker batch. |
+| `components.controlPlane.webhookDelivery.concurrency` | `WEBHOOK_WORKER_CONCURRENCY` | `20` | Maximum concurrent deliveries per control-plane worker. |
+| `components.controlPlane.webhookDelivery.perOriginConcurrency` | `WEBHOOK_WORKER_PER_ORIGIN_CONCURRENCY` | `4` | Maximum concurrent deliveries to one destination origin. |
+| `components.controlPlane.webhookDelivery.maxAttempts` | `WEBHOOK_MAX_ATTEMPTS` | `10` | Maximum delivery attempts before a job becomes terminal. |
+| `components.controlPlane.webhookDelivery.maxRetryAgeSeconds` | `WEBHOOK_MAX_RETRY_AGE_SECONDS` | `86400` | Maximum retry age in seconds. |
+| `components.controlPlane.webhookDelivery.maxPayloadBytes` | `WEBHOOK_MAX_PAYLOAD_BYTES` | `65536` | Maximum serialized webhook payload size. |
+| `components.controlPlane.webhookDelivery.maxSubscriptionsPerWorkspace` | `WEBHOOK_MAX_SUBSCRIPTIONS_PER_WORKSPACE` | `100` | Maximum webhook subscriptions in one workspace. |
 
 Webhook delivery URLs must use HTTPS. Public destinations work by default. Private-address delivery requires an explicit hostname allowlist in addition to any packet-level egress rule:
 
