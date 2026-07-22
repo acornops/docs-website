@@ -59,7 +59,7 @@ Read-only runs cannot execute write tools even when the agent and RBAC support t
 
 Each cluster has an effective write confirmation policy:
 
-- `deployment_default`: inherits `AGENT_WRITE_CONFIRMATION_REQUIRED`.
+- `deployment_default`: inherits `ASSISTANT_WRITE_CONFIRMATION_REQUIRED`.
 - `cluster_override`: uses the cluster's explicit override.
 
 In the management console, this policy is managed from Cluster Settings alongside namespace scope.
@@ -79,8 +79,7 @@ The current builtin Kubernetes tool set includes:
 - `get_resource_logs`
 - `restart_workload`
 - `scale_workload`
-- `simulate_patch`
-- `apply_remediation`
+- `patch_resource`
 
 The connected agent advertises the available builtin tools. AcornOps shows those tools in the target tool catalog and filters access based on workspace role, target policy, and run mode.
 

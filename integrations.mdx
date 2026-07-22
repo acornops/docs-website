@@ -9,10 +9,10 @@ Use this path when you want to build around AcornOps rather than only operate th
 
 | Surface | Use it for | Notes |
 | --- | --- | --- |
-| Control-plane API | Workspaces, targets, Kubernetes clusters, VMs, sessions, runs, approvals, tool settings, MCP server settings | Public API under your deployment host, such as `https://api.example.com/api/v1`; v1 calls require an authenticated AcornOps user session. The public demo API is `https://api.demo.acornops.dev/api/v1`. |
-| Webhooks | Event-driven bots and workflow automation | Create subscriptions in the management console or browser API. Verify every delivery signature before processing the payload. |
+| Control-plane API | Workspaces, targets, Kubernetes clusters, VMs, Agents, sessions, runs, approvals, MCP registries, and Agent-owned capabilities | Public API under your deployment host, such as `https://api.example.com/api/v1`; most v1 calls require an authenticated AcornOps user session. Installed external clients can use only the explicitly documented linked-user routes. The public demo API is `https://api.demo.acornops.dev/api/v1`. |
+| Webhooks | Event-driven bots and workflow automation | Verify every delivery signature before processing the payload. |
 | Run events and SSE | Custom run timelines or signed-in user experiences | Use replayable run events and `GET /api/v1/runs/{runId}/stream` for live updates. |
-| MCP server configuration | Connecting external tool providers | Add remote MCP servers through the control-plane API or management console, then enable discovered tools. |
+| Agent capability configuration | Connecting external tool providers | Add remote MCP servers to one Agent through the control-plane API or management console, then review discovered tools. |
 
 Execution-engine and LLM-gateway runtime APIs are internal platform surfaces. Do not call them from external bots or customer integrations.
 
@@ -49,16 +49,36 @@ Linked bot requests are authorized per workspace. Effective permissions are the 
 
 External integration clients should not store browser cookies, OIDC tokens, raw link tokens, or an AcornOps user ID as authorization material. Browser login and link completion are AcornOps-owned session flows, not external integration APIs.
 
+## Linked read-only Workflow access
+
+An installed external client can list and run a deliberately narrow set of Workflows for a linked user. Send both the installed client bearer token and the external identity observed from the provider:
+
+```http
+Authorization: Bearer <external-integration-client-token>
+x-acornops-external-user-id: <external-user-id>
+```
+
+The linked identity is authorized only when the user has a live workspace role and saved grants for `read_workspace_data`, `create_sessions`, and `create_read_only_runs`, plus every permission required by the Workflow. Eligible definitions must be active, read-only, and have no approval requirements. AcornOps still applies Workflow V2 compilation, catalog readiness, typed prompt references, exact target bindings, and tool narrowing.
+
+The external client may use:
+
+- `GET /api/v1/workspaces/{workspaceId}/workflows` to list eligible definitions.
+- `GET /api/v1/workflows/{workflowId}?workspaceId={workspaceId}` to refresh one eligible definition.
+- `POST /api/v1/workflows/{workflowId}/sessions` to create a session owned by the linked AcornOps user.
+- `POST /api/v1/workflow-sessions/{sessionId}/messages` to dispatch a read-only execution in that owned session.
+
+Each externally dispatched message should include a stable `clientRequestId`. Reuse it only when retrying the same provider message; use a new value for a new user message. This makes transport retries idempotent without making unrelated requests collide. External credentials cannot list arbitrary Workflow sessions, run write-capable definitions, satisfy approval-gated definitions, or use another user's session.
+
 ## Bot adapter pattern
 
 An external integration adapter usually follows this flow:
 
-1. Ask a workspace admin to create a webhook subscription for the events the bot needs.
+1. Ask the linked AcornOps user with `manage_webhooks` to create a webhook subscription for the events the bot needs.
 2. Verify `AcornOps-Signature` using the subscription secret.
 3. Map the event to a channel, thread, incident, or user-visible card.
-4. For allowed bot context, link to the management console or fetch permitted public API data using the linked external integration credential.
-5. For a write approval created by the integration's own troubleshooting run or Workflow execution, render the pending approval and require an explicit confirmation from the linked external user.
-6. Submit the decision to `POST /api/v1/runs/{runId}/approvals/{approvalId}/decision` with the same linked integration credential, or direct the user to the management console. External credentials receive `403` for browser-created, other-link/client, standalone Agent, scheduled, or system-triggered approvals.
+4. For read-only context, link to the management console, use an authenticated user session, or call an explicitly documented linked-user route with the installed client credential and observed external user ID.
+5. For write approvals, render approve and reject controls only when the click can be tied back to a real AcornOps user.
+6. Submit approval decisions to `POST /api/v1/runs/{runId}/approvals/{approvalId}/decision`.
 
 Approval decisions are intentionally not just webhook acknowledgements. The first recorded decision wins; conflicting later decisions return the current approval state.
 
@@ -84,6 +104,8 @@ Webhook events and delivery jobs are stored durably in Postgres and signed with
 HMAC-SHA256. Delivery is at least once: consumers must handle duplicate and
 out-of-order events. One stable event ID and immutable body are reused across
 all recipients and retry attempts.
+
+Delivery URLs must use HTTPS. AcornOps rejects embedded credentials, IP-literal URLs, redirects, localhost, metadata endpoints, and reserved destinations. A deployment can opt an exact DNS hostname or leading-wildcard hostname into private-address delivery, but this does not weaken the remaining URL and DNS checks.
 
 Workspace users with `permissions.manage_webhooks` can create, edit, disable, delete, and inspect delivery history for outgoing webhooks from Workspace Settings. The create response returns the signing secret once. Store that secret in your integration and do not put it in a delivery URL.
 
@@ -138,6 +160,8 @@ current canonical URL and signing secret. Delivery ordering is not global.
 
 Some bot adapters create one delivery route per external user or destination, then ask the AcornOps user to subscribe workspace events to that route URL. After the user links the external account and creates the webhook subscriptions, the bot can claim live subscription metadata for that route.
 
+For the Mattermost bot, run `!webhook create` to obtain the user-level delivery URL. The same linked AcornOps user must add that exact URL to one or more subscriptions in Workspace Settings and then run `!webhook connect`. The connect call is the secret handoff for this route: it rotates each matching subscription secret and returns the new value once over authenticated TLS. Do not paste a signing secret into Mattermost or put it in the delivery URL.
+
 Connect a route:
 
 ```http
@@ -153,7 +177,7 @@ Content-Type: application/json
 }
 ```
 
-AcornOps returns only subscriptions created by the linked AcornOps user for that delivery URL where the user still has `permissions.manage_webhooks`. Each successful connect rotates the matching signing secrets and returns the fresh `signingSecret` values in that response. Treat reconnect as the documented secret recovery and rotation flow.
+AcornOps compares the canonical delivery URL exactly and returns only subscriptions created by the linked AcornOps user while that user still has `permissions.manage_webhooks`. Each successful connect rotates the matching signing secrets and returns the fresh `signingSecret` values in that response. Treat reconnect as the documented secret recovery and rotation flow.
 
 Check route status:
 
@@ -163,7 +187,7 @@ Authorization: Bearer <external-integration-client-token>
 x-acornops-external-user-id: <external-user-id>
 ```
 
-Status responses return `unconfigured`, `configured`, or `connected` plus current workspace/event/enabled state. Status never includes signing secrets.
+Status responses return `unconfigured`, `configured`, or `connected` plus current workspace/event/enabled state. Status always reloads live AcornOps authorization and subscription state and never includes signing secrets. The Mattermost bot's `!webhook status` command uses this route without exposing its locally retained secrets.
 
 Write approval integrations should handle:
 
@@ -193,8 +217,8 @@ There are two different integration directions:
 
 | Goal | Recommended path |
 | --- | --- |
-| Let AcornOps call your external tools | Expose an MCP server, add it to a target, test discovery, then enable reviewed tools. |
-| Let your app react to AcornOps activity | Subscribe to webhooks and call public control-plane endpoints with an authenticated user session when needed. |
+| Let AcornOps call your external tools | Expose an MCP server, install it on one Agent, test discovery, then review exact server/tool pairs. |
+| Let your app react to AcornOps activity | Subscribe to webhooks and use an authenticated user session or an explicitly documented linked-user endpoint when additional API context is needed. |
 
 Remote MCP servers can receive non-secret `publicHeaders`. Credentials must use the secret-backed auth fields. Platform scope headers such as `x-workspace-id`, `x-target-id`, `x-target-type`, and `x-run-id` are reserved and added by the gateway.
 
@@ -205,7 +229,7 @@ See [MCP and tools](/mcp-tools) for MCP setup and header policy.
 Use this sequence for a new integration:
 
 1. Confirm the platform is deployed and reachable from your integration host.
-2. Decide whether the integration is webhook-driven, user-session driven, or both.
+2. Decide whether the integration is webhook-driven, user-session driven, linked-external-user driven, or a combination.
 3. Create a workspace webhook subscription for the required event types.
 4. Verify signatures before acting on payloads.
 5. Use [API overview](/api-overview) to confirm API boundaries, then use the API reference sidebar for endpoint schemas.

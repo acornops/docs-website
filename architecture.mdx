@@ -34,7 +34,7 @@ flowchart LR
 | Execution engine | Run lifecycle, orchestration loop, event emission, cancellation, tool-call coordination | Internal only |
 | LLM gateway | Provider routing, run-scoped model access, MCP registry, secret lookup, gateway auditing | Internal only |
 | AgentK | Kubernetes cluster snapshots, logs, and builtin Kubernetes tool execution | Outbound only |
-| AgentV | Linux/systemd host snapshots, logs, and read-only builtin VM tool execution | Outbound only |
+| AgentV | Bounded Linux/systemd snapshots and strict built-in tools; optional local helper for allowlisted service restart | Network outbound only |
 
 ## Runtime flow
 
@@ -46,7 +46,7 @@ flowchart LR
 6. The execution engine fetches run context from the control plane, streams model requests through the LLM gateway, and calls allowed tools.
 7. The control plane records run events and streams them back to the management console.
 
-Remote MCP servers use the same run-scoped tool permission model. The gateway discovers remote tools from `tools/list`, stores discovered tools disabled by default, and forwards calls with platform scope headers plus any configured non-secret public headers.
+Remote MCP servers use the same run-scoped tool permission model. Each installation belongs to one Agent. The gateway discovers remote tools from `tools/list`, stores them pending explicit review, and invokes only an exact `{serverId, toolName}` reference allowed by the pinned Agent version.
 
 ## Auth and trust boundaries
 
@@ -68,7 +68,7 @@ Remote MCP credentials are secret-backed. Non-secret `publicHeaders` may be forw
 
 ## Workspace and role model
 
-A workspace contains members, audit events, targets, Kubernetes clusters, VMs, MCP server settings, tool settings, sessions, runs, and webhooks. Server responses include role-derived permissions so clients can show available actions without reimplementing authorization rules.
+A workspace contains members, audit events, targets, Kubernetes clusters, VMs, MCP registries, Agents with independently installed capabilities, sessions, runs, and webhooks. Server responses include role-derived permissions so clients can show available actions without reimplementing authorization rules.
 
 The deployment defines the supported workspace role templates. `owner` is always present, protected, and required. Deployments can disable non-owner built-ins (`admin`, `operator`, `viewer`, `auditor`) and define custom lowercase snake_case roles with supported workspace capabilities. Workspaces assign members and invitations from this deployment catalog; they cannot edit capability sets or role availability.
 
@@ -88,7 +88,7 @@ Troubleshooting conversations are owner-write and viewer-read. The user who star
 | Run reservations and worker coordination | Execution engine with Redis |
 | Provider credentials, MCP registry, gateway request records | LLM gateway |
 | Live Kubernetes discovery and builtin tool behavior | AgentK |
-| Live VM host discovery and read-only builtin tool behavior | AgentV |
+| Live VM host discovery, strict tool behavior, and helper protocol | AgentV |
 
 Agent snapshots are persisted by the control plane and exposed to the management console. Kubernetes snapshots include resources, events, and metrics when available. VM snapshots include host inventory, health findings, metrics, and bounded logs.
 
