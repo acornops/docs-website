@@ -3483,7 +3483,7 @@
           "runs"
         ],
         "summary": "List write-tool approvals for a run",
-        "description": "Returns pending and decided write-tool approvals. Approval listing follows workspace-read visibility. An external integration may decide a troubleshooting approval or a Workflow pre-step/runtime tool_write approval only when the execution originated through the exact same link and client. Approval requires effective create_read_write_runs; the origin may reject with current workspace read access after write permission is removed.",
+        "description": "Returns pending and decided write-tool approvals. Approval listing follows workspace-read visibility. Browser sessions receive the full approval record; linked external integrations receive bounded control metadata without executable arguments, tool references or digests, actor identifiers, continuations, or tool results. An external integration may decide a troubleshooting approval or a Workflow pre-step/runtime tool_write approval only when the execution originated through the exact same link and client. Approval requires effective create_read_write_runs; the origin may reject with current workspace read access after write permission is removed.",
         "security": [
           {
             "userSession": []
@@ -3506,7 +3506,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/RunApprovalPage"
+                  "$ref": "#/components/schemas/RunApprovalList"
                 }
               }
             }
@@ -3541,7 +3541,7 @@
           "runs"
         ],
         "summary": "Approve or reject a pending write-tool approval",
-        "description": "A linked external integration may decide only a troubleshooting write approval or Workflow pre-step/runtime tool_write approval whose run execution was requested through that exact integration link and client. Approvals require effective create_read_write_runs. The exact origin may reject while retaining workspace read access if write permission was removed. Browser-created, other-link/client, standalone Agent, scheduled, and system-triggered approvals remain unavailable.",
+        "description": "A linked external integration may decide only a troubleshooting write approval or Workflow pre-step/runtime tool_write approval whose run execution was requested through that exact integration link and client. Approvals require effective create_read_write_runs. The exact origin may reject while retaining workspace read access if write permission was removed. Browser-created, other-link/client, standalone Agent, scheduled, and system-triggered approvals remain unavailable. Browser responses contain the full approval record; external-integration success and conflict responses contain only the same bounded control metadata returned by the external approval list.",
         "security": [
           {
             "userSession": []
@@ -19680,20 +19680,7 @@
         "additionalProperties": true
       },
       "ApprovalDecision": {
-        "type": "object",
-        "required": [
-          "approval"
-        ],
-        "properties": {
-          "approval": {
-            "$ref": "#/components/schemas/RunApproval"
-          },
-          "conflict": {
-            "type": "object",
-            "additionalProperties": true
-          }
-        },
-        "additionalProperties": true
+        "$ref": "#/components/schemas/RunApproval"
       },
       "AuthLogoutResponse": {
         "type": "object",
@@ -22206,9 +22193,12 @@
         "required": [
           "id",
           "runId",
+          "workspaceId",
+          "toolName",
           "status",
-          "targetId",
-          "targetType"
+          "executionStatus",
+          "createdAt",
+          "expiresAt"
         ],
         "properties": {
           "id": {
@@ -22218,6 +22208,32 @@
           "runId": {
             "type": "string",
             "format": "uuid"
+          },
+          "workspaceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "workflowId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "workflowRunId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sourceType": {
+            "type": "string",
+            "enum": [
+              "agent",
+              "workflow"
+            ]
+          },
+          "approvalKind": {
+            "type": "string",
+            "enum": [
+              "pre_step",
+              "tool_write"
+            ]
           },
           "targetId": {
             "type": "string",
@@ -22243,6 +22259,23 @@
               "expired"
             ]
           },
+          "executionStatus": {
+            "type": "string",
+            "enum": [
+              "not_started",
+              "executing",
+              "succeeded",
+              "failed",
+              "unknown"
+            ]
+          },
+          "decision": {
+            "type": "string",
+            "enum": [
+              "approved",
+              "rejected"
+            ]
+          },
           "toolName": {
             "type": "string"
           },
@@ -22265,20 +22298,11 @@
         },
         "additionalProperties": true
       },
-      "RunApprovalPage": {
-        "type": "object",
-        "required": [
-          "items"
-        ],
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/RunApproval"
-            }
-          }
-        },
-        "additionalProperties": true
+      "RunApprovalList": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/RunApproval"
+        }
       },
       "RunEvent": {
         "type": "object",

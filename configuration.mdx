@@ -360,6 +360,13 @@ must handle duplicates and verify signatures before processing payloads.
 | `components.controlPlane.webhookDelivery.maxPayloadBytes` | `WEBHOOK_MAX_PAYLOAD_BYTES` | `65536` | Maximum serialized webhook payload size. |
 | `components.controlPlane.webhookDelivery.maxSubscriptionsPerWorkspace` | `WEBHOOK_MAX_SUBSCRIPTIONS_PER_WORKSPACE` | `100` | Maximum webhook subscriptions in one workspace. |
 
+The effective per-origin concurrency is the lower of the global worker
+`concurrency` and `perOriginConcurrency`. Claim leases account for the time a
+full same-origin batch may wait behind that effective limit. The control
+plane's delivery deadline covers DNS resolution, connection setup, and the
+complete response body, so a stalled resolver or streaming peer cannot retain
+a delivery past its lease budget.
+
 Webhook delivery URLs must use HTTPS. Public destinations work by default. Private-address delivery requires an explicit hostname allowlist in addition to any packet-level egress rule:
 
 | Kubernetes value | Local or VM Compose variable | Default | Purpose |

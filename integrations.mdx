@@ -118,6 +118,12 @@ per-run SSE, and nested aggregate run events keep lifecycle and safe approval
 metadata while removing prompts, reasoning, token deltas, raw tool arguments,
 and tool results.
 
+Run approval lists and decision responses use the same boundary. Linked
+integrations receive only bounded control metadata such as approval identity,
+safe summary, state, target, and expiry. Executable arguments, tool references
+and digests, actor identifiers, continuation state, and tool results remain
+browser/internal-only.
+
 ## Webhook events
 
 Webhook events and delivery jobs are stored durably in Postgres and signed with

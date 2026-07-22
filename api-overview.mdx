@@ -68,6 +68,9 @@ integrations receive bounded run projections and sanitized event payloads:
 lifecycle state plus safe approval metadata, without prompts, reasoning, token
 deltas, raw tool arguments, or tool results. Only the exact originating
 link/client receives final assistant output from the run detail endpoint.
+Approval lists and decision responses likewise expose only bounded control
+metadata to linked integrations; executable arguments, tool references and
+digests, actor identifiers, continuations, and tool results are omitted.
 
 Multi-step Workflow executions also expose a workspace-readable sanitized
 execution DTO and aggregate replayable SSE stream. The aggregate stream carries
