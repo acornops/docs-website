@@ -9,14 +9,21 @@ This page covers day-two operations for the central platform and connected Kuber
 
 For production-style environments:
 
-1. Review release notes and changed configuration keys.
-2. Confirm Postgres and Redis availability and capacity.
-3. Run service init jobs before starting updated services.
-4. Roll the management console, control plane, execution engine, and LLM gateway.
-5. Verify OIDC sign-in, workspace listing, agent connectivity, and a read-only run.
-6. Roll target agents separately when chart, package, or agent behavior changes.
+1. Select one pinned stack matrix whose execution contract version is exactly 2.
+2. Confirm Postgres and Redis availability, then explicitly recreate the pre-release control-plane and gateway databases for this greenfield schema epoch.
+3. Deploy gateway, control plane, execution engine, deployment metadata, and documentation as one stack. Do not roll any image independently.
+4. Smoke test OIDC sign-in, workspace listing, agent connectivity, built-in tools, approval receipt execution, workspace and individual credential lifecycles, and a read-only run.
 
 Pin image tags during upgrades so deployments are reproducible.
+
+This version is a first-install/reset cutover, not a rolling database upgrade.
+The final baselines intentionally contain no pre-release data conversion paths.
+
+For external Postgres, take a provider snapshot or `pg_dump`, then use an
+administrative connection to drop and recreate the control-plane database. For
+local Compose, run `task local-reset`. Returning to an older schema requires
+restoring a matching database backup and complete pinned image matrix; an application-only
+rollback is unsafe across schema epochs.
 
 Control-plane rollouts keep the service available through multiple replicas. Connected agents reconnect to an available pod during the rollout, but commands that are already running can fail or time out and may need to be retried.
 
@@ -27,7 +34,7 @@ Inspect durable state:
 | Store | Contains |
 | --- | --- |
 | Control-plane Postgres | Workspaces, users, members, targets, sessions, Agents, Workflows, schedules, trigger deliveries, approvals, attempts, append-only run events, dispatch intent, report sources, invitations, and webhooks |
-| LLM-gateway Postgres | MCP registry, gateway metadata, encrypted provider or MCP secrets when using database-backed secrets |
+| LLM-gateway Postgres | Catalog discovery, Agent- and target-owned MCP installations, reviewed tool state, provider connections, and encrypted secrets when using database-backed secrets |
 | External secret manager | Provider keys and MCP auth secrets when Vault or another manager is enabled |
 
 Redis is used for coordination, rate limits, control-plane agent ownership, cross-pod command routing, and run event fanout. Postgres claims and leases are authoritative for automation scheduling and dispatch.
@@ -43,7 +50,7 @@ Verify the platform from the outside in:
 - target agents can connect over WebSocket,
 - a run streams events through `GET /api/v1/runs/{runId}/stream`,
 - the LLM gateway is ready with a fresh JWKS cache,
-- remote MCP server discovery and connection tests pass for configured servers,
+- remote MCP discovery and workspace/individual connection tests pass when the kill switch is enabled,
 - webhooks record delivery attempts for subscribed events.
 - workspace automation diagnostics report no dispatch older than 30 seconds, scheduler lag over 60 seconds, stale approvals, or unexpected `needs_review` runs.
 
@@ -60,7 +67,7 @@ For production, keep component API docs disabled unless you intentionally expose
 | Agent or Workflow dispatch delayed | Workspace automation diagnostics, `control_plane_automation_runtime` gauges, control-plane outbox worker logs, execution-engine readiness |
 | Run needs review | Approval and terminal audit records; confirm whether a write result was uncertain before authorizing resume |
 | Model calls fail | LLM-gateway logs, provider keys, run JWT claims, provider allow-list |
-| MCP tools fail | Gateway egress policy, MCP server discovery, public header validation, auth secret lookup |
+| MCP tools fail | Pinned Agent version, exact server/tool reference, target constraints, reviewed state, principal connection scopes, permission-mode decision, and gateway egress policy |
 | Webhook verification fails | Consumer raw-body handling, timestamp, signature header, subscription secret |
 
 ## Rate limits and budgets
@@ -74,8 +81,9 @@ Use both platform and gateway limits:
 - max output tokens,
 - per-window LLM request limits,
 - per-window tool-call limits.
+- per-user, per-installation MCP connect/verify limits.
 
-Keep read-write runs limited to roles and Kubernetes clusters where remediation is expected. VM troubleshooting runs are read-only.
+Keep read-write runs limited to roles and targets where remediation is expected. AgentV exposes only `restart_service`, and only when the host helper and exact local allowlist are enabled.
 
 ## Secret rotation
 
@@ -87,10 +95,14 @@ Rotate secrets with service-specific rollout plans:
 | Internal service tokens | Rotate paired services together or support overlap during rollout |
 | Agent keys | Use the control-plane agent-key rotation flow per target |
 | Provider API keys | Update the gateway secret backend, then verify a read-only run |
-| MCP server auth secrets | Rotate through the MCP server auth fields, test the server connection, then verify an enabled tool |
+| MCP credential | Revoke or rotate the least-privilege credential on the exact installation, then Verify; service identities require workspace-managed mode |
 | Webhook signing secrets | Create or rotate the subscription secret and update the consumer |
 
 Do not reuse internal service tokens across environments.
+
+For Vault KV v2, MCP credential cleanup must delete metadata under the configured namespace, mount, prefix, and workspace path, not only the latest data version. Alert on durable cleanup retry failures after member or workspace removal. Membership revocation proceeds even when Vault is unavailable; queued cleanup must complete when the backend recovers.
+
+Load both `observability/prometheus/alerts/llm-gateway.rules.yaml` and `observability/prometheus/alerts/control-plane-automation.rules.yaml` from the deployment repository. The MCP rules alert on secret cleanup failure, sustained runtime 401/403 transitions, and schedules auto-paused for connection readiness. External MCP reachability is deliberately not a platform readiness dependency.
 
 ## Public route drift
 
@@ -104,5 +116,19 @@ Keep these routes consistent across deployment, OIDC provider settings, docs, an
 Replace `example.com` with domains you control. The public demo uses `https://console.demo.acornops.dev/` and `https://api.demo.acornops.dev`.
 
 Default OIDC settings use the console-host callback, such as `https://console.example.com/api/v1/auth/oidc/callback`, so browser session cookies are set on the console origin. If you override the redirect URI, update the provider allow-list and deployment config together.
+
+Also register `https://console.example.com/api/v1/auth/oidc/logout/callback`
+as an exact post-logout redirect. If logout reports that only the AcornOps
+session was cleared, verify the provider discovery document exposes
+`end_session_endpoint` or configure the public
+`auth.oidc.logout.endSessionEndpointOverride`. Never use an internal service
+hostname for the browser-facing logout endpoint.
+
+Keep query strings out of edge and ingress access logs. OIDC callbacks and
+logout handoffs carry short-lived authorization codes, state values, or opaque
+single-use handles in the query string, while a provider-controlled referrer
+could include its complete logout URL. The supplied Compose Nginx proxy logs
+only the normalized URI path and omits referrers; configure equivalent
+redaction when using a separate ingress controller or external load balancer.
 
 Root `acornops.dev` is reserved outside the platform API surface. Public documentation is served directly from `docs.acornops.dev`.

@@ -9,10 +9,10 @@ Use this path when you want to build around AcornOps rather than only operate th
 
 | Surface | Use it for | Notes |
 | --- | --- | --- |
-| Control-plane API | Workspaces, targets, Kubernetes clusters, VMs, sessions, runs, approvals, tool settings, MCP server settings | Public API under your deployment host, such as `https://api.example.com/api/v1`; v1 calls require an authenticated AcornOps user session. The public demo API is `https://api.demo.acornops.dev/api/v1`. |
+| Control-plane API | Workspaces, targets, Kubernetes clusters, VMs, Agents, sessions, runs, approvals, MCP registries, and Agent-owned capabilities | Public API under your deployment host, such as `https://api.example.com/api/v1`; v1 calls require an authenticated AcornOps user session. The public demo API is `https://api.demo.acornops.dev/api/v1`. |
 | Webhooks | Event-driven bots and workflow automation | Verify every delivery signature before processing the payload. |
 | Run events and SSE | Custom run timelines or signed-in user experiences | Use replayable run events and `GET /api/v1/runs/{runId}/stream` for live updates. |
-| MCP server configuration | Connecting external tool providers | Add remote MCP servers through the control-plane API or management console, then enable discovered tools. |
+| Agent capability configuration | Connecting external tool providers | Add remote MCP servers to one Agent through the control-plane API or management console, then review discovered tools. |
 
 Execution-engine and LLM-gateway runtime APIs are internal platform surfaces. Do not call them from external bots or customer integrations.
 
@@ -95,7 +95,7 @@ There are two different integration directions:
 
 | Goal | Recommended path |
 | --- | --- |
-| Let AcornOps call your external tools | Expose an MCP server, add it to a target, test discovery, then enable reviewed tools. |
+| Let AcornOps call your external tools | Expose an MCP server, install it on one Agent, test discovery, then review exact server/tool pairs. |
 | Let your app react to AcornOps activity | Subscribe to webhooks and call public control-plane endpoints with an authenticated user session when needed. |
 
 Remote MCP servers can receive non-secret `publicHeaders`. Credentials must use the secret-backed auth fields. Platform scope headers such as `x-workspace-id`, `x-target-id`, `x-target-type`, and `x-run-id` are reserved and added by the gateway.
