@@ -22,12 +22,14 @@ The public control-plane API is session-based. Browser clients use the same `Sam
 
 AcornOps v1 does not expose a public PAT or broad bot service-account credential for the control-plane API. Installed external integration clients authenticate with raw bearer tokens whose SHA-256 hashes are configured in `EXTERNAL_INTEGRATION_CLIENTS_JSON`.
 
-For v1 integrations, keep user actions attributable:
+For v1 integrations, keep privileged decisions attributable:
 
 - use webhooks for bot notifications and workflow triggers,
-- send users to the management console or an authenticated client flow for privileged actions,
-- call approval endpoints only as a real AcornOps user with the required workspace permission,
-- avoid shared bot-user decisions for write approvals.
+- require an explicit linked-user confirmation before submitting a write approval,
+- send users to the management console for approvals outside the integration's own troubleshooting runs or Workflow executions and for management actions,
+- never auto-approve because a webhook or run event was received.
+
+Deployments may explicitly add `create_read_write_runs` to a registered external integration client's allowed capabilities and the linked user's workspace grant. That lets the integration request read-write troubleshooting runs and active read-write or approval-gated Workflows when the linked user's workspace role also allows it. Write-capable tools still pause on AcornOps approval gates. The exact integration link and client recorded on the run or Workflow execution may submit the linked user's explicit approval or rejection. It cannot decide approvals for browser-created executions, another link/client, standalone Agents, schedules, or system triggers.
 
 Internal service tokens such as `ORCH_SERVICE_TOKEN`, `EXECUTION_ENGINE_DISPATCH_TOKEN`, and `LLM_GATEWAY_ADMIN_TOKEN` are platform credentials. External integration client bearer tokens are narrow adapter credentials, not public PATs. The built-in MCP bridge uses the run-scoped JWT minted for the active execution.
 
@@ -79,6 +81,22 @@ An external integration adapter usually follows this flow:
 6. Submit approval decisions to `POST /api/v1/runs/{runId}/approvals/{approvalId}/decision`.
 
 Approval decisions are intentionally not just webhook acknowledgements. The first recorded decision wins; conflicting later decisions return the current approval state.
+
+For a Workflow, keep the returned `workflowSessionId` as the external thread
+mapping. Each external message requires a new `clientRequestId` and creates a
+new execution in that session. A reply after completion retains the conversation
+history and pinned Workflow version, but it creates new run IDs and fresh
+approvals. The current Workflow must remain active, and AcornOps recompiles the
+session's access from current effective permissions for every message.
+
+Use `GET /api/v1/workflow-executions/{executionId}` for sanitized state and
+`GET /api/v1/workflow-executions/{executionId}/stream` for aggregate,
+replayable SSE. The execution stream discovers each next-step run and approval,
+so adapters do not need to poll an unknown sequence of individual run streams.
+Resume with `Last-Event-ID` or `after`. Any linked integration with effective
+workspace read access may inspect safe execution metadata and events, including
+executions started elsewhere. Session replies, approval decisions, and report
+metadata/downloads remain restricted to the exact originating link and client.
 
 ## Webhook events
 
@@ -175,6 +193,14 @@ Write approval integrations should handle:
 
 - `run.tool_approval_requested.v1`
 - `run.tool_approval_decided.v1`
+
+When a run or aggregate Workflow execution stream reports a pending write
+approval, the originating linked integration may collect an explicit user
+confirmation. For approvals outside that narrow scope, send the user to:
+
+```text
+{MANAGEMENT_CONSOLE_BASE_URL}/workspaces/{workspaceId}/approvals?runId={runId}&approvalId={approvalId}
+```
 
 MCP server integrations may also care about:
 

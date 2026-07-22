@@ -40,7 +40,7 @@ Admin endpoints are documented separately in the Admin API reference. They use t
 
 ## Integration boundaries
 
-AcornOps v1 does not expose a public PAT or broad bot service-account credential for the control-plane API. Keep user actions attributable by calling privileged endpoints from a real authenticated user session. External integration client bearer tokens are only for external integration link lifecycle, linked-user bot endpoints, and external webhook route connect/status. They must not be treated as authority for general workspace actions.
+AcornOps v1 does not expose a public PAT or broad bot service-account credential for the control-plane API. External integration client bearer tokens are only for external integration link lifecycle, linked-user bot endpoints, and external webhook route connect/status. They must not be treated as authority for general workspace actions. Deployments may explicitly grant a linked external integration `create_read_write_runs` so it can request write-capable troubleshooting runs and active read-write or approval-gated Workflows. After explicit confirmation from the linked external user, the exact originating integration link/client may decide troubleshooting approvals plus Workflow pre-step and runtime write approvals. Browser-created, other-link/client, standalone Agent, scheduled, and system-triggered approvals remain unavailable to external credentials.
 
 Internal service tokens such as `ORCH_SERVICE_TOKEN`, `EXECUTION_ENGINE_DISPATCH_TOKEN`, and `LLM_GATEWAY_ADMIN_TOKEN` are platform credentials. They are not public integration credentials.
 
@@ -55,6 +55,13 @@ Workspace role responses include server-owned permission fields. Clients should 
 Registration endpoints return the target record, a one-time agent key, and install instructions. Agent-key rotation returns a replacement key and updated install instructions.
 
 Run events are replayable through the events endpoint and streamable through server-sent events. Current event types include run lifecycle, assistant message, token delta, provider reasoning summary, tool call, write approval, failure, cancellation, and completion events. Reasoning summary events contain provider-generated summaries only, not raw chain-of-thought.
+
+Multi-step Workflow executions also expose a workspace-readable sanitized
+execution DTO and aggregate replayable SSE stream. The aggregate stream carries
+execution status, step/run discovery, public run events, approval references,
+safe output metadata, and terminal state. Resume it with `Last-Event-ID` or
+`after`. Sensitive snapshots, context, compiled claims, continuation state, and
+integration provenance identifiers are excluded.
 
 Write approval decisions are first-writer-wins. Repeating the same decision is idempotent, while a conflicting decision or a decision that arrives after the approval expiry returns conflict with the current approval state.
 

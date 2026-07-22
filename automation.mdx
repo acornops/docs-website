@@ -110,6 +110,26 @@ Kubernetes and virtual-machine chat does not select, pin, or hand off to a works
 
 At run creation, AcornOps queries the live target capability registry and pins the exact native tools, target MCP tools, and target skill snapshots permitted by the user, requested tool-access mode, AgentK or AgentV advertisement, and current target/workspace policy. Configured third-party target MCP tools are eligible when their real connection is ready. Authorization is rechecked before every tool call, and target instructions come from the target adapter contract rather than a workspace Agent profile.
 
+## External integration sessions
+
+A linked external integration can launch an active Workflow when its client
+ceiling, user-approved workspace grant, and linked user role include the
+required capability. Ungated read-only Workflows require
+`create_read_only_runs`. Read-write and approval-gated Workflows also require
+`create_read_write_runs`.
+
+The Workflow session is the persistent conversation. Each message creates a
+new execution, and each execution creates one run per step attempt. Keep the
+session ID as the external thread mapping. Replies after completion use the
+same pinned Workflow version and retained history, but require a new
+`clientRequestId` and fresh approvals.
+
+Use the sanitized execution endpoint for current state and the aggregate
+execution SSE stream for step/run discovery, approvals, safe outputs, and the
+terminal event. Workspace readers may inspect these safe views regardless of
+origin. Only the exact originating integration link/client may post external
+replies, decide approvals, or retrieve reports.
+
 ## Delivery guarantees
 
 The control plane acknowledges a run only after Postgres commits the run and its dispatch intent. Workers claim work with database row locks, so multiple replicas can recover pending work after a restart. Dispatch is at least once, and the execution engine treats the run idempotency key as a stable identity.

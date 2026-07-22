@@ -3302,9 +3302,15 @@
         "security": [
           {
             "userSession": []
+          },
+          {
+            "externalIntegrationClientToken": []
           }
         ],
         "parameters": [
+          {
+            "$ref": "#/components/parameters/HeaderXAcornopsExternalUserId"
+          },
           {
             "in": "path",
             "name": "reportId",
@@ -3359,9 +3365,15 @@
         "security": [
           {
             "userSession": []
+          },
+          {
+            "externalIntegrationClientToken": []
           }
         ],
         "parameters": [
+          {
+            "$ref": "#/components/parameters/HeaderXAcornopsExternalUserId"
+          },
           {
             "in": "path",
             "name": "reportId",
@@ -3470,7 +3482,7 @@
           "runs"
         ],
         "summary": "List write-tool approvals for a run",
-        "description": "Returns pending and decided write-tool approvals for visibility. External integration callers may read approval state but cannot decide approvals.",
+        "description": "Returns pending and decided write-tool approvals. Approval listing follows workspace-read visibility. An external integration may decide a troubleshooting approval or a Workflow pre-step/runtime tool_write approval only when the execution originated through the exact same link and client. Approval requires effective create_read_write_runs; the origin may reject with current workspace read access after write permission is removed.",
         "security": [
           {
             "userSession": []
@@ -3528,13 +3540,19 @@
           "runs"
         ],
         "summary": "Approve or reject a pending write-tool approval",
-        "description": "Requires a real AcornOps user with create_read_write_runs for approval. Bots may relay this decision only when they can authenticate and attribute that user.",
+        "description": "A linked external integration may decide only a troubleshooting write approval or Workflow pre-step/runtime tool_write approval whose run execution was requested through that exact integration link and client. Approvals require effective create_read_write_runs. The exact origin may reject while retaining workspace read access if write permission was removed. Browser-created, other-link/client, standalone Agent, scheduled, and system-triggered approvals remain unavailable.",
         "security": [
           {
             "userSession": []
+          },
+          {
+            "externalIntegrationClientToken": []
           }
         ],
         "parameters": [
+          {
+            "$ref": "#/components/parameters/HeaderXAcornopsExternalUserId2"
+          },
           {
             "$ref": "#/components/parameters/PathRunId"
           },
@@ -3592,7 +3610,7 @@
             "$ref": "#/components/responses/Error401"
           },
           "403": {
-            "description": "The authenticated user cannot approve write runs.",
+            "description": "The actor lacks the permission needed for the decision, or an external integration is not the exact run/execution origin.",
             "content": {
               "application/json": {
                 "schema": {
@@ -4039,7 +4057,7 @@
           "sessions"
         ],
         "summary": "Append user message and trigger run dispatch",
-        "description": "External integration callers may append messages only to sessions owned by the linked AcornOps user and may trigger read-only troubleshooting runs only.",
+        "description": "External integration callers may append messages only to sessions owned by the linked AcornOps user. They may trigger read-only runs by default, or read-write runs only when the registered client allowedCapabilities, user-approved workspace grant, and linked user workspace role all include create_read_write_runs. The exact originating integration link and client may decide approvals created by its own troubleshooting or Workflow execution after explicit linked-user confirmation.",
         "security": [
           {
             "userSession": []
@@ -4227,9 +4245,15 @@
         "security": [
           {
             "userSession": []
+          },
+          {
+            "externalIntegrationClientToken": []
           }
         ],
         "parameters": [
+          {
+            "$ref": "#/components/parameters/HeaderXAcornopsExternalUserId"
+          },
           {
             "$ref": "#/components/parameters/PathExecutionId"
           }
@@ -4402,6 +4426,75 @@
                 }
               }
             }
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error500"
+          }
+        }
+      }
+    },
+    "/api/v1/workflow-executions/{executionId}/stream": {
+      "get": {
+        "tags": [
+          "workflows"
+        ],
+        "summary": "Replay and stream sanitized workflow execution events",
+        "description": "Workspace-authorized browser and external integration callers may replay durable aggregate execution events and continue over SSE. Prompts, compiled scopes, credentials, integration provenance, and tool arguments are not included.",
+        "security": [
+          {
+            "userSession": []
+          },
+          {
+            "externalIntegrationClientToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/HeaderXAcornopsExternalUserId"
+          },
+          {
+            "$ref": "#/components/parameters/PathExecutionId"
+          },
+          {
+            "in": "query",
+            "name": "after",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "description": "Last durable event id already observed."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Server-sent workflow_execution events, preceded by durable replay after the supplied cursor.",
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "type": "string",
+                  "description": "Server-Sent Events stream."
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
           },
           "429": {
             "$ref": "#/components/responses/Error429"
@@ -4595,7 +4688,7 @@
           "workflows"
         ],
         "summary": "Post a workflow session message and dispatch a run",
-        "description": "External integration callers can dispatch runs only for externally runnable read-only workflow sessions.",
+        "description": "External integration callers may append only to a Workflow session created by the exact same integration link and client. The current Workflow must remain active. Each message recompiles access against current effective permissions while retaining the session-pinned Workflow version, creates a new execution, and requires a new clientRequestId and fresh approvals.",
         "security": [
           {
             "userSession": []
@@ -8273,6 +8366,26 @@
           },
           {
             "$ref": "#/components/parameters/QueryCursor"
+          },
+          {
+            "in": "query",
+            "name": "runId",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Optional exact run filter for approval deep links."
+          },
+          {
+            "in": "query",
+            "name": "approvalId",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Optional exact approval filter for approval deep links."
           }
         ],
         "responses": {
