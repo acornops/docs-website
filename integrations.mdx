@@ -82,7 +82,10 @@ Approval decisions are intentionally not just webhook acknowledgements. The firs
 
 ## Webhook events
 
-Webhook delivery is best-effort and signed with HMAC-SHA256. Consumers should handle duplicates and out-of-order delivery.
+Webhook events and delivery jobs are stored durably in Postgres and signed with
+HMAC-SHA256. Delivery is at least once: consumers must handle duplicate and
+out-of-order events. One stable event ID and immutable body are reused across
+all recipients and retry attempts.
 
 Delivery URLs must use HTTPS. AcornOps rejects embedded credentials, IP-literal URLs, redirects, localhost, metadata endpoints, and reserved destinations. A deployment can opt an exact DNS hostname or leading-wildcard hostname into private-address delivery, but this does not weaken the remaining URL and DNS checks.
 
@@ -100,6 +103,40 @@ Each delivery includes:
 Target-scoped events include `targetId` and `targetType`. Kubernetes events also include `clusterId`, which matches the Kubernetes target ID.
 
 The signature input is `timestamp + "." + raw_json_body`, encoded as `v1=<hex>`.
+
+### Issue lifecycle events
+
+Subscribe to these events for issue alerts:
+
+- `issue.created.v1` when a new fingerprint becomes active
+- `issue.reopened.v1` when a resolved issue becomes active again
+- `issue.resolved.v1` after the resolution grace period
+
+Each issue event has `subject.type: "issue"` and includes a bounded issue
+snapshot in `data`. Use `lifecycleVersion` to reject older state and `stateAsOf`
+to distinguish the authoritative snapshot time from the later delivery time.
+The payload excludes raw findings, observations, logs, search text, and latest
+evidence.
+
+Issue webhooks are current-action notifications, not a complete audit log.
+When an issue enters recovery, AcornOps pauses pending created or reopened
+notifications without consuming delivery attempts. Resolution or reopening
+supersedes older pending lifecycle notifications. A receiver can therefore see
+`issue.resolved.v1` without first receiving `issue.created.v1`. Query the issue
+API for authoritative current state.
+
+### Retry and subscription behavior
+
+AcornOps retries transient network and DNS failures, timeouts, HTTP `408`,
+`425`, `429`, and `5xx` responses. It honors a bounded `Retry-After` value or
+uses jittered exponential backoff, and stops after 10 attempts or 24 hours.
+Redirects, blocked destinations, configuration failures, and other
+nonretryable `4xx` responses are terminal.
+
+The recipient set is captured when an event occurs. New subscriptions do not
+receive historical events. Before each attempt, AcornOps rechecks whether the
+subscription is enabled and still selects the event and target, then uses its
+current canonical URL and signing secret. Delivery ordering is not global.
 
 ## External webhook route connect/status
 
