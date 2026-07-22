@@ -49,7 +49,7 @@ Linked bot requests are authorized per workspace. Effective permissions are the 
 
 External integration clients should not store browser cookies, OIDC tokens, raw link tokens, or an AcornOps user ID as authorization material. Browser login and link completion are AcornOps-owned session flows, not external integration APIs.
 
-## Linked read-only Workflow access
+## Linked Workflow access
 
 An installed external client can list and run a deliberately narrow set of Workflows for a linked user. Send both the installed client bearer token and the external identity observed from the provider:
 
@@ -58,16 +58,29 @@ Authorization: Bearer <external-integration-client-token>
 x-acornops-external-user-id: <external-user-id>
 ```
 
-The linked identity is authorized only when the user has a live workspace role and saved grants for `read_workspace_data`, `create_sessions`, and `create_read_only_runs`, plus every permission required by the Workflow. Eligible definitions must be active, read-only, and have no approval requirements. AcornOps still applies Workflow V2 compilation, catalog readiness, typed prompt references, exact target bindings, and tool narrowing.
+The linked identity is authorized only when the user has a live workspace role
+and saved grants for `read_workspace_data`, `create_sessions`, and the run
+capability required by the Workflow, plus every other Workflow permission.
+Active ungated read-only definitions require `create_read_only_runs`. Active
+read-write or approval-gated definitions require the deployment-owned client
+ceiling and user grant to opt into `create_read_write_runs`. AcornOps still
+applies Workflow V2 compilation, catalog readiness, typed prompt references,
+exact target bindings, tool narrowing, and approval gates.
 
 The external client may use:
 
 - `GET /api/v1/workspaces/{workspaceId}/workflows` to list eligible definitions.
 - `GET /api/v1/workflows/{workflowId}?workspaceId={workspaceId}` to refresh one eligible definition.
 - `POST /api/v1/workflows/{workflowId}/sessions` to create a session owned by the linked AcornOps user.
-- `POST /api/v1/workflow-sessions/{sessionId}/messages` to dispatch a read-only execution in that owned session.
+- `POST /api/v1/workflow-sessions/{sessionId}/messages` with only `content` and a stable `clientRequestId` to dispatch an execution in that owned session.
 
-Each externally dispatched message should include a stable `clientRequestId`. Reuse it only when retrying the same provider message; use a new value for a new user message. This makes transport retries idempotent without making unrelated requests collide. External credentials cannot list arbitrary Workflow sessions, run write-capable definitions, satisfy approval-gated definitions, or use another user's session.
+Reuse `clientRequestId` only when retrying the same provider message; use a new
+value for a new user message. This makes transport retries idempotent without
+making unrelated requests collide. Prompt references are the only input and
+target-selection authority; stale `inputs`, `targetId`, and `targetType` body
+fields are rejected. External credentials cannot list arbitrary Workflow
+sessions or use another user's session, and write access remains an explicit
+three-layer opt-in.
 
 ## Bot adapter pattern
 
@@ -97,6 +110,13 @@ Resume with `Last-Event-ID` or `after`. Any linked integration with effective
 workspace read access may inspect safe execution metadata and events, including
 executions started elsewhere. Session replies, approval decisions, and report
 metadata/downloads remain restricted to the exact originating link and client.
+
+Direct run reads follow the same disclosure boundary. Linked integrations see
+a bounded run projection, and only the exact originating link/client receives
+the final assistant output needed by its adapter. External run event lists,
+per-run SSE, and nested aggregate run events keep lifecycle and safe approval
+metadata while removing prompts, reasoning, token deltas, raw tool arguments,
+and tool results.
 
 ## Webhook events
 
