@@ -25,7 +25,7 @@
     },
     {
       "name": "webhooks",
-      "description": "Best-effort webhook subscription and delivery history endpoints."
+      "description": "Durable webhook subscriptions, lifecycle-aware delivery, and attempt history."
     },
     {
       "name": "sessions",
