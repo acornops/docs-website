@@ -2,7 +2,8 @@
 
 ## AcornOps Contributions
 
-Use the [AcornOps workspace repository](https://github.com/acornops/acornops-workspace) as the starting point for product and cross-repository contributions.
+Use the [canonical AcornOps repository](https://github.com/acornops/acornops)
+as the starting point for product and cross-repository contributions.
 
 For contributor workflow details, start with:
 

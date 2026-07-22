@@ -5,6 +5,11 @@ description: "Deploy AcornOps through Kubernetes, VM Compose, workload agents, a
 
 AcornOps deployment has two independent steps: deploy the central platform, then connect each Kubernetes cluster or Linux VM with an outbound agent.
 
+Starter automation is part of current-version control-plane workspace
+provisioning in every environment. It is independent of optional local target
+fixtures such as `SEED_DEVELOPMENT_DATA`; each new workspace receives the final
+starter bundle once, with no startup upgrade or repair pass.
+
 ## Kubernetes
 
 Use the `acornops-platform` Helm chart to deploy the central platform into a Kubernetes cluster. The chart deploys:
@@ -41,7 +46,7 @@ Review these value groups before installing or upgrading:
 | Public hosts | `platform.publicUrl`, `platform.consoleUrl`, `exposure.ingress.apiHost`, `exposure.ingress.consoleHost` |
 | Auth | `auth.oidc.*`, `auth.password.*`, `auth.session.*` |
 | Workspace roles | `workspaceRoles.enabledBuiltIns`, `workspaceRoles.customTemplates` |
-| Run policy | `ai.*`, `agent.runtime.*`, `agent.routing.*` |
+| Run policy and target connectivity | `ai.*`, `assistantRuntime.*`, `agentGateway.*` |
 | Reasoning summaries | `ai.reasoningSummariesEnabled`, `ai.allowedReasoningSummaryModes`, `ai.allowedReasoningEfforts` |
 | Gateway controls | `components.llmGateway.auth.*`, `components.llmGateway.mcpEgress.*`, `components.llmGateway.rateLimits.*` |
 | Internal transport TLS | `internalTransport.tls.*` |
@@ -205,11 +210,18 @@ Before starting the stack:
 
 Database init jobs run before services start. Treat init failures as deployment blockers.
 
+### Greenfield database epoch
+
+This version is not a rolling database upgrade. Back up if needed, then drop and
+recreate the external control-plane and gateway databases before installing the
+complete pinned stack matrix. Pre-release data is not preserved, and mixed
+gateway, control-plane, or execution-engine versions are unsupported.
+
 ## Kubernetes clusters
 
 Each connected Kubernetes cluster gets the `acornops-agentk` Helm chart. Register the cluster in the management console, then run the generated install command returned by the control plane.
 
-The agent:
+AgentK:
 
 - connects outbound to the control plane,
 - authenticates with the generated agent key,
@@ -228,8 +240,8 @@ The AgentV:
 - connects outbound to the control plane,
 - authenticates with the generated agent key,
 - reports heartbeats and host snapshots,
-- advertises read-only Linux/systemd tools,
-- executes allowed read-only tool calls during troubleshooting runs.
+- advertises bounded Linux/systemd tools only after authenticated readiness,
+- remains read-only unless the separately installed helper, exact policy, run mode, and approval all permit `restart_service`.
 
 VM targets do not need public inbound access.
 
