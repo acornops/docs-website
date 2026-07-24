@@ -4052,7 +4052,7 @@
           "workflows"
         ],
         "summary": "Update workflow schedule",
-        "description": "Updates schedule cadence, enabled state, workflow, grants, or the control message. Requires manage_workflows.",
+        "description": "Updates schedule cadence, enabled state, workflow, grants, or runtime inputs. Requires manage_workflows.",
         "security": [
           {
             "userSession": []
@@ -4080,7 +4080,7 @@
                   "name",
                   "cron",
                   "timezone",
-                  "controlMessage",
+                  "inputs",
                   "principal"
                 ],
                 "properties": {
@@ -4105,9 +4105,12 @@
                     "type": "string",
                     "example": "UTC"
                   },
-                  "controlMessage": {
-                    "type": "string",
-                    "description": "Prompt template re-resolved and reauthorized for every occurrence."
+                  "inputs": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "description": "Exact workflow runtime parameter values re-resolved and reauthorized for every occurrence."
                   },
                   "approvedContextGrants": {
                     "type": "array",
@@ -4229,7 +4232,7 @@
           "workflows"
         ],
         "summary": "Post a workflow session message and dispatch a run",
-        "description": "External integration callers may append only to a Workflow session created by the exact same integration link and client. The current Workflow must remain active. Each message recompiles access against current effective permissions while retaining the session-pinned Workflow version, creates a new execution, and requires a new clientRequestId and fresh approvals.",
+        "description": "A session accepts one launch followed by ordinary follow-up messages. Idempotent launch retries return the original execution. Resource parameters are reauthorized by stable ID on every follow-up.",
         "security": [
           {
             "userSession": []
@@ -4257,21 +4260,63 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "required": [
-                  "content"
-                ],
-                "properties": {
-                  "content": {
-                    "type": "string",
-                    "description": "Authoritative control message. Resources are selected only through registered @type[label] references."
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "kind",
+                      "inputs"
+                    ],
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "enum": [
+                          "launch"
+                        ]
+                      },
+                      "inputs": {
+                        "type": "object",
+                        "additionalProperties": {
+                          "type": "string"
+                        }
+                      },
+                      "clientRequestId": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 128,
+                        "description": "Optional non-empty idempotency key supplied by the client."
+                      }
+                    },
+                    "additionalProperties": false
                   },
-                  "clientRequestId": {
-                    "type": "string",
-                    "description": "Optional idempotency key supplied by the client."
+                  {
+                    "type": "object",
+                    "required": [
+                      "kind",
+                      "content"
+                    ],
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "enum": [
+                          "follow_up"
+                        ]
+                      },
+                      "content": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 32768
+                      },
+                      "clientRequestId": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 128,
+                        "description": "Optional non-empty idempotency key supplied by the client."
+                      }
+                    },
+                    "additionalProperties": false
                   }
-                },
-                "additionalProperties": false
+                ]
               }
             }
           }
@@ -4500,47 +4545,6 @@
                       "type": "string"
                     }
                   },
-                  "inputs": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "required": [
-                        "name",
-                        "label",
-                        "type",
-                        "required"
-                      ],
-                      "properties": {
-                        "name": {
-                          "type": "string"
-                        },
-                        "label": {
-                          "type": "string"
-                        },
-                        "type": {
-                          "type": "string",
-                          "enum": [
-                            "text",
-                            "select",
-                            "mcp_server",
-                            "mcp_tool",
-                            "skill",
-                            "output_format",
-                            "approval_policy",
-                            "runtime",
-                            "retention"
-                          ]
-                        },
-                        "required": {
-                          "type": "boolean"
-                        },
-                        "optionSource": {
-                          "type": "string"
-                        }
-                      },
-                      "additionalProperties": false
-                    }
-                  },
                   "requiredPermissions": {
                     "type": "array",
                     "items": {
@@ -4691,7 +4695,7 @@
                 "required": [
                   "workspaceId",
                   "approvedContextGrants",
-                  "content"
+                  "inputs"
                 ],
                 "properties": {
                   "workspaceId": {
@@ -4705,9 +4709,12 @@
                       "type": "string"
                     }
                   },
-                  "content": {
-                    "type": "string",
-                    "description": "Prompt used for non-authoritative resource and capability preview."
+                  "inputs": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "description": "Exact runtime parameter values compiled using the same path as launch."
                   }
                 },
                 "additionalProperties": false
@@ -10940,7 +10947,7 @@
           "prompt resources"
         ],
         "summary": "Preview prompt resource resolution",
-        "description": "Parses all reference types, resolves provider groups concurrently, and returns display-only binding previews and blockers. Run creation always resolves and authorizes again.",
+        "description": "Authoring-only preview that parses concrete @type[label] references and returns derived runtime parameters. Run creation always resolves and authorizes again.",
         "security": [
           {
             "userSession": []
@@ -10968,19 +10975,6 @@
                   "workflowId": {
                     "type": "string"
                   },
-                  "workflowSessionId": {
-                    "type": "string"
-                  },
-                  "initiatingMessageId": {
-                    "type": "string"
-                  },
-                  "mode": {
-                    "type": "string",
-                    "enum": [
-                      "authoring",
-                      "launch"
-                    ]
-                  },
                   "requirements": {
                     "type": "array",
                     "items": {
@@ -10995,7 +10989,7 @@
         },
         "responses": {
           "200": {
-            "description": "Parsed references, candidate status, binding preview, and blockers.",
+            "description": "Parsed concrete references, derived parameters, candidate status, binding preview, and blockers.",
             "content": {
               "application/json": {
                 "schema": {
@@ -17228,7 +17222,7 @@
                   "name",
                   "cron",
                   "timezone",
-                  "controlMessage",
+                  "inputs",
                   "principal"
                 ],
                 "properties": {
@@ -17253,9 +17247,12 @@
                     "type": "string",
                     "example": "UTC"
                   },
-                  "controlMessage": {
-                    "type": "string",
-                    "description": "Prompt template re-resolved and reauthorized for every occurrence."
+                  "inputs": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "description": "Exact workflow runtime parameter values re-resolved and reauthorized for every occurrence."
                   },
                   "approvedContextGrants": {
                     "type": "array",
@@ -17329,7 +17326,7 @@
           "workflows"
         ],
         "summary": "Preview a workflow schedule",
-        "description": "Resolves the control-message prompt and validates context grants, cron, and timezone without creating or changing a schedule.",
+        "description": "Compiles the active workflow with the submitted inputs and validates context grants, cron, and timezone without creating or changing a schedule.",
         "security": [
           {
             "userSession": []
@@ -17351,7 +17348,7 @@
                   "name",
                   "cron",
                   "timezone",
-                  "controlMessage",
+                  "inputs",
                   "principal"
                 ],
                 "properties": {
@@ -17376,9 +17373,12 @@
                     "type": "string",
                     "example": "UTC"
                   },
-                  "controlMessage": {
-                    "type": "string",
-                    "description": "Prompt template re-resolved and reauthorized for every occurrence."
+                  "inputs": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "description": "Exact workflow runtime parameter values re-resolved and reauthorized for every occurrence."
                   },
                   "approvedContextGrants": {
                     "type": "array",
@@ -17608,47 +17608,6 @@
                     "type": "array",
                     "items": {
                       "type": "string"
-                    }
-                  },
-                  "inputs": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "required": [
-                        "name",
-                        "label",
-                        "type",
-                        "required"
-                      ],
-                      "properties": {
-                        "name": {
-                          "type": "string"
-                        },
-                        "label": {
-                          "type": "string"
-                        },
-                        "type": {
-                          "type": "string",
-                          "enum": [
-                            "text",
-                            "select",
-                            "mcp_server",
-                            "mcp_tool",
-                            "skill",
-                            "output_format",
-                            "approval_policy",
-                            "runtime",
-                            "retention"
-                          ]
-                        },
-                        "required": {
-                          "type": "boolean"
-                        },
-                        "optionSource": {
-                          "type": "string"
-                        }
-                      },
-                      "additionalProperties": false
                     }
                   },
                   "requiredPermissions": {
@@ -21014,6 +20973,7 @@
           "promptDigest",
           "bindingDigest",
           "tokens",
+          "parameters",
           "candidates",
           "bindings",
           "blockers",
@@ -21039,8 +20999,7 @@
                 "type",
                 "label",
                 "start",
-                "end",
-                "state"
+                "end"
               ],
               "properties": {
                 "type": {
@@ -21054,12 +21013,36 @@
                 },
                 "end": {
                   "type": "integer"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "parameters": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "key",
+                "type",
+                "required"
+              ],
+              "properties": {
+                "key": {
+                  "type": "string"
                 },
-                "state": {
+                "type": {
                   "type": "string",
                   "enum": [
-                    "placeholder",
-                    "concrete"
+                    "text",
+                    "target",
+                    "chat"
+                  ]
+                },
+                "required": {
+                  "type": "boolean",
+                  "enum": [
+                    true
                   ]
                 }
               },
@@ -23102,6 +23085,8 @@
         "required": [
           "workflowId",
           "workflowVersion",
+          "promptDigest",
+          "bindingDigest",
           "mode",
           "semanticCapabilityIds",
           "checkedAt",
@@ -23123,6 +23108,14 @@
           "workflowVersion": {
             "type": "integer",
             "minimum": 1
+          },
+          "promptDigest": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "bindingDigest": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
           },
           "mode": {
             "type": "string",
@@ -23668,6 +23661,7 @@
           "executionMode",
           "resourceRequirements",
           "capabilityPolicy",
+          "parameters",
           "requiredPermissions",
           "createdBy"
         ],
@@ -23736,11 +23730,37 @@
               "type": "string"
             }
           },
-          "inputs": {
+          "parameters": {
             "type": "array",
+            "readOnly": true,
             "items": {
               "type": "object",
-              "additionalProperties": true
+              "required": [
+                "key",
+                "type",
+                "required"
+              ],
+              "properties": {
+                "key": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9_]{0,63}$"
+                },
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "text",
+                    "target",
+                    "chat"
+                  ]
+                },
+                "required": {
+                  "type": "boolean",
+                  "enum": [
+                    true
+                  ]
+                }
+              },
+              "additionalProperties": false
             }
           },
           "requiredPermissions": {
@@ -24047,8 +24067,11 @@
           "timezone": {
             "type": "string"
           },
-          "controlMessage": {
-            "type": "string"
+          "inputs": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
           },
           "approvedContextGrants": {
             "type": "array",
@@ -24201,6 +24224,10 @@
           "createdBy": {
             "type": "string",
             "format": "uuid"
+          },
+          "launchedAt": {
+            "type": "string",
+            "format": "date-time"
           },
           "runs": {
             "type": "array",
