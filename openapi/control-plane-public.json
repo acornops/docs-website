@@ -6895,7 +6895,7 @@
           "agents"
         ],
         "summary": "Grant a workspace-native tool to a specialist Agent",
-        "description": "Transactionally updates the Agent version, reviewed routing mappings, semantic ceiling, and dependent readiness. Requires manage_agents; manage_mcp is not required.",
+        "description": "Transactionally grants or updates a workspace-native tool, its optional validated configuration, the Agent version, reviewed routing mappings, semantic ceiling, and dependent readiness. Requires manage_agents; manage_mcp is not required.",
         "security": [
           {
             "userSession": []
@@ -6918,6 +6918,23 @@
             }
           }
         ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "config": {
+                    "type": "object",
+                    "additionalProperties": true
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Updated Agent.",
@@ -18101,6 +18118,7 @@
           "version",
           "ownerUserId",
           "createdBy",
+          "nativeToolConfigs",
           "workflowUsage"
         ],
         "properties": {
@@ -18209,6 +18227,10 @@
             "items": {
               "type": "string"
             }
+          },
+          "nativeToolConfigs": {
+            "type": "object",
+            "additionalProperties": true
           },
           "skills": {
             "type": "array",
@@ -24686,6 +24708,7 @@
         "type": "object",
         "required": [
           "id",
+          "modelAlias",
           "title",
           "description",
           "semanticCapabilityId",
@@ -24700,11 +24723,20 @@
           "id": {
             "type": "string"
           },
+          "modelAlias": {
+            "type": "string"
+          },
           "title": {
             "type": "string"
           },
           "description": {
             "type": "string"
+          },
+          "targetCatalogDescription": {
+            "type": "string"
+          },
+          "targetToggleable": {
+            "type": "boolean"
           },
           "semanticCapabilityId": {
             "type": "string"
@@ -24722,8 +24754,9 @@
           "authorizationClass": {
             "type": "string",
             "enum": [
-              "selected_context",
-              "internal_artifact"
+              "prompt_resource",
+              "internal_artifact",
+              "external_http_read"
             ]
           },
           "auditOperation": {
@@ -24742,6 +24775,10 @@
           },
           "requiredContextGrant": {
             "type": "string"
+          },
+          "configSchema": {
+            "type": "object",
+            "additionalProperties": true
           },
           "inputSchema": {
             "type": "object",
