@@ -63,7 +63,7 @@
           "agents"
         ],
         "summary": "Get an agent definition",
-        "description": "Returns 404 for system-owned workflow coordinators and historical Manager records.",
+        "description": "Returns a reusable specialist capability profile by ID.",
         "security": [
           {
             "userSession": []
@@ -279,60 +279,6 @@
         }
       }
     },
-    "/api/v1/agents/{agentId}/activity": {
-      "get": {
-        "tags": [
-          "agents"
-        ],
-        "summary": "List agent activity records",
-        "security": [
-          {
-            "userSession": []
-          }
-        ],
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/PathAgentId"
-          },
-          {
-            "$ref": "#/components/parameters/QueryWorkspaceId"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Agent activity list.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AgentActivityList"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/Error400"
-          },
-          "401": {
-            "$ref": "#/components/responses/Error401"
-          },
-          "403": {
-            "$ref": "#/components/responses/Error403"
-          },
-          "404": {
-            "$ref": "#/components/responses/Error404"
-          },
-          "409": {
-            "$ref": "#/components/responses/Error409"
-          },
-          "429": {
-            "$ref": "#/components/responses/Error429"
-          },
-          "500": {
-            "$ref": "#/components/responses/Error500"
-          }
-        }
-      }
-    },
     "/api/v1/agents/{agentId}/duplicate": {
       "post": {
         "tags": [
@@ -399,291 +345,6 @@
                 }
               }
             }
-          },
-          "429": {
-            "$ref": "#/components/responses/Error429"
-          },
-          "500": {
-            "$ref": "#/components/responses/Error500"
-          }
-        }
-      }
-    },
-    "/api/v1/agents/{agentId}/test": {
-      "post": {
-        "tags": [
-          "agents"
-        ],
-        "summary": "Preview Agent scope without executing",
-        "security": [
-          {
-            "userSession": []
-          }
-        ],
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/PathAgentId"
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "workspaceId"
-                ],
-                "properties": {
-                  "workspaceId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "example": "4b930d98-add9-4924-ab26-3c16d96ec373"
-                  }
-                },
-                "additionalProperties": true
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Non-executing compiled scope preview.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AgentTestResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/Error400"
-          },
-          "401": {
-            "$ref": "#/components/responses/Error401"
-          },
-          "403": {
-            "$ref": "#/components/responses/Error403"
-          },
-          "404": {
-            "$ref": "#/components/responses/Error404"
-          },
-          "409": {
-            "$ref": "#/components/responses/Error409"
-          },
-          "429": {
-            "$ref": "#/components/responses/Error429"
-          },
-          "500": {
-            "$ref": "#/components/responses/Error500"
-          }
-        }
-      }
-    },
-    "/api/v1/agents/{agentId}/triggers": {
-      "post": {
-        "tags": [
-          "agents"
-        ],
-        "summary": "Create an agent trigger",
-        "security": [
-          {
-            "userSession": []
-          }
-        ],
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/PathAgentId"
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "workspaceId"
-                ],
-                "properties": {
-                  "workspaceId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "example": "4b930d98-add9-4924-ab26-3c16d96ec373"
-                  }
-                },
-                "additionalProperties": true
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Agent trigger created. Webhook triggers additionally return the encrypted-secret-backed HMAC secret exactly once.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AgentTriggerResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/Error400"
-          },
-          "401": {
-            "$ref": "#/components/responses/Error401"
-          },
-          "403": {
-            "$ref": "#/components/responses/Error403"
-          },
-          "404": {
-            "$ref": "#/components/responses/Error404"
-          },
-          "409": {
-            "$ref": "#/components/responses/Error409"
-          },
-          "429": {
-            "$ref": "#/components/responses/Error429"
-          },
-          "500": {
-            "$ref": "#/components/responses/Error500"
-          }
-        }
-      }
-    },
-    "/api/v1/agents/{agentId}/triggers/{triggerId}": {
-      "patch": {
-        "tags": [
-          "agents"
-        ],
-        "summary": "Update an agent trigger",
-        "security": [
-          {
-            "userSession": []
-          }
-        ],
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/PathAgentId"
-          },
-          {
-            "$ref": "#/components/parameters/PathTriggerId"
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "workspaceId"
-                ],
-                "properties": {
-                  "workspaceId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "example": "4b930d98-add9-4924-ab26-3c16d96ec373"
-                  }
-                },
-                "additionalProperties": true
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Agent trigger updated.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AgentTriggerResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/Error400"
-          },
-          "401": {
-            "$ref": "#/components/responses/Error401"
-          },
-          "403": {
-            "$ref": "#/components/responses/Error403"
-          },
-          "404": {
-            "$ref": "#/components/responses/Error404"
-          },
-          "409": {
-            "$ref": "#/components/responses/Error409"
-          },
-          "429": {
-            "$ref": "#/components/responses/Error429"
-          },
-          "500": {
-            "$ref": "#/components/responses/Error500"
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "agents"
-        ],
-        "summary": "Delete an agent trigger",
-        "security": [
-          {
-            "userSession": []
-          }
-        ],
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/PathAgentId"
-          },
-          {
-            "$ref": "#/components/parameters/PathTriggerId"
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "workspaceId"
-                ],
-                "properties": {
-                  "workspaceId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "example": "4b930d98-add9-4924-ab26-3c16d96ec373"
-                  }
-                },
-                "additionalProperties": true
-              }
-            }
-          }
-        },
-        "responses": {
-          "204": {
-            "description": "Agent trigger deleted."
-          },
-          "400": {
-            "$ref": "#/components/responses/Error400"
-          },
-          "401": {
-            "$ref": "#/components/responses/Error401"
-          },
-          "403": {
-            "$ref": "#/components/responses/Error403"
-          },
-          "404": {
-            "$ref": "#/components/responses/Error404"
-          },
-          "409": {
-            "$ref": "#/components/responses/Error409"
           },
           "429": {
             "$ref": "#/components/responses/Error429"
@@ -2958,129 +2619,6 @@
         }
       }
     },
-    "/api/v1/automation/webhooks/{triggerId}": {
-      "post": {
-        "tags": [
-          "agents"
-        ],
-        "summary": "Accept a signed standalone Agent webhook event",
-        "security": [],
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/PathTriggerId"
-          },
-          {
-            "in": "header",
-            "name": "x-acornops-timestamp",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "header",
-            "name": "x-acornops-event-id",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "maxLength": 200
-            }
-          },
-          {
-            "in": "header",
-            "name": "x-acornops-signature",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "pattern": "^(sha256=)?[a-fA-F0-9]{64}$"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "maxProperties": 1000
-              }
-            }
-          }
-        },
-        "responses": {
-          "202": {
-            "description": "The signed event and durable trigger delivery were committed.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": [
-                    "eventId",
-                    "status"
-                  ],
-                  "properties": {
-                    "eventId": {
-                      "type": "string"
-                    },
-                    "status": {
-                      "type": "string",
-                      "enum": [
-                        "accepted"
-                      ]
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/Error400"
-          },
-          "401": {
-            "description": "Timestamp or HMAC signature invalid.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "403": {
-            "$ref": "#/components/responses/Error403"
-          },
-          "404": {
-            "$ref": "#/components/responses/Error404"
-          },
-          "409": {
-            "description": "Event ID replay rejected.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "413": {
-            "description": "Payload exceeds 256 KiB."
-          },
-          "429": {
-            "description": "Per-trigger rate limit exceeded.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "500": {
-            "$ref": "#/components/responses/Error500"
-          }
-        }
-      }
-    },
     "/api/v1/external-integrations/webhook-routes/connect": {
       "post": {
         "tags": [
@@ -3541,7 +3079,7 @@
           "runs"
         ],
         "summary": "Approve or reject a pending write-tool approval",
-        "description": "A linked external integration may decide only a troubleshooting write approval or Workflow pre-step/runtime tool_write approval whose run execution was requested through that exact integration link and client. Approvals require effective create_read_write_runs. The exact origin may reject while retaining workspace read access if write permission was removed. Browser-created, other-link/client, standalone Agent, scheduled, and system-triggered approvals remain unavailable. Browser responses contain the full approval record; external-integration success and conflict responses contain only the same bounded control metadata returned by the external approval list.",
+        "description": "A linked external integration may decide only a troubleshooting write approval or Workflow pre-step/runtime tool_write approval whose run execution was requested through that exact integration link and client. Approvals require effective create_read_write_runs. The exact origin may reject while retaining workspace read access if write permission was removed. Browser-created, other-link/client, delegated specialist, scheduled, and system-triggered approvals remain unavailable. Browser responses contain the full approval record; external-integration success and conflict responses contain only the same bounded control metadata returned by the external approval list.",
         "security": [
           {
             "userSession": []
@@ -4375,7 +3913,7 @@
         "tags": [
           "workflows"
         ],
-        "summary": "Resume a failed workflow entry run as a new attempt",
+        "summary": "Resume a failed Workflow root as a new attempt",
         "security": [
           {
             "userSession": []
@@ -5849,7 +5387,7 @@
           "agents"
         ],
         "summary": "List active workspace agents",
-        "description": "Returns specialist Agents. System-owned workflow coordinators and historical Manager records are omitted from lists, search, and counts.",
+        "description": "Returns reusable specialist capability profiles available in the workspace.",
         "security": [
           {
             "userSession": []
@@ -7495,112 +7033,6 @@
           },
           "409": {
             "$ref": "#/components/responses/Error409"
-          },
-          "429": {
-            "$ref": "#/components/responses/Error429"
-          },
-          "500": {
-            "$ref": "#/components/responses/Error500"
-          }
-        }
-      }
-    },
-    "/api/v1/workspaces/{workspaceId}/agents/{agentId}/runs": {
-      "post": {
-        "tags": [
-          "agents"
-        ],
-        "summary": "Create a durable standalone Agent run",
-        "security": [
-          {
-            "userSession": []
-          }
-        ],
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/PathWorkspaceId"
-          },
-          {
-            "$ref": "#/components/parameters/PathAgentId"
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "prompt"
-                ],
-                "properties": {
-                  "prompt": {
-                    "type": "string",
-                    "minLength": 1
-                  },
-                  "inputContext": {
-                    "type": "object"
-                  },
-                  "targetId": {
-                    "type": "string"
-                  },
-                  "approvedContextGrants": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    }
-                  },
-                  "triggerId": {
-                    "type": "string"
-                  },
-                  "clientRequestId": {
-                    "type": "string",
-                    "maxLength": 128
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "202": {
-            "description": "Agent run and dispatch intent committed.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AgentRunAccepted"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/Error400"
-          },
-          "401": {
-            "$ref": "#/components/responses/Error401"
-          },
-          "403": {
-            "$ref": "#/components/responses/Error403"
-          },
-          "404": {
-            "$ref": "#/components/responses/Error404"
-          },
-          "409": {
-            "description": "Agent, selected target, or exact MCP readiness is not ready. MCP conflicts include bounded structured installation and tool failures.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "oneOf": [
-                    {
-                      "$ref": "#/components/schemas/ErrorResponse"
-                    },
-                    {
-                      "$ref": "#/components/schemas/McpReadinessErrorResponse"
-                    }
-                  ]
-                }
-              }
-            }
           },
           "429": {
             "$ref": "#/components/responses/Error429"
@@ -18062,7 +17494,7 @@
           "workflows"
         ],
         "summary": "Create a workspace workflow definition",
-        "description": "Creates a Workflow V2 definition from one or more active reviewed specialist Agent IDs. One Agent runs directly; multiple Agents are coordinated by AcornOps. Selection order has no meaning and executionMode is derived. Requires manage_workflows.",
+        "description": "Creates a Workflow V2 definition from one or more active reviewed specialist Agent IDs. One Agent produces a specialist root run; multiple Agents produce a coordinator root with delegated specialist children. Selection order has no meaning and executionMode is derived. Requires manage_workflows.",
         "security": [
           {
             "userSession": []
@@ -18412,14 +17844,6 @@
           "type": "string"
         }
       },
-      "PathTriggerId": {
-        "in": "path",
-        "name": "triggerId",
-        "required": true,
-        "schema": {
-          "type": "string"
-        }
-      },
       "PathVmId": {
         "in": "path",
         "name": "vmId",
@@ -18618,77 +18042,6 @@
       }
     },
     "schemas": {
-      "AgentActivityList": {
-        "type": "object",
-        "required": [
-          "items"
-        ],
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AgentActivityRecord"
-            }
-          }
-        }
-      },
-      "AgentActivityRecord": {
-        "type": "object",
-        "required": [
-          "id",
-          "agentId",
-          "workspaceId",
-          "agentVersion",
-          "status",
-          "createdAt"
-        ],
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "agentId": {
-            "type": "string"
-          },
-          "workspaceId": {
-            "type": "string"
-          },
-          "agentVersion": {
-            "type": "integer"
-          },
-          "triggerId": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "queued",
-              "running",
-              "waiting_for_approval",
-              "needs_review",
-              "completed",
-              "failed",
-              "cancelled"
-            ]
-          },
-          "inputContext": {
-            "type": "object",
-            "additionalProperties": true
-          },
-          "compiledScope": {
-            "type": "object",
-            "additionalProperties": true
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "updatedAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        },
-        "additionalProperties": true
-      },
       "AgentCapability": {
         "type": "object",
         "required": [
@@ -18743,12 +18096,12 @@
           "instructions",
           "status",
           "origin",
-          "kind",
           "reviewState",
           "providerType",
           "version",
           "ownerUserId",
-          "createdBy"
+          "createdBy",
+          "workflowUsage"
         ],
         "properties": {
           "id": {
@@ -18796,12 +18149,6 @@
               }
             },
             "additionalProperties": false
-          },
-          "kind": {
-            "type": "string",
-            "enum": [
-              "specialist"
-            ]
           },
           "reviewState": {
             "type": "string",
@@ -18919,15 +18266,35 @@
               "type": "string"
             }
           },
-          "triggers": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AgentTrigger"
-            }
-          },
-          "activity": {
+          "workflowUsage": {
             "type": "object",
-            "additionalProperties": true
+            "required": [
+              "workflowRunCount"
+            ],
+            "properties": {
+              "workflowRunCount": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "lastRunAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "lastStatus": {
+                "type": "string",
+                "enum": [
+                  "queued",
+                  "dispatching",
+                  "running",
+                  "waiting_for_approval",
+                  "needs_review",
+                  "completed",
+                  "failed",
+                  "cancelled"
+                ]
+              }
+            },
+            "additionalProperties": false
           },
           "readiness": {
             "type": "object",
@@ -19407,36 +18774,6 @@
           }
         }
       },
-      "AgentRunAccepted": {
-        "type": "object",
-        "required": [
-          "runId",
-          "activityId",
-          "source",
-          "status"
-        ],
-        "properties": {
-          "runId": {
-            "type": "string"
-          },
-          "activityId": {
-            "type": "string"
-          },
-          "source": {
-            "type": "string",
-            "enum": [
-              "agent"
-            ]
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "queued",
-              "waiting_for_approval"
-            ]
-          }
-        }
-      },
       "AgentSkill": {
         "type": "object",
         "required": [
@@ -19513,109 +18850,6 @@
           }
         },
         "additionalProperties": false
-      },
-      "AgentTestResponse": {
-        "type": "object",
-        "required": [
-          "compiledScope",
-          "executing",
-          "deprecated"
-        ],
-        "properties": {
-          "compiledScope": {
-            "type": "object",
-            "additionalProperties": true
-          },
-          "executing": {
-            "type": "boolean",
-            "enum": [
-              false
-            ]
-          },
-          "deprecated": {
-            "type": "boolean",
-            "enum": [
-              true
-            ]
-          }
-        }
-      },
-      "AgentTrigger": {
-        "type": "object",
-        "required": [
-          "id",
-          "type",
-          "enabled"
-        ],
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "type": {
-            "type": "string",
-            "enum": [
-              "manual",
-              "workflow",
-              "schedule",
-              "webhook",
-              "target_event"
-            ]
-          },
-          "enabled": {
-            "type": "boolean"
-          },
-          "name": {
-            "type": "string"
-          },
-          "schedule": {
-            "type": "object",
-            "additionalProperties": true
-          },
-          "eventFilter": {
-            "type": "object",
-            "additionalProperties": true
-          },
-          "principal": {
-            "type": "object",
-            "required": [
-              "type",
-              "id"
-            ],
-            "properties": {
-              "type": {
-                "type": "string",
-                "enum": [
-                  "user",
-                  "service_identity"
-                ]
-              },
-              "id": {
-                "type": "string"
-              }
-            },
-            "additionalProperties": false
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "updatedAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        },
-        "additionalProperties": true
-      },
-      "AgentTriggerResponse": {
-        "type": "object",
-        "required": [
-          "trigger"
-        ],
-        "properties": {
-          "trigger": {
-            "$ref": "#/components/schemas/AgentTrigger"
-          }
-        }
       },
       "AgentVersionList": {
         "type": "object",
@@ -19766,7 +19000,7 @@
           "runtime",
           "dispatch",
           "runs",
-          "triggers",
+          "schedules",
           "approvals",
           "templates",
           "reports",
@@ -19793,7 +19027,7 @@
             "type": "object",
             "additionalProperties": true
           },
-          "triggers": {
+          "schedules": {
             "type": "object",
             "additionalProperties": true
           },
@@ -22217,16 +21451,9 @@
             "type": "string",
             "format": "uuid"
           },
-          "workflowRunId": {
+          "executionId": {
             "type": "string",
             "format": "uuid"
-          },
-          "sourceType": {
-            "type": "string",
-            "enum": [
-              "agent",
-              "workflow"
-            ]
           },
           "approvalKind": {
             "type": "string",
@@ -23927,10 +23154,6 @@
           "selectedTarget": {
             "$ref": "#/components/schemas/WorkflowTargetCapabilityCandidate"
           },
-          "compiledAccessScope": {
-            "type": "object",
-            "additionalProperties": true
-          },
           "tools": {
             "type": "object",
             "required": [
@@ -24284,6 +23507,9 @@
               "mcp",
               "builtin"
             ]
+          },
+          "serverId": {
+            "type": "string"
           }
         },
         "additionalProperties": false
@@ -24572,7 +23798,7 @@
         "required": [
           "message_id",
           "run_id",
-          "workflow_run_id",
+          "executionId",
           "status"
         ],
         "properties": {
@@ -24584,15 +23810,11 @@
             "type": "string",
             "format": "uuid"
           },
-          "workflow_run_id": {
+          "executionId": {
             "type": "string"
           },
           "status": {
             "type": "string"
-          },
-          "compiledAccessScope": {
-            "type": "object",
-            "additionalProperties": true
           }
         },
         "additionalProperties": true
@@ -24958,10 +24180,6 @@
             "type": "string",
             "format": "uuid"
           },
-          "compiledAccessScope": {
-            "type": "object",
-            "additionalProperties": true
-          },
           "runs": {
             "type": "array",
             "items": {
@@ -25000,16 +24218,11 @@
       "WorkflowSessionResponse": {
         "type": "object",
         "required": [
-          "session",
-          "compiledAccessScope"
+          "session"
         ],
         "properties": {
           "session": {
             "$ref": "#/components/schemas/WorkflowSession"
-          },
-          "compiledAccessScope": {
-            "type": "object",
-            "additionalProperties": true
           }
         },
         "additionalProperties": true

@@ -24,7 +24,7 @@ AcornOps ships these code-owned semantic capabilities:
 
 `scm.repository.read` is a supported semantic capability, but it is not built in. It needs a reviewed repository integration.
 
-Semantic capability IDs do not authorize tools by themselves. For `target.diagnostics.read`, the control plane creates reviewed mappings from each eligible specialist Agent to each exact target after built-in tool synchronization. A direct Agent run or Workflow run must select one target. The compiled authority is the intersection of the Agent target scope, Workflow target constraints, the exact-target mapping, the acting user's permissions, and the live target catalog.
+Semantic capability IDs do not authorize tools by themselves. For `target.diagnostics.read`, the control plane creates reviewed mappings from each eligible specialist Agent to each exact target after built-in tool synchronization. A direct or delegated specialist Workflow run must select one target. The compiled authority is the intersection of the Agent target scope, Workflow target constraints, the exact-target mapping, the acting user's permissions, and the live target catalog.
 
 Workspace administrators set the Agent and Workflow ceilings. Starter diagnostics allow Kubernetes and virtual-machine target types. An administrator can narrow either definition to exact target IDs. Operators choose one target when launching a run; they cannot widen the administrator-defined scope. Remote MCP tools, skills, web search, target insights, workspace-native tools, and write-capable target tools are not included in `target.diagnostics.read`.
 
@@ -48,9 +48,9 @@ The native catalog currently contains:
 - `prompt.resources.read`, exposed to the model as `_acornops_read_prompt_resources`, dispatches bounded evidence loads through registered providers. It accepts binding IDs rather than arbitrary resource IDs and cannot expand the run's signed resource bindings.
 - `reports.pdf.generate`, which creates a bounded, provenance-linked PDF report with authenticated download and idempotency per run and tool call.
 
-Native tools are code-owned, so granting or revoking one requires `manage_agents`, not `manage_mcp`. Assignment updates the Agent version, reviewed semantic mapping, and dependent Workflow readiness together. Managers cannot receive operational tools.
+Native tools are code-owned, so granting or revoking one requires `manage_agents`, not `manage_mcp`. Assignment updates the Agent version, reviewed semantic mapping, and dependent Workflow readiness together. Internal coordinator runs cannot receive operational tools.
 
-Both tools have workflow-only invocation scope. A direct Agent run cannot invoke them, even when the Agent owns the assignment. Target adapters also reject workspace tools; Kubernetes and VM native tools continue through AgentK and AgentV.
+Both tools have Workflow-only invocation scope. Delegated specialist children cannot invoke workspace-native tools. Target adapters also reject workspace tools; Kubernetes and VM native tools continue through AgentK and AgentV.
 
 PDF generation has the `internal_artifact` authorization class. A read-only Workflow may create the artifact without write-run permission or per-call write approval, while persistence remains a write-audited event. AcornOps never logs chat bodies, report source, tool arguments, or PDF bytes.
 
@@ -197,7 +197,7 @@ Administrators can see workspace connection status and can manage that
 installation-owned credential. They cannot list, read, export, replace, or
 disconnect another user's individual credential.
 
-When target chat, a direct Agent run, or a workflow message fails MCP readiness,
+When target chat or a Workflow run fails MCP readiness,
 the console links to the exact Agent or target installation and highlights its
 Connect or Verify control. Opening that recovery link never submits a credential
 or starts verification. Successful repair clears the recovery parameters. If an

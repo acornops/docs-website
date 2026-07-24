@@ -70,7 +70,7 @@ Generate unique values for every internal token and encryption key per environme
 | `AUTOMATION_RUNTIME_MODE` | `automation.runtimeMode` | `off` in production | Select `off`, `shadow`, `canary`, or `on`. |
 | `AUTOMATION_CANARY_WORKSPACE_IDS` | `automation.canaryWorkspaceIds` | empty | Comma-separated workspace IDs eligible in `canary` mode. |
 | `AUTOMATION_WORKER_INTERVAL_MS` | `automation.workerIntervalMs` | `1000` | Poll interval for durable schedules and dispatch intent. |
-| `ASSISTANT_WRITE_CONFIRMATION_TIMEOUT_SECONDS` | `assistantRuntime.writeConfirmationTimeoutSeconds` | `900` | Expires Agent, Workflow, and target write approvals after 15 minutes. |
+| `ASSISTANT_WRITE_CONFIRMATION_TIMEOUT_SECONDS` | `assistantRuntime.writeConfirmationTimeoutSeconds` | `900` | Expires Workflow-run and target-run write approvals after 15 minutes. |
 
 See [Agents and workflows](/automation) for rollout order and delivery guarantees.
 
@@ -92,7 +92,7 @@ troubleshooting runs or active read-write/approval-gated Workflows; keep
 them. The same linked integration and client may decide approvals only for
 troubleshooting runs or Workflow executions it originated, and only after an
 explicit linked-user confirmation. Browser-created, other-link/client,
-standalone Agent, scheduled, and system-triggered approvals remain denied.
+scheduled, and system-triggered approvals remain denied.
 
 ## Internal transport TLS
 

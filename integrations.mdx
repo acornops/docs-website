@@ -24,12 +24,14 @@ AcornOps v1 does not expose a public PAT or broad bot service-account credential
 
 For v1 integrations, keep privileged decisions attributable:
 
-- use webhooks for bot notifications and workflow triggers,
+- use outgoing webhooks for bot notifications and the authorized Workflow API
+  for launches; AcornOps does not currently expose an inbound
+  webhook-to-Workflow trigger,
 - require an explicit linked-user confirmation before submitting a write approval,
 - send users to the management console for approvals outside the integration's own troubleshooting runs or Workflow executions and for management actions,
 - never auto-approve because a webhook or run event was received.
 
-Deployments may explicitly add `create_read_write_runs` to a registered external integration client's allowed capabilities and the linked user's workspace grant. That lets the integration request read-write troubleshooting runs and active read-write or approval-gated Workflows when the linked user's workspace role also allows it. Write-capable tools still pause on AcornOps approval gates. The exact integration link and client recorded on the run or Workflow execution may submit the linked user's explicit approval or rejection. It cannot decide approvals for browser-created executions, another link/client, standalone Agents, schedules, or system triggers.
+Deployments may explicitly add `create_read_write_runs` to a registered external integration client's allowed capabilities and the linked user's workspace grant. That lets the integration request read-write troubleshooting runs and active read-write or approval-gated Workflows when the linked user's workspace role also allows it. Write-capable tools still pause on AcornOps approval gates. The exact integration link and client recorded on the run or Workflow execution may submit the linked user's explicit approval or rejection. It cannot decide approvals for browser-created executions, another link/client, schedules, or system triggers.
 
 Internal service tokens such as `ORCH_SERVICE_TOKEN`, `EXECUTION_ENGINE_DISPATCH_TOKEN`, and `LLM_GATEWAY_ADMIN_TOKEN` are platform credentials. External integration client bearer tokens are narrow adapter credentials, not public PATs. The built-in MCP bridge uses the run-scoped JWT minted for the active execution.
 

@@ -19,7 +19,7 @@ Missing configuration never activates fallback Agents, tools, MCP servers, crede
 
 Workspace administrators create specialist Agents through the editor or API. A specialist receives reviewed semantic capabilities and exact operational resources from the live catalog.
 
-Coordination is system-owned. Managers do not appear in Agent lists, workflow options, search, configuration, or public Agent responses. You cannot create, select, or access one directly.
+Coordination is system-owned. The coordinator is a versioned, code-owned Workflow executor, not an Agent. Its profile is snapshotted into each new coordinator root attempt and is never exposed through Agent APIs.
 
 A coordinated workflow asks AcornOps to perform work for a semantic capability and exact target. The control plane chooses an eligible selected specialist by reviewed mapping priority and stable Agent ID. It intersects the selected Agents, target compatibility, principal permissions, workspace policy, and connection readiness. Semantic labels never authorize tools on their own.
 
@@ -27,9 +27,12 @@ Coordination is one level deep and allows at most four concurrent child runs and
 
 ## Workflow V2
 
-A Workflow contains a starter prompt, required `agentIds`, generic prompt-resource requirements, a semantic capability policy, and schedule or trigger configuration. Agent selection is a set; array order has no routing meaning and IDs must be unique and non-empty.
+A Workflow contains a starter prompt, required `agentIds`, generic
+prompt-resource requirements, a semantic capability policy, and optional
+schedule configuration. Agent selection is a set; array order has no routing
+meaning and IDs must be unique and non-empty.
 
-Select one Agent to run the workflow directly. Select two or more Agents for AcornOps to coordinate. Workflow responses derive `executionMode` as `direct` or `coordinated`. Requests that send `entryAgentId`, `delegationPolicy`, or `executionMode` are rejected.
+Select one Agent to run the Workflow directly. Select two or more Agents for AcornOps to coordinate. Workflow responses derive `executionMode` as `direct` or `coordinated`; it is not an authoring input.
 
 Creating a Workflow session records a non-executable capability ceiling. It does not resolve prompt resources. At launch, the control plane parses the exact prompt, resolves and authorizes every reference under the authenticated user, and atomically pins stable resource bindings with prompt and binding digests. Semantic capability IDs such as `target.diagnostics.read` describe routing requirements but never authorize a tool by themselves. Existing runs keep their pinned execution mode and bindings when you edit a Workflow. Future runs use the new definition and live provider state.
 
@@ -48,7 +51,7 @@ The capability policy has two explicit modes:
 - `inherit` uses the selected Agents' current combined reviewed ceiling. `semanticCapabilityIds` must be empty. Each new session resolves and pins the effective set, so an Agent grant or revocation affects future sessions without expanding an existing run.
 - `restrict` uses `semanticCapabilityIds` as an explicit subset of the selected Agents' combined ceiling. An empty array intentionally creates a zero-capability workflow.
 
-Stored workflows created before this field existed migrate to `restrict` to prevent privilege expansion. Legacy API requests that omit the field keep the old restricted interpretation. The management console always sends the mode explicitly.
+The management console sends the capability-policy mode explicitly.
 
 Manual Workflow defaults are server-owned. When policy fields are omitted, the control plane uses read-only mode, inherited Agent capabilities, workspace metadata context, workspace-data permission, and no approval requirements. The management console sends only the operator-controlled restriction choice and semantic subset.
 
@@ -119,7 +122,8 @@ required capability. Ungated read-only Workflows require
 `create_read_write_runs`.
 
 The Workflow session is the persistent conversation. Each message creates a
-new execution, and each execution creates one run per step attempt. Keep the
+new execution. A direct execution creates a specialist root run; a coordinated
+execution creates a coordinator root and its specialist child runs. Keep the
 session ID as the external thread mapping. Replies after completion use the
 same pinned Workflow version and retained history, but require a new
 `clientRequestId` and fresh approvals.
@@ -138,17 +142,19 @@ Dispatch, continuation, approval, and tool execution consume the persisted compi
 
 Approvals expire after 15 minutes by default. Expiry fails the attempt and does not grant the requested capability.
 
-## Agent triggers
+## Workflow execution
 
-Standalone Agents support `manual`, `workflow`, `schedule`, `webhook`, and `target_event` triggers. `audit_event` and `external_adapter` are not accepted in this release.
+Workflows are the only runnable automation aggregate. Agents are reusable,
+versioned specialist capability profiles; they never own or start runs. A
+one-Agent Workflow creates a specialist root. A multi-Agent Workflow creates a
+coordinator root, and delegation creates specialist children beneath that root.
+Rootness is represented by the absence of a parent run, not by a separate
+executor role.
 
-Creating a webhook trigger returns its HMAC secret once. Store it immediately; later Agent responses never include the plaintext or ciphertext. Send JSON events to the returned URL with:
-
-- `x-acornops-timestamp`: Unix seconds or an ISO timestamp within five minutes,
-- `x-acornops-event-id`: a stable, unique event identifier, and
-- `x-acornops-signature`: the SHA-256 HMAC of `<timestamp>.<raw JSON body>`.
-
-The control plane rejects repeated event IDs, invalid signatures, payloads over 256 KiB, and sustained delivery above the per-trigger limit. A `202` response means the event and its durable delivery record committed; Agent dispatch happens asynchronously and is idempotent for that event.
+Use a Workflow schedule when you need unattended execution. A linked external
+integration can launch an active Workflow when its grant permits it. AcornOps
+does not currently expose a generic public inbound webhook that starts a
+Workflow.
 
 ## Rollout modes
 
@@ -165,7 +171,7 @@ The main `/ready` endpoint continues to reflect Postgres and Redis correctness. 
 
 ## Diagnostics and alerts
 
-Authorized workspace readers can inspect `GET /api/v1/workspaces/{workspaceId}/automation/diagnostics`. The response includes runtime enablement, dispatch state and oldest pending age, visible Agent and Workflow states, active-run count, trigger deliveries, scheduler lag, pending approval age, template readiness reasons, and retained report-source count. System-owned coordination records are not exposed through this workspace-facing response.
+Authorized workspace readers can inspect `GET /api/v1/workspaces/{workspaceId}/automation/diagnostics`. The response includes runtime enablement, dispatch state and oldest pending age, Workflow-run counts by executor role and root/child position, scheduler lag, pending approval age, template readiness reasons, and retained report-source count.
 
 Scrape `/metrics` and load `observability/prometheus/alerts/control-plane-automation.rules.yaml` from the deployment repository. Starter provisioning reports `control_plane_automation_template_seed_total{template_id,outcome}`. The supplied rules cover dispatch older than the 30-second objective, scheduler lag over 60 seconds, approvals older than 15 minutes, `needs_review`, trigger rejection, MCP failures, personal-credential cleanup retries, MCP-readiness schedule pauses, PDF rendering failures, and elevated terminal failures.
 
