@@ -3777,6 +3777,366 @@
         }
       }
     },
+    "/api/v1/workflow-event-triggers/{triggerId}": {
+      "patch": {
+        "tags": [
+          "workflows"
+        ],
+        "summary": "Update a workflow event trigger",
+        "description": "Updates name, enabled state, approved grants, or issue-field bindings. Source, workflow, and creator-bound run identity are immutable. Requires manage_workflows.",
+        "security": [
+          {
+            "userSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/PathTriggerId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "workspaceId"
+                ],
+                "properties": {
+                  "workspaceId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 120
+                  },
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "inputBindings": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string",
+                      "enum": [
+                        "issue.id",
+                        "issue.title",
+                        "issue.summary",
+                        "issue.severity",
+                        "issue.scope",
+                        "issue.object",
+                        "target.id",
+                        "target.type"
+                      ]
+                    }
+                  },
+                  "approvedContextGrants": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Workflow event trigger updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkflowEventTriggerResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error500"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "workflows"
+        ],
+        "summary": "Delete a workflow event trigger",
+        "description": "Stops future events immediately without affecting existing workflow runs. Requires manage_workflows.",
+        "security": [
+          {
+            "userSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/PathTriggerId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "workspaceId"
+                ],
+                "properties": {
+                  "workspaceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "example": "4b930d98-add9-4924-ab26-3c16d96ec373"
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Workflow event trigger deleted."
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error500"
+          }
+        }
+      }
+    },
+    "/api/v1/workflow-event-triggers/{triggerId}/events": {
+      "post": {
+        "tags": [
+          "workflows"
+        ],
+        "summary": "Submit a signed workflow webhook event",
+        "description": "Accepts an inputs object after verifying X-AcornOps-Event-Id, X-AcornOps-Timestamp, and an HMAC SHA-256 X-AcornOps-Signature over `<timestamp>.<raw body>`. Events are replay-protected and limited to 256 KiB.",
+        "security": [],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/PathTriggerId"
+          },
+          {
+            "in": "header",
+            "name": "X-AcornOps-Event-Id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-AcornOps-Timestamp",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-AcornOps-Signature",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^v1=[a-f0-9]{64}$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "inputs"
+                ],
+                "properties": {
+                  "inputs": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Event accepted for durable dispatch.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkflowEventTriggerAccepted"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "description": "Timestamp or signature invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "description": "Target workflow changed after the trigger was saved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Payload exceeds 256 KiB."
+          },
+          "429": {
+            "description": "Per-trigger request or accepted-event rate exceeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/Error500"
+          }
+        }
+      }
+    },
+    "/api/v1/workflow-event-triggers/{triggerId}/rotate-secret": {
+      "post": {
+        "tags": [
+          "workflows"
+        ],
+        "summary": "Rotate a webhook event-trigger signing secret",
+        "description": "Invalidates the previous secret and returns the replacement once. Requires manage_workflows.",
+        "security": [
+          {
+            "userSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/PathTriggerId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "workspaceId"
+                ],
+                "properties": {
+                  "workspaceId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "example": "4b930d98-add9-4924-ab26-3c16d96ec373"
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Signing secret rotated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkflowEventTriggerCreated"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error500"
+          }
+        }
+      }
+    },
     "/api/v1/workflow-executions/{executionId}": {
       "get": {
         "tags": [
@@ -17168,6 +17528,172 @@
         }
       }
     },
+    "/api/v1/workspaces/{workspaceId}/workflow-event-triggers": {
+      "get": {
+        "tags": [
+          "workflows"
+        ],
+        "summary": "List workflow event triggers for a workspace",
+        "description": "Returns signed webhook and AcornOps event triggers. Requires read_workspace_data.",
+        "security": [
+          {
+            "userSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/PathWorkspaceId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Workflow event-trigger list.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkflowEventTriggerList"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error500"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "workflows"
+        ],
+        "summary": "Create a workflow event trigger",
+        "description": "Binds one signed webhook or issue-created event source to one existing workflow. Webhook signing secrets are returned once. Requires manage_workflows.",
+        "security": [
+          {
+            "userSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/PathWorkspaceId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "workflowId",
+                  "name",
+                  "sourceType"
+                ],
+                "properties": {
+                  "workflowId": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 120
+                  },
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "sourceType": {
+                    "type": "string",
+                    "enum": [
+                      "webhook",
+                      "acornops_event"
+                    ]
+                  },
+                  "eventType": {
+                    "type": "string",
+                    "enum": [
+                      "issue.created.v1"
+                    ]
+                  },
+                  "inputBindings": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string",
+                      "enum": [
+                        "issue.id",
+                        "issue.title",
+                        "issue.summary",
+                        "issue.severity",
+                        "issue.scope",
+                        "issue.object",
+                        "target.id",
+                        "target.type"
+                      ]
+                    }
+                  },
+                  "approvedContextGrants": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Workflow event trigger created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkflowEventTriggerCreated"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error500"
+          }
+        }
+      }
+    },
     "/api/v1/workspaces/{workspaceId}/workflow-options": {
       "get": {
         "tags": [
@@ -17902,6 +18428,15 @@
         "required": true,
         "schema": {
           "type": "string"
+        }
+      },
+      "PathTriggerId": {
+        "in": "path",
+        "name": "triggerId",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "format": "uuid"
         }
       },
       "PathVmId": {
@@ -23918,6 +24453,234 @@
           }
         },
         "additionalProperties": true
+      },
+      "WorkflowEventTrigger": {
+        "type": "object",
+        "required": [
+          "id",
+          "workspaceId",
+          "workflowId",
+          "name",
+          "status",
+          "sourceType",
+          "inputBindings",
+          "approvedContextGrants",
+          "principal"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "workspaceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "workflowId": {
+            "type": "string",
+            "example": "workflow-cluster-daily-triage"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "enabled",
+              "paused"
+            ]
+          },
+          "sourceType": {
+            "type": "string",
+            "enum": [
+              "webhook",
+              "acornops_event"
+            ]
+          },
+          "eventType": {
+            "oneOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "issue.created.v1"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "inputBindings": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "enum": [
+                "issue.id",
+                "issue.title",
+                "issue.summary",
+                "issue.severity",
+                "issue.scope",
+                "issue.object",
+                "target.id",
+                "target.type"
+              ]
+            }
+          },
+          "approvedContextGrants": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "principal": {
+            "type": "object",
+            "required": [
+              "type",
+              "id"
+            ],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "user"
+                ]
+              },
+              "id": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          },
+          "endpointUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "lastTriggeredAt": {
+            "oneOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "lastStatus": {
+            "oneOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "dispatched",
+                  "failed",
+                  "auto_paused",
+                  "rejected"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "lastError": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "WorkflowEventTriggerAccepted": {
+        "type": "object",
+        "required": [
+          "eventId",
+          "status"
+        ],
+        "properties": {
+          "eventId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "accepted"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "WorkflowEventTriggerCreated": {
+        "type": "object",
+        "required": [
+          "trigger"
+        ],
+        "properties": {
+          "trigger": {
+            "$ref": "#/components/schemas/WorkflowEventTrigger"
+          },
+          "webhook": {
+            "type": "object",
+            "required": [
+              "url",
+              "secret",
+              "secretDisclosure"
+            ],
+            "properties": {
+              "url": {
+                "type": "string",
+                "format": "uri"
+              },
+              "secret": {
+                "type": "string",
+                "pattern": "^whsec_"
+              },
+              "secretDisclosure": {
+                "type": "string",
+                "enum": [
+                  "one_time"
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "WorkflowEventTriggerList": {
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkflowEventTrigger"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "WorkflowEventTriggerResponse": {
+        "type": "object",
+        "required": [
+          "trigger"
+        ],
+        "properties": {
+          "trigger": {
+            "$ref": "#/components/schemas/WorkflowEventTrigger"
+          }
+        },
+        "additionalProperties": false
       },
       "WorkflowMessageAccepted": {
         "type": "object",
