@@ -215,7 +215,8 @@ Operators can:
 
 - disable password login with `auth.password.enabled=false` or `PASSWORD_AUTH_ENABLED=false`,
 - disable password reset with `auth.password.resetEnabled=false` or `PASSWORD_RESET_ENABLED=false`,
-- enable self-service signup with `auth.password.signupEnabled=true` or `PASSWORD_SIGNUP_ENABLED=true`.
+- allow and default self-service signup with `platformSettings.passwordSignup`, then manage the
+  effective runtime value from the audited Platform Admin settings page.
 
 Only enable self-service signup in private deployments where account creation has been reviewed.
 

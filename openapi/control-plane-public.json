@@ -10517,6 +10517,82 @@
         }
       }
     },
+    "/api/v1/workspaces/{workspaceId}/member-candidates": {
+      "get": {
+        "tags": [
+          "workspaces"
+        ],
+        "summary": "Discover existing users eligible for workspace membership",
+        "description": "Requires manage_members. The deployment-selected mode controls whether discovery is disabled, exact-email only, or directory search.",
+        "security": [
+          {
+            "userSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/PathWorkspaceId"
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "description": "Directory queries are limited to 200 characters; exact-email queries support up to 320.",
+            "schema": {
+              "type": "string",
+              "maxLength": 320
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Discovery mode and up to eight eligible local user candidates.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceMemberCandidateResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "description": "Requires manage_members.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "429": {
+            "description": "Member discovery rate limit exceeded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/Error500"
+          }
+        }
+      }
+    },
     "/api/v1/workspaces/{workspaceId}/members": {
       "get": {
         "tags": [
@@ -10602,7 +10678,7 @@
         "tags": [
           "workspaces"
         ],
-        "summary": "Add a workspace member by email",
+        "summary": "Add an existing AcornOps user as a workspace member",
         "security": [
           {
             "userSession": []
@@ -10620,18 +10696,19 @@
               "schema": {
                 "type": "object",
                 "required": [
+                  "userId",
                   "email",
                   "role"
                 ],
                 "properties": {
+                  "userId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
                   "email": {
                     "type": "string",
                     "format": "email",
-                    "example": "sre@example.com"
-                  },
-                  "displayName": {
-                    "type": "string",
-                    "example": "SRE User"
+                    "maxLength": 320
                   },
                   "role": {
                     "type": "string",
@@ -10668,7 +10745,7 @@
             "$ref": "#/components/responses/Error401"
           },
           "403": {
-            "description": "Requires manage_members. PROTECTED_ROLE_REQUIRES_OWNER is returned when a non-owner assigns a protected role.",
+            "description": "Requires manage_members. MEMBER_DISCOVERY_DISABLED is returned when direct existing-user addition is disabled. PROTECTED_ROLE_REQUIRES_OWNER is returned when a non-owner assigns a protected role.",
             "content": {
               "application/json": {
                 "schema": {
@@ -10678,10 +10755,17 @@
             }
           },
           "404": {
-            "$ref": "#/components/responses/Error404"
+            "description": "Existing eligible user not found, including when userId and email do not identify the same user.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           },
           "409": {
-            "description": "User is already a member, user workspace-membership quota exceeded, or workspace member quota exceeded. Quota failures return QUOTA_EXCEEDED with quotaKey=workspaceMemberships or workspaceMembers.",
+            "description": "User is already a member, has a pending invitation, user workspace-membership quota exceeded, or workspace member quota exceeded. Quota failures return QUOTA_EXCEEDED with quotaKey=workspaceMemberships or workspaceMembers.",
             "content": {
               "application/json": {
                 "schema": {
@@ -24664,6 +24748,73 @@
           }
         },
         "additionalProperties": true
+      },
+      "WorkspaceMemberCandidate": {
+        "type": "object",
+        "required": [
+          "userId",
+          "email",
+          "displayName",
+          "authMethods",
+          "status"
+        ],
+        "properties": {
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "authMethods": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "oidc",
+                "password"
+              ]
+            },
+            "uniqueItems": true
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "available",
+              "member",
+              "invited"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "WorkspaceMemberCandidateResponse": {
+        "type": "object",
+        "required": [
+          "mode",
+          "items"
+        ],
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": [
+              "disabled",
+              "exact_email",
+              "directory"
+            ]
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkspaceMemberCandidate"
+            }
+          }
+        },
+        "additionalProperties": false
       },
       "WorkspaceMemberPage": {
         "type": "object",

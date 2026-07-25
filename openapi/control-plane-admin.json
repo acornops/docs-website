@@ -68,6 +68,89 @@
             "adminBearer": []
           }
         ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "adminTokenId",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "adminActorSubject",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "action",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "actionGroup",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "workspace_access_modified",
+                "workspace_status_modified"
+              ]
+            },
+            "description": "Fixed related-action group. Cannot be combined with action."
+          },
+          {
+            "in": "query",
+            "name": "outcome",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "success",
+                "failure"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "workspaceId",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/QueryLimit"
+          },
+          {
+            "$ref": "#/components/parameters/QueryCursor"
+          }
+        ],
         "responses": {
           "200": {
             "description": "Paged admin audit events.",
@@ -175,22 +258,10 @@
             }
           },
           {
-            "in": "query",
-            "name": "limit",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "minimum": 1,
-              "maximum": 100
-            }
+            "$ref": "#/components/parameters/QueryLimit"
           },
           {
-            "in": "query",
-            "name": "cursor",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
+            "$ref": "#/components/parameters/QueryCursor"
           }
         ],
         "responses": {
@@ -233,7 +304,7 @@
         "tags": [
           "admin"
         ],
-        "summary": "Inspect the current admin token",
+        "summary": "Inspect the current admin service credential and human administrator",
         "security": [
           {
             "adminBearer": []
@@ -605,6 +676,234 @@
           }
         }
       }
+    },
+    "/admin/v1/system/settings": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "List effective durable platform settings and deployment boundaries",
+        "security": [
+          {
+            "adminBearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Typed platform setting states with effective values, source, version, and constraints.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformSettingList"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error500"
+          }
+        }
+      }
+    },
+    "/admin/v1/system/settings/{settingKey}": {
+      "patch": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Set a durable platform setting override",
+        "security": [
+          {
+            "adminBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "value",
+                  "expectedVersion",
+                  "reason"
+                ],
+                "properties": {
+                  "value": {
+                    "type": "object"
+                  },
+                  "expectedVersion": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 500
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated effective setting state.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformSetting"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Value is invalid or outside the deployment policy ceiling.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "description": "Optimistic setting version conflict.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error500"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Reset a durable platform setting to its deployment default",
+        "security": [
+          {
+            "adminBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "expectedVersion",
+                  "reason"
+                ],
+                "properties": {
+                  "expectedVersion": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 500
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Setting reset to its deployment default.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformSetting"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "description": "Optimistic setting version conflict.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error500"
+          }
+        }
+      },
+      "parameters": [
+        {
+          "in": "path",
+          "name": "settingKey",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "enum": [
+              "member_discovery",
+              "ai_policy",
+              "password_signup"
+            ]
+          }
+        }
+      ]
     },
     "/admin/v1/targets": {
       "get": {
@@ -1176,6 +1475,65 @@
       }
     },
     "/admin/v1/workspaces/{workspaceId}/members": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "List governance-safe workspace members",
+        "security": [
+          {
+            "adminBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/QueryLimit"
+          },
+          {
+            "$ref": "#/components/parameters/QueryCursor"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paged workspace membership records with user display identity and role.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminWorkspaceMemberPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "description": "Workspace not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error500"
+          }
+        }
+      },
       "post": {
         "tags": [
           "admin"
@@ -1533,9 +1891,209 @@
           }
         }
       }
+    },
+    "/admin/v1/workspaces/{workspaceId}/restore": {
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Restore member access to a suspended workspace",
+        "security": [
+          {
+            "adminBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "reason"
+                ],
+                "properties": {
+                  "workspaceName": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200,
+                    "description": "When supplied, must exactly match the current workspace name."
+                  },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 500
+                  },
+                  "ticketRef": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Workspace access restored with retained memberships.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminMutationResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Workspace-name confirmation did not match.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "description": "Workspace is already active or lifecycle state changed concurrently.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error500"
+          }
+        }
+      }
+    },
+    "/admin/v1/workspaces/{workspaceId}/suspend": {
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Suspend member access to a workspace without modifying workloads",
+        "security": [
+          {
+            "adminBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "workspaceName",
+                  "reason"
+                ],
+                "properties": {
+                  "workspaceName": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 500
+                  },
+                  "ticketRef": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Workspace access suspended; memberships, targets, workloads, and audit history retained.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminMutationResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Workspace-name confirmation did not match.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "description": "Workspace is already suspended or lifecycle state changed concurrently.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error500"
+          }
+        }
+      }
     }
   },
   "components": {
+    "parameters": {
+      "QueryCursor": {
+        "in": "query",
+        "name": "cursor",
+        "required": false,
+        "schema": {
+          "type": "string"
+        }
+      },
+      "QueryLimit": {
+        "in": "query",
+        "name": "limit",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        }
+      }
+    },
     "responses": {
       "Error400": {
         "description": "Error response.",
@@ -1611,34 +2169,88 @@
     "schemas": {
       "AdminAuditEvent": {
         "type": "object",
+        "required": [
+          "id",
+          "action",
+          "outcome",
+          "requestId",
+          "metadata",
+          "occurredAt"
+        ],
         "properties": {
           "id": {
             "type": "string",
             "format": "uuid"
           },
-          "tokenId": {
+          "adminTokenId": {
             "type": "string"
           },
-          "scope": {
+          "adminActorIssuer": {
             "type": "string"
           },
-          "method": {
+          "adminActorSubject": {
             "type": "string"
           },
-          "path": {
+          "adminActorEmail": {
             "type": "string"
           },
-          "statusCode": {
-            "type": "integer"
+          "adminActorDisplayName": {
+            "type": "string"
+          },
+          "adminActorRole": {
+            "type": "string",
+            "enum": [
+              "platform-admin",
+              "platform-admin-viewer",
+              "platform-admin-auditor"
+            ]
+          },
+          "authenticationTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "action": {
+            "type": "string"
+          },
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "success",
+              "failure"
+            ]
+          },
+          "workspaceId": {
+            "type": "string"
+          },
+          "targetType": {
+            "type": "string"
+          },
+          "targetId": {
+            "type": "string"
+          },
+          "subjectType": {
+            "type": "string"
+          },
+          "subjectId": {
+            "type": "string"
           },
           "reason": {
+            "type": "string"
+          },
+          "requestId": {
+            "type": "string"
+          },
+          "sourceIpHash": {
+            "type": "string"
+          },
+          "userAgent": {
             "type": "string"
           },
           "metadata": {
             "type": "object",
             "additionalProperties": true
           },
-          "createdAt": {
+          "occurredAt": {
             "type": "string",
             "format": "date-time"
           }
@@ -1733,6 +2345,39 @@
             "type": "array",
             "items": {
               "type": "string"
+            }
+          },
+          "actor": {
+            "type": "object",
+            "properties": {
+              "issuer": {
+                "type": "string"
+              },
+              "subject": {
+                "type": "string"
+              },
+              "email": {
+                "type": "string"
+              },
+              "displayName": {
+                "type": "string"
+              },
+              "roles": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "scopes": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "authenticatedAt": {
+                "type": "string",
+                "format": "date-time"
+              }
             }
           },
           "adminApiEnabled": {
@@ -2038,9 +2683,50 @@
         "allOf": [
           {
             "$ref": "#/components/schemas/Workspace"
+          },
+          {
+            "type": "object",
+            "required": [
+              "virtualMachineCount",
+              "lifecycleStatus"
+            ],
+            "properties": {
+              "virtualMachineCount": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "lifecycleStatus": {
+                "type": "string",
+                "enum": [
+                  "active",
+                  "suspended"
+                ]
+              },
+              "suspendedAt": {
+                "type": "string",
+                "format": "date-time"
+              }
+            }
           }
         ],
         "description": "Support-safe workspace detail."
+      },
+      "AdminWorkspaceMemberPage": {
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkspaceMember"
+            }
+          },
+          "nextCursor": {
+            "type": "string"
+          }
+        }
       },
       "AdminWorkspacePage": {
         "type": "object",
@@ -2104,6 +2790,85 @@
           }
         },
         "additionalProperties": true
+      },
+      "PlatformSetting": {
+        "type": "object",
+        "required": [
+          "key",
+          "value",
+          "deploymentDefault",
+          "source",
+          "version",
+          "editable",
+          "constraints"
+        ],
+        "properties": {
+          "key": {
+            "type": "string",
+            "enum": [
+              "member_discovery",
+              "ai_policy",
+              "password_signup"
+            ]
+          },
+          "value": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "deploymentDefault": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "overrideValue": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "deployment_default",
+              "runtime_override",
+              "runtime_override_constrained"
+            ]
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "updatedBy": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "editable": {
+            "type": "boolean"
+          },
+          "constraints": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "warning": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PlatformSettingList": {
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlatformSetting"
+            }
+          }
+        },
+        "additionalProperties": false
       },
       "SnapshotReference": {
         "type": "object",
