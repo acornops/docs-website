@@ -4809,7 +4809,7 @@
           "workflows"
         ],
         "summary": "Update a workflow definition",
-        "description": "Manual workflows accept definition edits. System-provided workflows accept availability-status changes only; duplicate one to edit its definition.",
+        "description": "Workspace workflows accept definition edits from users with manage_workflows, including workflows created from workspace defaults or recommendations.",
         "security": [
           {
             "userSession": []
@@ -4954,14 +4954,7 @@
             "$ref": "#/components/responses/Error404"
           },
           "409": {
-            "description": "System-provided workflow definition is immutable; duplicate it to edit.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
+            "$ref": "#/components/responses/Error409"
           },
           "429": {
             "$ref": "#/components/responses/Error429"
@@ -8384,8 +8377,8 @@
         "tags": [
           "agents"
         ],
-        "summary": "List automation templates and setup state",
-        "description": "Returns automatic and opt-in templates, setup steps, accepted integration profiles, blocker codes, and installation state. Automatic templates are provisioned with the workspace; opt-in definitions are absent until installed.",
+        "summary": "List recommended workflows and setup state",
+        "description": "Returns the workflows AcornOps recommends as starting points, along with setup steps, accepted integration profiles, blocker codes, and addition state. Default workflows are created once with the workspace; optional recommendations are absent until explicitly added. Resulting workflows are workspace-owned and directly editable.",
         "security": [
           {
             "userSession": []
@@ -8398,7 +8391,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Template catalog and installation rows.",
+            "description": "Recommended workflow catalog and addition state.",
             "content": {
               "application/json": {
                 "schema": {
@@ -8436,7 +8429,7 @@
         "tags": [
           "agents"
         ],
-        "summary": "Activate an installed automation template",
+        "summary": "Activate an added recommended workflow",
         "description": "Activation succeeds only when reviewed workspace prerequisites are ready.",
         "security": [
           {
@@ -8458,7 +8451,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Template activated.",
+            "description": "Recommended workflow activated.",
             "content": {
               "application/json": {
                 "schema": {
@@ -8503,8 +8496,8 @@
         "tags": [
           "agents"
         ],
-        "summary": "Install or explicitly reinstall an automation template",
-        "description": "Idempotently creates paused definitions for opt-in templates. Requires manage_agents and manage_workflows.",
+        "summary": "Add a recommended workflow",
+        "description": "Idempotently creates a paused, workspace-owned workflow from an optional recommendation. AcornOps does not maintain or overwrite the resulting definition. Requires manage_agents and manage_workflows.",
         "security": [
           {
             "userSession": []
@@ -8525,7 +8518,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Template was already installed.",
+            "description": "The recommended workflow was already added.",
             "content": {
               "application/json": {
                 "schema": {
@@ -8535,7 +8528,7 @@
             }
           },
           "201": {
-            "description": "Template installed.",
+            "description": "Recommended workflow added.",
             "content": {
               "application/json": {
                 "schema": {
@@ -18180,7 +18173,7 @@
           "workflows"
         ],
         "summary": "List workflow definitions for a workspace",
-        "description": "Returns system-provided template-origin and manually created workflow definitions visible to management-console. Requires read_workspace_data.",
+        "description": "Returns workspace-owned workflow definitions visible to management-console. Workflows created from workspace defaults or recommendations are ordinary editable definitions. Requires read_workspace_data.",
         "security": [
           {
             "userSession": []
