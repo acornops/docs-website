@@ -103,6 +103,41 @@ Template manifests contain prose, safe policy defaults, semantic requirements, a
 
 Schedules store an `inputs` object keyed by the active Workflow's derived parameters. Preview validates the exact values before creation or update. Every occurrence compiles the current active prompt and reauthorizes stored resource IDs. A definition mismatch, missing value, deletion, integration outage, membership change, or authorization failure auto-pauses the schedule with a bounded actionable reason; repair the cause and resume it manually.
 
+## Observe runs and triggers
+
+Open **Workflows** in the management console to use three views:
+
+- **Library** contains installed Workflow definitions and manual launch.
+- **Runs** shows open and historical executions across the workspace.
+- **Triggers** contains schedules, AcornOps issue events, and incoming webhook
+  triggers.
+
+The Workflows and Runs navigation badges show the number of open executions.
+The Runs ledger defaults to open work. You can search it or filter by state,
+origin, Workflow, and issue. Each row identifies the Workflow, the schedule or
+event that started it, its target, current state, start or completion time, and
+an exact run link.
+
+Issue rows show related automation directly on the workspace, Kubernetes, and
+virtual-machine issue surfaces. Use **Review run** for approval or review
+states, **Open run** for one active execution, or **View runs** when several
+executions relate to the same issue. Manual triage remains available.
+
+Trigger rows keep three facts separate:
+
+- **Configuration** shows whether the trigger is enabled or paused.
+- **Last dispatch** shows whether the latest trigger occurrence dispatched,
+  failed, was rejected, or was skipped.
+- **Latest execution** shows the actual run state when dispatch created one.
+
+A dispatch failure does not appear as a running execution and does not erase
+the previous successful run link. AcornOps retains the run's origin label even
+if you later delete the trigger.
+
+**Outbound webhooks** is a separate Automation destination. Outbound webhooks
+send AcornOps events to another system; incoming webhook triggers start an
+AcornOps Workflow.
+
 ## Create a custom workflow
 
 AcornOps does not install a repository-review Agent or workflow. When you need a repository-oriented or other external workflow:
