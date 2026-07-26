@@ -4161,7 +4161,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Workflow execution with retained attempts and, for coordinated runs, a sanitized child summary without prompts, compiled scopes, results, credentials, or coordinator identity.",
+            "description": "Workflow execution with retained attempts and, for normal users, immutable origin provenance. Coordinated runs include a sanitized child summary without prompts, compiled scopes, results, credentials, or coordinator identity.",
             "content": {
               "application/json": {
                 "schema": {
@@ -4172,7 +4172,13 @@
                   ],
                   "properties": {
                     "execution": {
-                      "type": "object"
+                      "type": "object",
+                      "properties": {
+                        "origin": {
+                          "$ref": "#/components/schemas/WorkflowExecutionOrigin"
+                        }
+                      },
+                      "additionalProperties": true
                     },
                     "attempts": {
                       "type": "array",
@@ -17694,6 +17700,118 @@
         }
       }
     },
+    "/api/v1/workspaces/{workspaceId}/workflow-executions": {
+      "get": {
+        "tags": [
+          "workflows"
+        ],
+        "summary": "List workspace workflow executions with immutable provenance",
+        "security": [
+          {
+            "userSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/PathWorkspaceId"
+          },
+          {
+            "in": "query",
+            "name": "state",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "all",
+                "open",
+                "attention",
+                "completed",
+                "failed",
+                "cancelled"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "origin",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "manual",
+                "external_integration",
+                "schedule",
+                "event_trigger"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "workflowId",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sourceIssueId",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 200
+            }
+          },
+          {
+            "$ref": "#/components/parameters/QueryCursor"
+          },
+          {
+            "$ref": "#/components/parameters/QueryLimit2"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cursor-paginated execution ledger and current workspace counts.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkflowExecutionPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error500"
+          }
+        }
+      }
+    },
     "/api/v1/workspaces/{workspaceId}/workflow-options": {
       "get": {
         "tags": [
@@ -21004,6 +21122,11 @@
       },
       "Issue": {
         "type": "object",
+        "properties": {
+          "workflowActivity": {
+            "$ref": "#/components/schemas/WorkflowActivitySummary"
+          }
+        },
         "additionalProperties": true
       },
       "IssueObservation": {
@@ -23595,6 +23718,35 @@
         },
         "additionalProperties": true
       },
+      "WorkflowActivitySummary": {
+        "type": "object",
+        "required": [
+          "totalCount",
+          "openCount",
+          "attentionCount"
+        ],
+        "properties": {
+          "totalCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "openCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "attentionCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "openExecution": {
+            "$ref": "#/components/schemas/WorkflowExecutionSummary"
+          },
+          "latestExecution": {
+            "$ref": "#/components/schemas/WorkflowExecutionSummary"
+          }
+        },
+        "additionalProperties": false
+      },
       "WorkflowApprovalInbox": {
         "type": "object",
         "required": [
@@ -24584,6 +24736,36 @@
               }
             ]
           },
+          "lastExecutionId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "lastRunId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "latestExecution": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/WorkflowExecutionSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "lastError": {
             "oneOf": [
               {
@@ -24678,6 +24860,277 @@
         "properties": {
           "trigger": {
             "$ref": "#/components/schemas/WorkflowEventTrigger"
+          }
+        },
+        "additionalProperties": false
+      },
+      "WorkflowExecutionOrigin": {
+        "type": "object",
+        "required": [
+          "schemaVersion",
+          "kind",
+          "label"
+        ],
+        "oneOf": [
+          {
+            "required": [
+              "kind"
+            ],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "manual",
+                  "external_integration"
+                ]
+              }
+            }
+          },
+          {
+            "required": [
+              "kind",
+              "triggerId"
+            ],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "schedule"
+                ]
+              }
+            }
+          },
+          {
+            "required": [
+              "kind",
+              "triggerId",
+              "source"
+            ],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "event_trigger"
+                ]
+              }
+            }
+          }
+        ],
+        "properties": {
+          "schemaVersion": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "manual",
+              "external_integration",
+              "schedule",
+              "event_trigger"
+            ]
+          },
+          "label": {
+            "type": "string"
+          },
+          "triggerId": {
+            "type": "string"
+          },
+          "source": {
+            "type": "object",
+            "required": [
+              "kind",
+              "label"
+            ],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "issue",
+                  "webhook"
+                ]
+              },
+              "label": {
+                "type": "string"
+              },
+              "id": {
+                "type": "string"
+              },
+              "eventType": {
+                "type": "string"
+              },
+              "targetId": {
+                "type": "string"
+              },
+              "targetType": {
+                "type": "string",
+                "enum": [
+                  "kubernetes",
+                  "virtual_machine"
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "WorkflowExecutionPage": {
+        "type": "object",
+        "required": [
+          "items",
+          "summary"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkflowExecutionSummary"
+            }
+          },
+          "nextCursor": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "object",
+            "required": [
+              "openCount",
+              "attentionCount"
+            ],
+            "properties": {
+              "openCount": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "attentionCount": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "latestUpdatedAt": {
+                "type": "string",
+                "format": "date-time"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "WorkflowExecutionSummary": {
+        "type": "object",
+        "required": [
+          "id",
+          "workspaceId",
+          "workflow",
+          "status",
+          "origin",
+          "createdAt",
+          "updatedAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "workspaceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "workflow": {
+            "type": "object",
+            "required": [
+              "id",
+              "name",
+              "version"
+            ],
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "version": {
+                "type": "integer",
+                "minimum": 1
+              }
+            },
+            "additionalProperties": false
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "queued",
+              "dispatching",
+              "running",
+              "waiting_for_approval",
+              "needs_review",
+              "cancelling",
+              "completed",
+              "failed",
+              "cancelled"
+            ]
+          },
+          "origin": {
+            "$ref": "#/components/schemas/WorkflowExecutionOrigin"
+          },
+          "rootRun": {
+            "type": "object",
+            "required": [
+              "id",
+              "requestedAt"
+            ],
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "targetId": {
+                "type": "string"
+              },
+              "targetName": {
+                "type": "string"
+              },
+              "targetType": {
+                "type": "string",
+                "enum": [
+                  "kubernetes",
+                  "virtual_machine"
+                ]
+              },
+              "requestedAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "startedAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "endedAt": {
+                "type": "string",
+                "format": "date-time"
+              }
+            },
+            "additionalProperties": false
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
           }
         },
         "additionalProperties": false
@@ -24960,6 +25413,22 @@
               "failed",
               "auto_paused",
               "skipped"
+            ]
+          },
+          "lastExecutionId": {
+            "type": "string"
+          },
+          "lastRunId": {
+            "type": "string"
+          },
+          "latestExecution": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/WorkflowExecutionSummary"
+              },
+              {
+                "type": "null"
+              }
             ]
           },
           "lastError": {

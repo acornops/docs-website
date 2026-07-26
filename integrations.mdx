@@ -49,6 +49,8 @@ AcornOps returns a management-console `linkUrl` under `/integrations/external/li
 
 Linked bot requests are authorized per workspace. Effective permissions are the linked AcornOps user's workspace role intersected with the registered integration client's capability ceiling and the user's saved workspace grant. A workspace without a grant is hidden or denied to the external integration.
 
+Workflow executions started by an external integration retain the registered client display name for operator-facing provenance in AcornOps. Exact execution responses returned to the integration keep the existing restricted representation and do not expose that browser-only provenance or internal request identity.
+
 External integration clients should not store browser cookies, OIDC tokens, raw link tokens, or an AcornOps user ID as authorization material. Browser login and link completion are AcornOps-owned session flows, not external integration APIs.
 
 ## Linked Workflow access
