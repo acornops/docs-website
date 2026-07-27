@@ -132,7 +132,7 @@
           "agents"
         ],
         "summary": "Update an agent definition",
-        "description": "Manual Agents accept definition edits. System-provided Agents accept availability-status changes only; duplicate one to edit its definition. MCP servers and skills are managed through the nested Agent capability APIs.",
+        "description": "Workspace Agents accept definition edits, including defaults created with a workspace. MCP servers and skills are managed through the nested Agent capability APIs.",
         "security": [
           {
             "userSession": []
@@ -184,7 +184,7 @@
             "$ref": "#/components/responses/Error404"
           },
           "409": {
-            "description": "System-provided Agent definitions are immutable, or the requested change conflicts with an active assignment or policy.",
+            "description": "The requested change conflicts with an active assignment or policy.",
             "content": {
               "application/json": {
                 "schema": {
