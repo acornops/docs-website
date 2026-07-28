@@ -11943,7 +11943,7 @@
           "workspaces"
         ],
         "summary": "Preview assistant capabilities available for a target run",
-        "description": "Returns display-safe tools and assistant-visible skills for the requested run tool access mode. Execution bootstrap remains authoritative.",
+        "description": "Returns display-safe tools and assistant-visible skills available to the current user for the requested run tool access mode. Credential-dependent MCP tools unavailable to that user are counted and omitted. Execution bootstrap remains authoritative.",
         "security": [
           {
             "userSession": []
@@ -12008,7 +12008,14 @@
             "$ref": "#/components/responses/Error404"
           },
           "409": {
-            "$ref": "#/components/responses/Error409"
+            "description": "A non-degradable MCP installation prerequisite is unavailable.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           },
           "429": {
             "$ref": "#/components/responses/Error429"
@@ -22453,6 +22460,10 @@
               "agent_write_disabled"
             ],
             "nullable": true
+          },
+          "unavailableMcpToolCount": {
+            "type": "integer",
+            "minimum": 0
           },
           "toolSummary": {
             "type": "object",
