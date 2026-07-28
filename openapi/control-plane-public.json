@@ -3598,7 +3598,7 @@
           "sessions"
         ],
         "summary": "Append user message and trigger run dispatch",
-        "description": "External integration callers may append messages only to sessions owned by the linked AcornOps user. They may trigger read-only runs by default, or read-write runs only when the registered client allowedCapabilities, user-approved workspace grant, and linked user workspace role all include create_read_write_runs. The exact originating integration link and client may decide approvals created by its own troubleshooting or Workflow execution after explicit linked-user confirmation.",
+        "description": "Manual sessions remain creator-only. Browser-authenticated workspace members with create_sessions and the required run capability may reply to shared auto_triage sessions; each human message records the actual user and remains within the session pinned tool and confirmation ceiling. External integrations remain owner-only and never receive the shared-session exception.",
         "security": [
           {
             "userSession": []
@@ -9637,13 +9637,7 @@
             "$ref": "#/components/parameters/PathWorkspaceId"
           },
           {
-            "in": "path",
-            "name": "issueId",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
+            "$ref": "#/components/parameters/PathIssueId"
           }
         ],
         "responses": {
@@ -9688,6 +9682,70 @@
         }
       }
     },
+    "/api/v1/workspaces/{workspaceId}/issues/{issueId}/automatic-investigation": {
+      "post": {
+        "tags": [
+          "workspaces"
+        ],
+        "summary": "Idempotently start or retry the automatic investigation for the current issue lifecycle",
+        "security": [
+          {
+            "userSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/PathWorkspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/PathIssueId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Existing lifecycle investigation activity.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutomaticInvestigationSummary"
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "Eligible lifecycle investigation queued for initial start or retry.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutomaticInvestigationSummary"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error500"
+          }
+        }
+      }
+    },
     "/api/v1/workspaces/{workspaceId}/issues/{issueId}/observations": {
       "get": {
         "tags": [
@@ -9711,13 +9769,7 @@
             "$ref": "#/components/parameters/PathWorkspaceId"
           },
           {
-            "in": "path",
-            "name": "issueId",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
+            "$ref": "#/components/parameters/PathIssueId"
           },
           {
             "$ref": "#/components/parameters/QueryLimit"
@@ -12016,6 +12068,248 @@
                 }
               }
             }
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error500"
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/targets/{targetId}/auto-triage": {
+      "get": {
+        "tags": [
+          "workspaces"
+        ],
+        "summary": "Get target auto-triage settings and effective readiness",
+        "description": "Browser callers receive edit capability when authorized. External integration callers with read_workspace_data receive the complete effective configuration read-only.",
+        "security": [
+          {
+            "userSession": []
+          },
+          {
+            "externalIntegrationClientToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/HeaderXAcornopsExternalUserId"
+          },
+          {
+            "$ref": "#/components/parameters/PathWorkspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/PathTargetId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Persisted settings, effective write behavior, readiness, edit capability, and eligible current issue count.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TargetAutoTriageSettings"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error500"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "workspaces"
+        ],
+        "summary": "Save target auto-triage settings with optimistic revision checking",
+        "security": [
+          {
+            "userSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/PathWorkspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/PathTargetId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "expectedRevision",
+                  "enabled",
+                  "minimumSeverity",
+                  "writeMode",
+                  "additionalInstructions"
+                ],
+                "properties": {
+                  "expectedRevision": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "minimumSeverity": {
+                    "type": "string",
+                    "enum": [
+                      "critical",
+                      "warning",
+                      "info"
+                    ]
+                  },
+                  "writeMode": {
+                    "type": "string",
+                    "enum": [
+                      "follow_target",
+                      "read_only",
+                      "approval_required",
+                      "full_write"
+                    ]
+                  },
+                  "additionalInstructions": {
+                    "type": "string",
+                    "maxLength": 4000
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Saved settings with effective behavior and readiness.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TargetAutoTriageSettings"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "description": "Settings revision conflict.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error500"
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/targets/{targetId}/auto-triage/investigations": {
+      "post": {
+        "tags": [
+          "workspaces"
+        ],
+        "summary": "Explicitly queue currently eligible target issue lifecycles",
+        "security": [
+          {
+            "userSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/PathWorkspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/PathTargetId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "expectedSettingsRevision"
+                ],
+                "properties": {
+                  "expectedSettingsRevision": {
+                    "type": "integer",
+                    "minimum": 1
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Idempotent queue counts.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutoTriageBulkStartResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
           },
           "429": {
             "$ref": "#/components/responses/Error429"
@@ -18463,6 +18757,15 @@
           "type": "string"
         }
       },
+      "PathIssueId": {
+        "in": "path",
+        "name": "issueId",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
       "PathRunId": {
         "in": "path",
         "name": "runId",
@@ -19711,6 +20014,58 @@
         },
         "additionalProperties": true
       },
+      "AutomaticInvestigationSummary": {
+        "type": "object",
+        "required": [
+          "issueId",
+          "lifecycleVersion",
+          "state",
+          "updatedAt",
+          "canRetry"
+        ],
+        "properties": {
+          "issueId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "lifecycleVersion": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "queued",
+              "investigating",
+              "awaiting_approval",
+              "findings_ready",
+              "failed",
+              "cancelled",
+              "deleted"
+            ]
+          },
+          "sessionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "runId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "errorCode": {
+            "type": "string",
+            "maxLength": 64
+          },
+          "canRetry": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
       "AutomationDiagnostics": {
         "type": "object",
         "required": [
@@ -19926,6 +20281,78 @@
           },
           "workflowId": {
             "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AutoTriageBulkStartResult": {
+        "type": "object",
+        "required": [
+          "queuedCount",
+          "alreadyExistsCount",
+          "skippedCount"
+        ],
+        "properties": {
+          "queuedCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "alreadyExistsCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "skippedCount": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "additionalProperties": false
+      },
+      "AutoTriageEffectiveBehavior": {
+        "type": "object",
+        "required": [
+          "requestedWriteMode",
+          "effectiveToolMode",
+          "confirmationRequiredForWrite",
+          "targetCeilingApplied",
+          "targetSupportsWrite",
+          "summary"
+        ],
+        "properties": {
+          "requestedWriteMode": {
+            "type": "string",
+            "enum": [
+              "follow_target",
+              "read_only",
+              "approval_required",
+              "full_write"
+            ]
+          },
+          "effectiveToolMode": {
+            "type": "string",
+            "enum": [
+              "read_only",
+              "read_write"
+            ]
+          },
+          "confirmationRequiredForWrite": {
+            "type": "boolean"
+          },
+          "targetCeilingApplied": {
+            "type": "boolean"
+          },
+          "targetSupportsWrite": {
+            "type": "boolean"
+          },
+          "summary": {
+            "type": "string",
+            "enum": [
+              "read_only",
+              "approval_required",
+              "automatic_write",
+              "reduced_to_approval",
+              "agent_read_only"
+            ]
           }
         },
         "additionalProperties": false
@@ -20369,6 +20796,42 @@
           "content": {
             "type": "string"
           },
+          "createdBy": {
+            "type": "string"
+          },
+          "createdByUser": {
+            "type": "object",
+            "required": [
+              "id",
+              "email",
+              "displayName"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "email": {
+                "type": "string",
+                "format": "email"
+              },
+              "displayName": {
+                "type": "string"
+              },
+              "emailVerified": {
+                "type": "boolean"
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updatedAt": {
+                "type": "string",
+                "format": "date-time"
+              }
+            },
+            "additionalProperties": true
+          },
           "format": {
             "type": "string"
           },
@@ -20464,8 +20927,7 @@
             "type": "string"
           },
           "createdBy": {
-            "type": "string",
-            "format": "uuid"
+            "type": "string"
           },
           "createdByUser": {
             "type": "object",
@@ -20499,6 +20961,54 @@
               }
             },
             "additionalProperties": true
+          },
+          "origin": {
+            "type": "string",
+            "enum": [
+              "manual",
+              "auto_triage"
+            ]
+          },
+          "automaticInvestigation": {
+            "type": "object",
+            "properties": {
+              "issueId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "lifecycleVersion": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "severity": {
+                "type": "string",
+                "enum": [
+                  "critical",
+                  "warning",
+                  "info"
+                ]
+              },
+              "writeMode": {
+                "type": "string",
+                "enum": [
+                  "follow_target",
+                  "read_only",
+                  "approval_required",
+                  "full_write"
+                ]
+              },
+              "effectiveToolMode": {
+                "type": "string",
+                "enum": [
+                  "read_only",
+                  "read_write"
+                ]
+              },
+              "confirmationRequiredForWrite": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false
           },
           "lastRuntimeSelection": {
             "$ref": "#/components/schemas/ChatRuntimeSelection"
@@ -21125,6 +21635,9 @@
         "properties": {
           "workflowActivity": {
             "$ref": "#/components/schemas/WorkflowActivitySummary"
+          },
+          "automaticInvestigation": {
+            "$ref": "#/components/schemas/AutomaticInvestigationSummary"
           }
         },
         "additionalProperties": true
@@ -22562,6 +23075,118 @@
           }
         },
         "additionalProperties": true
+      },
+      "TargetAutoTriageSettings": {
+        "type": "object",
+        "required": [
+          "workspaceId",
+          "targetId",
+          "enabled",
+          "minimumSeverity",
+          "writeMode",
+          "additionalInstructions",
+          "revision",
+          "canEdit",
+          "eligibleCurrentIssueCount",
+          "effectiveBehavior",
+          "readiness"
+        ],
+        "properties": {
+          "workspaceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "targetId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "minimumSeverity": {
+            "type": "string",
+            "enum": [
+              "critical",
+              "warning",
+              "info"
+            ]
+          },
+          "writeMode": {
+            "type": "string",
+            "enum": [
+              "follow_target",
+              "read_only",
+              "approval_required",
+              "full_write"
+            ]
+          },
+          "additionalInstructions": {
+            "type": "string",
+            "maxLength": 4000
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "canEdit": {
+            "type": "boolean"
+          },
+          "eligibleCurrentIssueCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "effectiveBehavior": {
+            "$ref": "#/components/schemas/AutoTriageEffectiveBehavior"
+          },
+          "readiness": {
+            "type": "object",
+            "required": [
+              "status",
+              "reasons",
+              "unavailableOptionalMcpToolCount"
+            ],
+            "properties": {
+              "status": {
+                "type": "string",
+                "enum": [
+                  "ready",
+                  "needs_setup",
+                  "temporarily_unavailable"
+                ]
+              },
+              "reasons": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "ai_provider_credentials_missing",
+                    "target_agent_disconnected",
+                    "no_diagnostic_tools",
+                    "mcp_tools_need_setup",
+                    "optional_mcp_tools_unavailable"
+                  ]
+                }
+              },
+              "unavailableOptionalMcpToolCount": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "additionalProperties": false
+          },
+          "updatedBy": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
       },
       "TargetChatActivity": {
         "type": "object",
