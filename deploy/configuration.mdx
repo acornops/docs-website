@@ -1,0 +1,42 @@
+---
+title: "Configure the platform"
+description: "Find deployment settings by operational responsibility"
+---
+
+Configuration is split by purpose. Use this page to find the relevant part of the complete [configuration reference](/deploy/configuration-reference).
+
+<CardGroup cols={2}>
+  <Card title="Hosts, routes, and secrets" icon="globe" href="/deploy/configuration-reference#public-hosts">
+    Configure API, console, WebSocket, database, Redis, and internal secret values.
+  </Card>
+  <Card title="Authentication and sessions" icon="key" href="/deploy/configuration-reference#oidc">
+    Configure OIDC, password authentication, browser sessions, and signup policy.
+  </Card>
+  <Card title="Models and runtime limits" icon="message-bot" href="/deploy/configuration-reference#llm-providers-and-run-limits">
+    Configure providers, models, budgets, reasoning summaries, and gateway readiness.
+  </Card>
+  <Card title="Approvals and retention" icon="shield-check" href="/deploy/configuration-reference#write-confirmations">
+    Configure write confirmation, Workflow duration, report retention, and auditing.
+  </Card>
+  <Card title="MCP egress and registries" icon="plug" href="/deploy/configuration-reference#mcp-egress-policy">
+    Constrain remote MCP destinations and bootstrap registry sources.
+  </Card>
+  <Card title="Webhooks" icon="webhook" href="/deploy/configuration-reference#webhooks">
+    Configure durable delivery, retry limits, payload bounds, and private destinations.
+  </Card>
+</CardGroup>
+
+## Configuration ownership
+
+Keep these scopes distinct:
+
+- **Deployment configuration** sets the maximum available policy and infrastructure behavior.
+- **Workspace configuration** selects from deployment-supported roles, providers, integrations, and capabilities.
+- **Target configuration** controls one cluster or VM and its connector policy.
+- **Run scope** contains the exact resources and tools authorized for one execution.
+
+Settings at a narrower scope cannot exceed a broader policy ceiling.
+
+## Change discipline
+
+Treat platform configuration as code, but keep secret values in the deployment's secret mechanism. Render and review Kubernetes changes before applying them. For Compose, review the full environment and image matrix together. Validate auth, target connectivity, model readiness, and a read-only run after changes.

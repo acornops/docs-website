@@ -1,110 +1,50 @@
 ---
 title: "AcornOps"
-description: "AI-assisted operations for Kubernetes and VM targets"
+description: "AI-assisted operations for Kubernetes and Linux VM targets"
 ---
 
-AcornOps connects a central operations platform to Kubernetes clusters and Linux/systemd VMs through outbound agents. Operators use the management console to investigate target state, run guided triage sessions, and coordinate safe remediation workflows.
-
-AcornOps is self-hosted for production use. A public demo is available at `https://console.demo.acornops.dev/` for evaluation, backed by `https://api.demo.acornops.dev`.
+AcornOps connects a central operations platform to Kubernetes clusters and Linux/systemd VMs through outbound target connectors. Teams use the management console to investigate live state, coordinate specialist automation, and review policy-gated remediation.
 
 ## Choose your path
 
 <CardGroup cols={2}>
-  <Card title="Try the demo" icon="display" href="https://console.demo.acornops.dev/">
-    Explore the public demo before deploying AcornOps into your own environment.
+  <Card title="Understand AcornOps" icon="book-open" href="/overview/how-acornops-works">
+    Learn the product model, core concepts, architecture, and trust boundaries.
   </Card>
-  <Card title="Self-host AcornOps" icon="server" href="/quickstart">
-    Deploy the platform, configure dependencies, and connect Kubernetes clusters or VMs.
+  <Card title="Use AcornOps" icon="display" href="/use">
+    Join an existing platform, investigate targets, and use automation.
   </Card>
-  <Card title="Build integrations" icon="webhook" href="/integrations">
-    Build bots, workflow adapters, custom clients, or external MCP tool providers.
+  <Card title="Administer AcornOps" icon="server" href="/deploy">
+    Install, configure, secure, and maintain a self-hosted AcornOps platform.
   </Card>
-  <Card title="Operate a deployment" icon="gauge-high" href="/operations">
-    Verify health, rotate secrets, inspect failures, and keep routes aligned.
-  </Card>
-</CardGroup>
-
-## What AcornOps gives you
-
-- A workspace model for grouping targets, Kubernetes clusters, VMs, members, MCP registries, Agent-owned capabilities, and investigation history.
-- A browser management console for target inventory, findings, runbooks, members, settings, and chat-based troubleshooting.
-- A control plane that owns auth, sessions, workspaces, the target core, target registration, agent connections, run state, and API authorization.
-- An execution engine that performs troubleshooting runs and streams progress back to the control plane.
-- An LLM gateway that enforces run-scoped model and tool permissions before provider or remote MCP traffic leaves the platform.
-- A AgentK that runs inside each connected Kubernetes cluster and connects outbound to the control plane.
-- A AgentV that runs on Linux/systemd hosts and connects outbound to the control plane.
-
-<CardGroup cols={2}>
-  <Card title="Start with deployment" icon="rocket" href="/quickstart">
-    Prepare the platform, connect targets, and expose the management console.
-  </Card>
-  <Card title="Build against the control plane" icon="code" href="/integrations">
-    Use webhooks, run events, approvals, and the public control-plane API.
-  </Card>
-  <Card title="Review the architecture" icon="diagram-project" href="/architecture">
-    Understand the control plane, execution engine, LLM gateway, and target-agent boundaries.
+  <Card title="Build with AcornOps" icon="code" href="/developer">
+    Use the public API, webhooks, external sessions, or MCP.
   </Card>
 </CardGroup>
 
-## Self-host workflow
+## What AcornOps provides
 
-1. Deploy the central platform with either the Kubernetes chart or VM Compose stack.
-2. Sign in to the management console and create a workspace.
-3. Register a Kubernetes cluster or Linux VM from that workspace.
-4. Install the generated AgentK or AgentV command.
-5. Review findings, manage available tools, and start troubleshooting sessions.
+- **Workspace isolation** for members, roles, targets, automation, integrations, and history.
+- **A shared target model** for Kubernetes clusters and Linux VMs.
+- **Target-native investigations** using live inventory and bounded tools.
+- **Specialist Agents and Workflows** for reusable, reviewable automation.
+- **Layered authorization** across the user, workspace, target, run, and exact tool.
+- **Self-hosted deployment** through Kubernetes or a single-VM Compose stack.
 
-## Platform components
+## Explore the product
 
-<CardGroup cols={2}>
-  <Card title="Management console" icon="display" href="/architecture">
-    Browser application for workspaces, targets, investigations, sessions, and tools.
+<CardGroup cols={3}>
+  <Card title="Core concepts" icon="shapes" href="/overview/core-concepts">
+    Learn the objects and relationships used throughout AcornOps.
   </Card>
-  <Card title="Control plane" icon="diagram-project" href="/architecture">
-    API, auth, workspace state, agent WebSocket connections, and orchestration entrypoint.
+  <Card title="Architecture" icon="diagram-project" href="/overview/architecture">
+    Review components, runtime flows, data ownership, and trust boundaries.
   </Card>
-  <Card title="Execution engine" icon="gears" href="/architecture">
-    Run execution, tool-call coordination, and Redis-backed run reservation.
-  </Card>
-  <Card title="LLM gateway" icon="message-bot" href="/architecture">
-    Provider routing, model access, MCP registry, secrets handling, and request auditing.
-  </Card>
-  <Card title="AgentK" icon="plug" href="/kubernetes-clusters">
-    Outbound Kubernetes connector for snapshots, logs, and tool execution.
-  </Card>
-  <Card title="AgentV" icon="server" href="/vm-targets">
-    Outbound Linux/systemd connector for bounded diagnostics and optional allowlisted service recovery.
+  <Card title="Try the demo" icon="arrow-up-right-from-square" href="https://console.demo.acornops.dev/">
+    Explore the public AcornOps environment before self-hosting.
   </Card>
 </CardGroup>
 
-## Self-host surfaces
-
-- Console: `https://console.example.com/`
-- Public docs: `https://docs.acornops.dev/`
-- Public control-plane API: `https://api.example.com/api/v1`
-- Agent WebSocket: `wss://api.example.com/api/v1/agent/connect`
-
-Replace `example.com` with domains you control. Execution engine and LLM gateway are internal services. They should not have public DNS records or public ingress routes in production.
-
-## Where to go next
-
-<CardGroup cols={2}>
-  <Card title="Kubernetes" icon="dharmachakra" href="/deployment">
-    Helm deployment for the central platform, with operator-provided Postgres and Redis.
-  </Card>
-  <Card title="VM Compose" icon="server" href="/deployment">
-    Docker Compose deployment path for single-VM environments.
-  </Card>
-  <Card title="Configuration" icon="sliders" href="/configuration">
-    Required secrets, OIDC settings, LLM provider settings, and runtime limits.
-  </Card>
-  <Card title="Integrations" icon="webhook" href="/integrations">
-    Bot adapters, webhook handling, user-attributable approvals, and public API boundaries.
-  </Card>
-  <Card title="MCP and tools" icon="plug-circle-bolt" href="/mcp-tools">
-    Builtin tools, remote MCP servers, public headers, and write confirmations.
-  </Card>
-  <Card title="API overview" icon="code" href="/api-overview">
-    Browser session flow, API families, integration boundaries, and workflow notes.
-  </Card>
-</CardGroup>
+<Note>
+  AcornOps uses **Agent** for a workspace specialist and **AgentK** or **AgentV** for target connectors. See the [glossary](/overview/glossary) when a term is unfamiliar.
+</Note>

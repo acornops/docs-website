@@ -1,0 +1,34 @@
+---
+title: "Workspaces and members"
+description: "How AcornOps isolates operational resources, access, and history"
+---
+
+A workspace is the main ownership and authorization boundary in AcornOps.
+
+## What a workspace contains
+
+- members and role assignments,
+- Kubernetes and virtual-machine targets,
+- specialist Agents and Workflows,
+- target-native and remote MCP capabilities,
+- sessions, runs, approvals, and reports,
+- integrations, webhook subscriptions, and audit events.
+
+Resources in one workspace are not implicitly available in another. Requests are evaluated against both the signed-in user and the selected workspace.
+
+## Members and roles
+
+Membership gives a user access to a workspace. The assigned role determines which workspace operations the member can perform, such as reading targets, managing members, starting read-only runs, starting write-capable runs, or approving changes.
+
+The platform administrator controls the deployment-supported role catalog. Workspace owners and administrators assign those supported roles to members.
+
+## Workspace owners and platform administrators
+
+A workspace owner governs one workspace. A platform administrator operates the AcornOps deployment and may have access to the separately enabled admin API. Platform administration does not replace ordinary workspace authorization.
+
+## Next steps
+
+- [Kubernetes quick start](/use/kubernetes-quick-start)
+- [VM quick start](/use/vm-quick-start)
+- [Understand targets and connectors](/overview/targets)
+- [Configure deployment-wide workspace roles](/deploy/configuration-reference#target-and-assistant-settings)

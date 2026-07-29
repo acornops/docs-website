@@ -1,9 +1,9 @@
 ---
-title: "Kubernetes clusters"
-description: "Install, scope, secure, and verify the AgentK in connected Kubernetes clusters"
+title: "Connect a Kubernetes cluster"
+description: "Register a Kubernetes target, install AgentK, and verify its connection"
 ---
 
-Every Kubernetes cluster that AcornOps observes runs a AgentK. The agent opens an outbound WebSocket to the control plane, reports cluster state, and executes allowed Kubernetes tools during troubleshooting runs.
+Every Kubernetes cluster that AcornOps observes runs AgentK. The connector opens an outbound WebSocket to the control plane, reports cluster state, and executes allowed Kubernetes tools during troubleshooting runs.
 
 ## Registration flow
 
@@ -14,16 +14,6 @@ Every Kubernetes cluster that AcornOps observes runs a AgentK. The agent opens a
 5. Confirm the cluster shows as connected.
 
 The registration response includes `{ cluster, agentKey, installInstructions }`. Treat `installInstructions.command` as authoritative.
-
-## Agent connection
-
-By default, the agent derives its WebSocket URL from the platform URL:
-
-```text
-wss://api.example.com/api/v1/agent/connect
-```
-
-Replace `example.com` with your deployment domain. The public demo agent route is `wss://api.demo.acornops.dev/api/v1/agent/connect`. The agent authenticates with the issued agent key. Store the key in a Kubernetes Secret for long-running installs, or use the generated command for first-time setup.
 
 ## Namespace scope
 
@@ -83,7 +73,7 @@ The current builtin Kubernetes tool set includes:
 
 The connected agent advertises the available builtin tools. AcornOps shows those tools in the target tool catalog and filters access based on workspace role, target policy, and run mode.
 
-See [MCP and tools](/mcp-tools) for remote MCP server setup, public header policy, and tool enablement behavior.
+See [MCP and tools](/use/tools-and-mcp) for remote MCP server setup, public header policy, and tool enablement behavior.
 
 ## High availability
 
@@ -96,6 +86,26 @@ leaderElection:
 ```
 
 Only the elected replica connects to the control plane. Other replicas wait and take over when the leader stops renewing its lease.
+
+## Private platform CA
+
+When the AcornOps WebSocket certificate uses an organization-private CA, add that public CA bundle to AgentK without disabling TLS verification.
+
+Add the bundle source to the same values file that you use for the AgentK release. For a local PEM file, add
+`--set-file config.tls.additionalCaBundle.inlinePem=/path/to/organization-ca.pem` to your existing
+`helm upgrade --install` command. Keep the rest of that command's release values unchanged.
+
+You can instead reference one existing ConfigMap or Secret in the AgentK release namespace through `config.tls.additionalCaBundle.configMapKeyRef` or `secretKeyRef`. The sources are mutually exclusive. A missing resource or key prevents the pod from starting.
+
+AgentK extends normal public CA trust and keeps certificate and hostname verification enabled. Existing ConfigMap or Secret content changes require a pod restart. Rotate private roots with an old/new overlap.
+
+## Structured write safeguards
+
+`patch_resource` accepts guarded semantic image, label, annotation, and explicitly enabled Service selector changes; it does not expose an arbitrary patch document or shell.
+
+The local default permits Deployment, StatefulSet, and DaemonSet patching. CronJob, Service, and Ingress kinds require explicit `patchPolicy.kinds` configuration and matching RBAC. Service selector changes require both `patchPolicy.allowServiceSelectorChanges=true` and caller confirmation.
+
+Scale-to-zero is disabled unless both the operator and caller opt in. Mutation receipts are minimal, and an uncertain write outcome must be inspected before any retry.
 
 ## Verification
 

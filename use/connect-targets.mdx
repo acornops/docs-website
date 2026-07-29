@@ -1,0 +1,32 @@
+---
+title: "Connect targets"
+description: "Choose the correct onboarding path for a Kubernetes cluster or Linux VM"
+---
+
+Connect a target only after the central platform and your workspace are ready. You need a workspace role that permits target registration and access to install software in the target environment.
+
+<CardGroup cols={2}>
+  <Card title="Connect a Kubernetes cluster" icon="dharmachakra" href="/use/connect-kubernetes">
+    Register the cluster, install AgentK with Helm, and verify its scope and connection.
+  </Card>
+  <Card title="Connect a Linux VM" icon="server" href="/use/connect-vm">
+    Register the VM, install AgentV as a systemd service, and verify diagnostics.
+  </Card>
+</CardGroup>
+
+## Shared registration flow
+
+1. Register the target in the management console.
+2. Copy the generated installation command.
+3. Run it in the target environment using an authorized administrative account.
+4. Wait for AgentK or AgentV to connect outbound.
+5. Verify inventory, findings, and advertised tools.
+6. Review target policy before permitting write-capable operations.
+
+Use the generated command rather than assembling one manually. It contains the target identity, control-plane address, installation settings, and agent-key handling for the registered target.
+
+<Warning>
+  Treat the generated agent key as a secret. Rotate it through the target's supported rotation flow if it is exposed.
+</Warning>
+
+Connecting a target is different from [deploying the central platform](/deploy). The target connector runs in the environment that AcornOps observes; the central platform hosts the management console and coordination services.

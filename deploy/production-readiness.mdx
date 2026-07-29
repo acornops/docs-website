@@ -1,0 +1,57 @@
+---
+title: "Production readiness"
+description: "Validate a self-hosted deployment before operational use"
+---
+
+Complete this checklist after installation and after material platform configuration changes.
+
+## Public access
+
+- The management console loads through the intended console host.
+- The public API is reachable only through the intended API and console proxy routes.
+- OIDC returns to the exact registered callback.
+- Execution-engine and LLM-gateway endpoints are not publicly reachable.
+- NetworkPolicy ingress-controller peers match the controller that actually owns public routing.
+
+## State and coordination
+
+- Control-plane and LLM-gateway database migrations completed.
+- Postgres and Redis use durable, monitored services.
+- Backup and recovery procedures are documented and tested.
+- Multiple replicas use the required Redis coordination paths.
+
+## Identity and policy
+
+- Enabled sign-in methods match deployment policy.
+- Self-service signup and development login are disabled unless explicitly intended.
+- Workspace roles and capability ceilings are reviewed.
+- Admin API enablement, token storage, scopes, and audit handling are reviewed.
+
+## Models and tools
+
+- At least one approved provider and model is ready.
+- A read-only run can stream events and complete.
+- Write-capable tools require the intended approval policy.
+- MCP and webhook egress allow only intended destinations.
+- Remote credentials remain secret-backed.
+- Provider base URLs and the OpenAI API surface match the intended endpoints and required native-tool behavior.
+
+## Target connectivity
+
+- A workspace can be created and listed.
+- A registered AgentK can connect and report cluster inventory.
+- A registered AgentV can connect and report host inventory.
+- Agent keys can be rotated through the supported flow.
+- Connected targets require no public inbound route.
+- Private-CA bundles are mounted where required without disabling certificate or hostname verification.
+
+## Operations
+
+- Health endpoints and metrics are scraped.
+- Supplied alert rules are loaded.
+- Logs exclude credentials, tokens, prompts, tool arguments, and sensitive target output.
+- Complete tool-result artifacts and PDF reports use approved size and retention limits.
+- Upgrade, rollback, secret rotation, and incident ownership are documented.
+- High-availability behavior has been exercised outside production when running multiple replicas.
+
+Continue with [day-two operations](/deploy/operations).

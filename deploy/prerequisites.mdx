@@ -1,0 +1,48 @@
+---
+title: "Deployment prerequisites"
+description: "Prepare networking, state stores, identity, model access, and secrets before installation"
+---
+
+Prepare these dependencies before installing the central platform.
+
+## Public routes and TLS
+
+Use operator-owned DNS names:
+
+| Surface | Example |
+| --- | --- |
+| Management console | `https://console.example.com/` |
+| Public control-plane API | `https://api.example.com/api/v1` |
+| Agent WebSocket | `wss://api.example.com/api/v1/agent/connect` |
+
+The management console host proxies `/api` for browser session flows. Keep the execution engine and LLM gateway private.
+
+## Durable state
+
+Provide:
+
+- Postgres for control-plane state,
+- a separate Postgres database for LLM-gateway state,
+- Redis for coordination, routing, reservations, events, and rate limits.
+
+Kubernetes platform deployments use operator-provided Postgres and Redis by default. Size, secure, back up, and monitor them as production dependencies.
+
+## Authentication
+
+Prepare an OIDC client for browser sign-in or review the password-authentication settings for your environment. Register the exact console-host callback used by the deployment.
+
+Configure SMTP before relying on password reset or enabling self-service password signup in production.
+
+## Model access
+
+Choose an allowed model policy and decide who owns provider credentials. After installation, a workspace administrator can save a write-only workspace credential. A platform administrator can instead provide an optional deployment-wide default through the platform admin console. Model readiness is separate from target connectivity.
+
+## Secrets
+
+Generate unique values for database URLs, Redis URLs, OIDC credentials, internal service tokens, signing keys, session secrets, and gateway secret encryption. Do not commit them to chart values or source control.
+
+## Installation access
+
+For Kubernetes, you need permission to create the namespace, Secret references, workloads, services, ingress, and migration Jobs. For VM Compose, you need administrative access to the host, container runtime, durable volumes, and edge proxy.
+
+Continue with [Kubernetes deployment](/deploy/kubernetes) or [VM Compose deployment](/deploy/vm-compose).

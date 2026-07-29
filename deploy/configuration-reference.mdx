@@ -1,6 +1,6 @@
 ---
-title: "Configuration"
-description: "Configure hosts, secrets, OIDC, model access, MCP egress, and runtime limits"
+title: "Configuration reference"
+description: "Detailed platform settings for hosts, auth, model access, runtime policy, egress, and delivery"
 ---
 
 Configuration is split between public host settings, Kubernetes or Compose deployment values, and secret values. Keep secrets out of source control and inject them through the platform secret mechanism for your deployment target.
@@ -52,16 +52,41 @@ The Kubernetes chart defaults to an existing Secret named `acornops-platform-sec
 | `LLM_GATEWAY_ADMIN_TOKEN` | Control-plane admin auth into LLM gateway |
 | `SECRETS_KEK_BASE64` | LLM-gateway database secret encryption key |
 
-Optional provider and secret-backend keys include:
+Optional secret-backend keys include:
 
 | Key | Purpose |
 | --- | --- |
-| `OPENAI_API_KEY` | OpenAI provider access |
-| `ANTHROPIC_API_KEY` | Anthropic provider access |
-| `GEMINI_API_KEY` | Gemini provider access |
 | `VAULT_TOKEN` | Vault secret-backend access when Vault is enabled |
 
 Generate unique values for every internal token and encryption key per environment.
+
+## Provider credentials
+
+Provider API keys are not configured through `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, or `GEMINI_API_KEY` deployment variables. Configure them as write-only credentials:
+
+- per workspace in **Workspace Settings → AI**, or
+- as an optional platform default in **Platform Settings → AI** in the platform admin console.
+
+A workspace credential takes precedence over a platform default. APIs and consoles expose only configured status and the effective source (`workspace`, `platform_default`, or `none`); they never return credential plaintext.
+
+## Provider routing and API surfaces
+
+Platform operators can route provider traffic through API-compatible endpoints without changing workspace credentials:
+
+| Provider | Kubernetes value | VM Compose variable |
+| --- | --- | --- |
+| OpenAI | `components.llmGateway.providerBaseUrls.openai` | `LLM_PROVIDER_OPENAI_BASE_URL` |
+| Anthropic | `components.llmGateway.providerBaseUrls.anthropic` | `LLM_PROVIDER_ANTHROPIC_BASE_URL` |
+| Gemini | `components.llmGateway.providerBaseUrls.gemini` | `LLM_PROVIDER_GEMINI_BASE_URL` |
+
+An empty value uses the provider SDK's vendor endpoint. Provider SDK-specific environment variables are not part of the AcornOps configuration contract.
+
+OpenAI uses the Responses API by default. Select an API-compatible Chat Completions endpoint explicitly with:
+
+- `components.llmGateway.openaiApiSurface=chat_completions` on Kubernetes, or
+- `LLM_PROVIDER_OPENAI_API_SURFACE=chat_completions` with VM Compose.
+
+The gateway never probes or falls back between surfaces. Chat Completions supports normalized text and custom function calls, but it does not support AcornOps provider-native tools or reasoning summaries. Configured [Web Search](/use/web-search) remains visible but unavailable for ordinary target runs. Restore `responses` to roll back.
 
 ## Automation runtime
 
@@ -72,7 +97,7 @@ Generate unique values for every internal token and encryption key per environme
 | `AUTOMATION_WORKER_INTERVAL_MS` | `automation.workerIntervalMs` | `1000` | Poll interval for durable schedules and dispatch intent. |
 | `ASSISTANT_WRITE_CONFIRMATION_TIMEOUT_SECONDS` | `assistantRuntime.writeConfirmationTimeoutSeconds` | `900` | Expires Workflow-run and target-run write approvals after 15 minutes. |
 
-See [Agents and workflows](/automation) for rollout order and delivery guarantees.
+See [Automation runtime](/deploy/automation-runtime) for rollout order and operational diagnostics.
 
 `EXTERNAL_INTEGRATION_CLIENTS_JSON` stores descriptors such as client id,
 provider, display name, enabled flag, lowercase SHA-256 token hash, and optional
@@ -295,14 +320,16 @@ Clusters can inherit the deployment default or set a per-cluster override. Requi
 
 In the management console, per-cluster write confirmation policy is managed from Cluster Settings.
 
-## Workflow runtime and report retention
+## Workflow and evidence retention
 
-Workflow execution duration and PDF report retention are deployment-wide. Workflow definitions cannot override them.
+Workflow execution duration, PDF report retention, and complete tool-result artifact limits are deployment-wide. Workflow definitions cannot override them.
 
 | Helm value | Rendered environment variable | Default | Purpose |
 | --- | --- | --- | --- |
 | `agent.runtime.maxRuntimeMs` | `AGENT_MAX_RUNTIME_MS` | `600000` | Maximum execution duration for Workflow and target-chat runs. |
 | `components.controlPlane.reportArtifacts.maxRetentionDays` | `TARGET_CHAT_REPORT_RETENTION_DAYS` | `30` | Retention period for Workflow and target-chat PDF reports. Accepts `1` through `365`. |
+| `components.controlPlane.toolResultArtifacts.retentionDays` | `TOOL_RESULT_ARTIFACT_RETENTION_DAYS` | `7` | Retention for eligible complete redacted tool results. Accepts `1` through `7`. |
+| `components.controlPlane.toolResultArtifacts.maxBytes` | `TOOL_RESULT_ARTIFACT_MAX_BYTES` | `2097152` | Maximum uncompressed complete-result artifact size, up to 2 MiB. |
 
 The Workflow options API returns each effective value as a singleton policy list. Legacy mutation fields remain accepted for compatibility but cannot override deployment configuration.
 
@@ -323,6 +350,35 @@ Supported modes are:
 
 Retention always runs for persisted rows, even when logging mode is `disabled`. Audit metadata remains sanitized before persistence, so raw tokens, secrets, message bodies, pod logs, auth headers, and full tool arguments are not stored.
 
+## Additional CA trust
+
+Use an additive CA bundle when server-side components must reach OIDC, provider, webhook, MCP, registry, or other HTTPS endpoints signed by an organization-private CA.
+
+For Kubernetes, configure one namespace-local reference:
+
+```yaml
+global:
+  trust:
+    additionalCaBundle:
+      configMapKeyRef:
+        name: organization-platform-trust
+        key: ca-bundle.pem
+```
+
+Use `secretKeyRef` instead when required by your distribution policy. A component-specific reference under `components.controlPlane`, `components.executionEngine`, or `components.llmGateway` replaces the global bundle for that component.
+
+For VM Compose, set `ADDITIONAL_CA_BUNDLE_SOURCE_PATH` to the host PEM bundle used by the trust overlay. Target connectors use their own settings described in [Connect a Kubernetes cluster](/use/connect-kubernetes#private-platform-ca) and [Connect a Linux VM](/use/connect-vm#agent-behavior).
+
+Additional CA trust:
+
+- extends normal public roots,
+- keeps certificate and hostname verification enabled,
+- is separate from internal service mTLS,
+- does not enable verified TLS for Postgres or Redis unless their URLs request it,
+- does not configure container-runtime or OCI registry trust.
+
+The selected Kubernetes resource must exist in the release namespace. Restart affected workloads after bundle changes and rotate roots with an old/new overlap.
+
 ## MCP egress policy
 
 Remote MCP servers can be installed at workspace scope for Agent and Workflow use, or at exact target scope for one Kubernetes cluster or VM. In production, the gateway should require HTTPS and block private, local, and reserved network targets unless you intentionally allow specific hosts.
@@ -339,7 +395,7 @@ Use allow-lists for trusted internal MCP endpoints instead of broad private-netw
 
 Remote MCP server `publicHeaders` are for non-secret metadata only. Credentials belong in secret-backed auth fields, and platform scope headers are reserved.
 
-MCP registry policy uses `components.llmGateway.catalog`. The Official MCP Registry is disabled by default and must be enabled explicitly. Configure internal registries through `bootstrapSources`, use `secretKeyRef` for registry credentials, and keep bootstrap routing set to `direct`. MCP installations select workspace-managed or individual credential ownership and require no deployment-level callback configuration. See [MCP registries](/catalog-registries) for complete examples and lifecycle behavior.
+MCP registry policy uses `components.llmGateway.catalog`. The Official MCP Registry is disabled by default and must be enabled explicitly. Configure internal registries through `bootstrapSources`, use `secretKeyRef` for registry credentials, and keep bootstrap routing set to `direct`. MCP installations select workspace-managed or individual credential ownership and require no deployment-level callback configuration. See [MCP registries](/use/mcp-registries) for complete examples and lifecycle behavior.
 
 ## Webhooks
 

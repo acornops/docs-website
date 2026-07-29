@@ -29,7 +29,7 @@ Semantic capability IDs do not authorize tools by themselves. For `target.diagno
 
 Workspace administrators set the Agent and Workflow ceilings. Starter diagnostics allow Kubernetes and virtual-machine target types. An administrator can narrow either definition to exact target IDs. Operators choose one target when launching a run; they cannot widen the administrator-defined scope. Remote MCP tools, skills, web search, target insights, workspace-native tools, and write-capable target tools are not included in `target.diagnostics.read`.
 
-If you are building a bot or workflow adapter that reacts to AcornOps events, start with [Integrations](/integrations). Use this page when you are configuring tools that AcornOps can call.
+If you are building a bot or workflow adapter that reacts to AcornOps events, start with [Integrations](/developer/integrations). Use this page when you are configuring tools that AcornOps can call.
 
 ## Tool sources
 
@@ -97,7 +97,7 @@ Under **Agents → Agent detail → Capabilities** or a target's **MCP servers**
 
 For **Connect by URL**, enter the actual remote Streamable HTTP endpoint, for example `https://mcp.internal.example/mcp`. The URL must be absolute HTTPS and cannot contain a username, password, or fragment. Non-secret query parameters are supported; credentials must use the authentication fields. Registry roots, `/v0.1` API URLs, `server.json`, GitHub repositories, npm or PyPI packages, containers, and stdio commands are not accepted.
 
-Internal endpoint hostnames still require the gateway egress allow-list and configured CA trust. [MCP registries](/catalog-registries) use a separate base-URL contract.
+Internal endpoint hostnames still require the gateway egress allow-list and configured CA trust. [MCP registries](/use/mcp-registries) use a separate base-URL contract.
 
 Catalog imports store the source ID, artifact name, pinned version, digest, and import time. Runtime calls use the installed server record and do not look up the registry.
 
@@ -237,6 +237,6 @@ Every invocation intersects current principal RBAC, the pinned Agent snapshot, w
 
 When write confirmations are required, the run pauses before a write-capable tool call. An authorized user must approve or reject the specific pending write before it runs.
 
-The default timeout is 300 seconds. Rejection and timeout do not call the target agent. Approval executes the queued write once. AgentV restart requests use stable operation IDs and never automatically retry an unknown outcome.
+The default timeout is 300 seconds. Rejection and timeout do not call the target connector. Approval executes the queued write once. AgentV restart requests use stable operation IDs and never automatically retry an unknown outcome.
 
-See [Kubernetes clusters](/kubernetes-clusters#write-confirmation-policy) for Kubernetes write confirmation behavior, [VM targets](/vm-targets#tools-and-mcp) for VM tool behavior, and the API reference sidebar for public endpoint schemas.
+See [Connect a Kubernetes cluster](/use/connect-kubernetes#write-confirmation-policy) for Kubernetes write confirmation behavior, [Connect a Linux VM](/use/connect-vm#tools-and-mcp) for VM tool behavior, and the API reference sidebar for public endpoint schemas.

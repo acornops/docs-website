@@ -1,6 +1,6 @@
 ---
-title: "Deployment"
-description: "Deploy AcornOps through Kubernetes, VM Compose, workload agents, and production-ready platform configuration"
+title: "Deployment reference"
+description: "Detailed Kubernetes, VM Compose, target-agent, and production deployment behavior"
 ---
 
 AcornOps deployment has two independent steps: deploy the central platform, then connect each Kubernetes cluster or Linux VM with an outbound agent.
@@ -18,6 +18,7 @@ Use the `acornops-platform` Helm chart to deploy the central platform into a Kub
 - control plane,
 - execution engine,
 - LLM gateway,
+- optional platform admin console when explicitly enabled,
 - database migration Jobs.
 
 Postgres and Redis are operator-provided. The chart references an existing Kubernetes Secret instead of templating secret values into Helm values.
@@ -36,7 +37,7 @@ Prepare these inputs before installing the chart:
 | Existing secret | Defaults to `acornops-platform-secrets`. |
 | OIDC client | Redirects back to the control plane callback route. |
 | External integration service token | Required when enabling the registered external integration client account-link flow. |
-| LLM provider key | At least one enabled provider needs credentials. |
+| Provider credential plan | Configure a write-only workspace credential after installation, or enable the platform admin console and configure an optional platform default. |
 | Internal TLS Secrets | Optional. Required only when `internalTransport.tls.enabled=true`. |
 
 Review these value groups before installing or upgrading:
@@ -174,6 +175,10 @@ Expose only the management console and control-plane public routes:
 
 Keep execution engine and LLM gateway private to the platform network.
 
+Ingress ownership and NetworkPolicy authorization are independent. `exposure.ingress.enabled` controls whether the chart renders an Ingress; it does not authorize packets. When `networkPolicies.enabled=true`, configure `networkPolicies.ingressController.from` with the exact namespace and pod selectors allowed to reach the management console and control plane. An empty list fails closed and allows no ingress-controller source through the chart's default-deny policy.
+
+This applies equally when an external controller or GitOps system owns the Ingress resource.
+
 ### Replicas
 
 The chart defaults to multiple replicas for stateless or Redis-coordinated services where supported:
@@ -219,42 +224,17 @@ gateway, control-plane, or execution-engine versions are unsupported.
 
 ## Kubernetes clusters
 
-Each connected Kubernetes cluster gets the `acornops-agentk` Helm chart. Register the cluster in the management console, then run the generated install command returned by the control plane.
-
-AgentK:
-
-- connects outbound to the control plane,
-- authenticates with the generated agent key,
-- reports heartbeats and snapshots,
-- advertises builtin Kubernetes tools,
-- executes allowed tool calls during troubleshooting runs.
-
-Connected Kubernetes clusters do not need public inbound access.
+Connecting a Kubernetes target is a workspace task performed after the central
+platform is ready. Follow [Connect a Kubernetes cluster](/use/connect-kubernetes)
+for registration, AgentK installation, scope, and verification.
 
 ## VM targets
 
-Each Linux/systemd VM gets the `acornops-agentv` systemd service. Register the VM in the management console, then run the generated install instructions returned by the control plane.
-
-The AgentV:
-
-- connects outbound to the control plane,
-- authenticates with the generated agent key,
-- reports heartbeats and host snapshots,
-- advertises bounded Linux/systemd tools only after authenticated readiness,
-- remains read-only unless the separately installed helper, exact policy, run mode, and approval all permit `restart_service`.
-
-VM targets do not need public inbound access.
+Connecting a Linux VM target is also a workspace task. Follow
+[Connect a Linux VM](/use/connect-vm) for registration, AgentV installation,
+diagnostics, and bounded write behavior.
 
 ## Validation
 
-Before using a deployment for production operations, verify:
-
-- the management console loads from your console host, such as `https://console.example.com/`,
-- OIDC login returns to the expected callback route,
-- `GET /api/v1/me` returns the current user from the same host used by the management console session,
-- the first workspace can be created,
-- a registered AgentK shows as connected,
-- a registered AgentV shows as connected and reports host inventory,
-- a read-only troubleshooting run can stream events to the management console,
-- internal execution-engine and LLM-gateway endpoints are not publicly reachable,
-- Kubernetes high availability behavior has been exercised in a non-production environment when you run multiple replicas.
+Complete the [production readiness checklist](/deploy/production-readiness)
+before handing the deployment to workspace users.
