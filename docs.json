@@ -88,6 +88,14 @@
     {
       "source": "/admin-operations",
       "destination": "/deploy/admin-operations"
+    },
+    {
+      "source": "/use/get-started",
+      "destination": "/use/kubernetes-quick-start"
+    },
+    {
+      "source": "/use/quick-start",
+      "destination": "/use/kubernetes-quick-start"
     }
   ],
   "api": {
@@ -139,10 +147,11 @@
         "tab": "User Guide",
         "groups": [
           {
-            "group": "Get started",
+            "group": "Start here",
             "pages": [
               "use/index",
-              "use/get-started",
+              "use/kubernetes-quick-start",
+              "use/vm-quick-start",
               "use/first-investigation"
             ]
           },
