@@ -2222,6 +2222,9 @@
           "workspaceId": {
             "type": "string"
           },
+          "workspaceName": {
+            "type": "string"
+          },
           "targetType": {
             "type": "string"
           },
@@ -2691,6 +2694,12 @@
               "lifecycleStatus"
             ],
             "properties": {
+              "createdByDisplayName": {
+                "type": "string"
+              },
+              "createdByEmail": {
+                "type": "string"
+              },
               "virtualMachineCount": {
                 "type": "integer",
                 "minimum": 0
