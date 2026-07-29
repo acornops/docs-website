@@ -2777,6 +2777,137 @@
         }
       }
     },
+    "/api/v1/mcp/oauth/callback": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Complete an MCP OAuth authorization-code flow",
+        "description": "Requires the initiating AcornOps user session and browser binding. Provider parameters are exchanged server-side and the browser is redirected to a safe console path.",
+        "security": [
+          {
+            "userSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "state",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "code",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "iss",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            }
+          },
+          {
+            "in": "query",
+            "name": "error",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "303": {
+            "description": "Redirects to the canonical console with a stable OAuth result."
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "description": "The initiating AcornOps user session is missing.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error500"
+          }
+        }
+      }
+    },
+    "/api/v1/mcp/oauth/client-metadata": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Read AcornOps MCP OAuth client metadata",
+        "description": "CIMD document generated only from canonical deployment configuration. It contains no tenant, user, or secret data.",
+        "responses": {
+          "200": {
+            "description": "OAuth client metadata.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/McpOAuthClientMetadata"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "description": "Automatic MCP OAuth is disabled.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error500"
+          }
+        }
+      }
+    },
     "/api/v1/me": {
       "get": {
         "tags": [
@@ -5989,7 +6120,8 @@
                     "enum": [
                       "none",
                       "bearer_token",
-                      "custom_header"
+                      "custom_header",
+                      "oauth"
                     ]
                   },
                   "credentialMode": {
@@ -6124,7 +6256,8 @@
                     "enum": [
                       "none",
                       "bearer_token",
-                      "custom_header"
+                      "custom_header",
+                      "oauth"
                     ]
                   },
                   "credentialMode": {
@@ -6528,6 +6661,271 @@
         "responses": {
           "204": {
             "description": "Connection absent."
+          },
+          "400": {
+            "description": "Invalid credential payload or missing consent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "A current user session is required.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Destination read or run capability is missing.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Installation not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Installation does not use a credential connection.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Connection operation throttled. Retry-After is returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/Error500"
+          },
+          "502": {
+            "description": "Remote discovery failed."
+          },
+          "503": {
+            "description": "The credential service is unavailable."
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/agents/{agentId}/mcp/servers/{serverId}/connection/oauth/prepare": {
+      "post": {
+        "tags": [
+          "catalog"
+        ],
+        "summary": "Discover automatic MCP OAuth authorization",
+        "description": "For an individual OAuth installation, validates protected-resource and authorization-server metadata and selects CIMD or unauthenticated DCR for a client without token authentication. No provider configuration or client secret is accepted.",
+        "security": [
+          {
+            "userSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/PathWorkspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/PathAgentId2"
+          },
+          {
+            "$ref": "#/components/parameters/PathServerId2"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "returnPath"
+                ],
+                "properties": {
+                  "returnPath": {
+                    "type": "string",
+                    "pattern": "^/(?!/)",
+                    "description": "Safe management-console path restored after the callback."
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Validated authorization-server choices and requested scopes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/McpOAuthPreparation"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid credential payload or missing consent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "A current user session is required.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Destination read or run capability is missing.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Installation not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Installation does not use a credential connection.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Connection operation throttled. Retry-After is returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/Error500"
+          },
+          "502": {
+            "description": "Remote discovery failed."
+          },
+          "503": {
+            "description": "The credential service is unavailable."
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/agents/{agentId}/mcp/servers/{serverId}/connection/oauth/start": {
+      "post": {
+        "tags": [
+          "catalog"
+        ],
+        "summary": "Start MCP OAuth browser authorization",
+        "description": "Consumes the preparation, requires explicit consent plus a required issuer selection, and returns a short-lived authorization URL. Provider credentials remain outside the browser.",
+        "security": [
+          {
+            "userSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/PathWorkspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/PathAgentId2"
+          },
+          {
+            "$ref": "#/components/parameters/PathServerId2"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "preparationHandle",
+                  "consentGranted"
+                ],
+                "properties": {
+                  "preparationHandle": {
+                    "type": "string",
+                    "minLength": 43,
+                    "maxLength": 256
+                  },
+                  "issuer": {
+                    "type": "string",
+                    "format": "uri"
+                  },
+                  "consentGranted": {
+                    "type": "boolean",
+                    "enum": [
+                      true
+                    ]
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Authorization URL for immediate top-level browser navigation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/McpOAuthStart"
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid credential payload or missing consent.",
@@ -12828,7 +13226,8 @@
                         "enum": [
                           "none",
                           "bearer_token",
-                          "custom_header"
+                          "custom_header",
+                          "oauth"
                         ],
                         "example": "bearer_token"
                       },
@@ -12956,7 +13355,8 @@
                         "enum": [
                           "none",
                           "bearer_token",
-                          "custom_header"
+                          "custom_header",
+                          "oauth"
                         ],
                         "example": "bearer_token"
                       },
@@ -13386,6 +13786,271 @@
         "responses": {
           "204": {
             "description": "Connection absent."
+          },
+          "400": {
+            "description": "Invalid credential payload or missing consent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "A current user session is required.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Destination read or run capability is missing.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Installation not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Installation does not use a credential connection.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Connection operation throttled. Retry-After is returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/Error500"
+          },
+          "502": {
+            "description": "Remote discovery failed."
+          },
+          "503": {
+            "description": "The credential service is unavailable."
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}/connection/oauth/prepare": {
+      "post": {
+        "tags": [
+          "catalog"
+        ],
+        "summary": "Discover automatic MCP OAuth authorization",
+        "description": "For an individual OAuth installation, validates protected-resource and authorization-server metadata and selects CIMD or unauthenticated DCR for a client without token authentication. No provider configuration or client secret is accepted.",
+        "security": [
+          {
+            "userSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/PathWorkspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/PathTargetId2"
+          },
+          {
+            "$ref": "#/components/parameters/PathServerId2"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "returnPath"
+                ],
+                "properties": {
+                  "returnPath": {
+                    "type": "string",
+                    "pattern": "^/(?!/)",
+                    "description": "Safe management-console path restored after the callback."
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Validated authorization-server choices and requested scopes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/McpOAuthPreparation"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid credential payload or missing consent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "A current user session is required.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Destination read or run capability is missing.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Installation not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Installation does not use a credential connection.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Connection operation throttled. Retry-After is returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/Error500"
+          },
+          "502": {
+            "description": "Remote discovery failed."
+          },
+          "503": {
+            "description": "The credential service is unavailable."
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}/connection/oauth/start": {
+      "post": {
+        "tags": [
+          "catalog"
+        ],
+        "summary": "Start MCP OAuth browser authorization",
+        "description": "Consumes the preparation, requires explicit consent plus a required issuer selection, and returns a short-lived authorization URL. Provider credentials remain outside the browser.",
+        "security": [
+          {
+            "userSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/PathWorkspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/PathTargetId2"
+          },
+          {
+            "$ref": "#/components/parameters/PathServerId2"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "preparationHandle",
+                  "consentGranted"
+                ],
+                "properties": {
+                  "preparationHandle": {
+                    "type": "string",
+                    "minLength": 43,
+                    "maxLength": 256
+                  },
+                  "issuer": {
+                    "type": "string",
+                    "format": "uri"
+                  },
+                  "consentGranted": {
+                    "type": "boolean",
+                    "enum": [
+                      true
+                    ]
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Authorization URL for immediate top-level browser navigation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/McpOAuthStart"
+                }
+              }
+            }
           },
           "400": {
             "description": "Invalid credential payload or missing consent.",
@@ -19528,7 +20193,8 @@
             "enum": [
               "none",
               "bearer_token",
-              "custom_header"
+              "custom_header",
+              "oauth"
             ]
           },
           "credentialMode": {
@@ -21840,7 +22506,9 @@
             "type": "string",
             "enum": [
               "missing",
+              "pending_authorization",
               "connected",
+              "reauthorization_required",
               "error"
             ]
           },
@@ -21858,18 +22526,46 @@
             "type": "string",
             "enum": [
               "bearer_token",
-              "custom_header"
+              "custom_header",
+              "oauth"
             ]
           },
           "action": {
             "type": "string",
             "enum": [
               "connect_mcp_server",
+              "authorize_mcp_server",
+              "select_authorization_server",
+              "reauthorize_mcp_server",
               "verify_mcp_server"
             ]
           },
           "errorCode": {
             "type": "string"
+          },
+          "issuerOrigin": {
+            "type": "string",
+            "format": "uri"
+          },
+          "registrationMethod": {
+            "type": "string",
+            "enum": [
+              "cimd",
+              "dcr"
+            ]
+          },
+          "scopes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "tokenExpiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "refreshCapable": {
+            "type": "boolean"
           },
           "verifiedAt": {
             "type": "string",
@@ -21890,6 +22586,148 @@
         "properties": {
           "connection": {
             "$ref": "#/components/schemas/McpConnection"
+          }
+        },
+        "additionalProperties": false
+      },
+      "McpOAuthClientMetadata": {
+        "type": "object",
+        "required": [
+          "client_id",
+          "client_name",
+          "client_uri",
+          "redirect_uris",
+          "grant_types",
+          "response_types",
+          "token_endpoint_auth_method"
+        ],
+        "properties": {
+          "client_id": {
+            "type": "string",
+            "format": "uri"
+          },
+          "client_name": {
+            "type": "string",
+            "enum": [
+              "AcornOps"
+            ]
+          },
+          "client_uri": {
+            "type": "string",
+            "format": "uri"
+          },
+          "redirect_uris": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "format": "uri"
+            }
+          },
+          "grant_types": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "authorization_code",
+                "refresh_token"
+              ]
+            }
+          },
+          "response_types": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "code"
+              ]
+            }
+          },
+          "token_endpoint_auth_method": {
+            "type": "string",
+            "enum": [
+              "none"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "McpOAuthIssuerCandidate": {
+        "type": "object",
+        "required": [
+          "issuer",
+          "issuerOrigin",
+          "registrationMethod",
+          "scopes",
+          "offlineAccessRequested"
+        ],
+        "properties": {
+          "issuer": {
+            "type": "string",
+            "format": "uri"
+          },
+          "issuerOrigin": {
+            "type": "string",
+            "format": "uri"
+          },
+          "registrationMethod": {
+            "type": "string",
+            "enum": [
+              "cimd",
+              "dcr"
+            ]
+          },
+          "scopes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "offlineAccessRequested": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "McpOAuthPreparation": {
+        "type": "object",
+        "required": [
+          "preparationHandle",
+          "resourceOrigin",
+          "issuerSelectionRequired",
+          "candidates"
+        ],
+        "properties": {
+          "preparationHandle": {
+            "type": "string",
+            "minLength": 43
+          },
+          "resourceOrigin": {
+            "type": "string",
+            "format": "uri"
+          },
+          "issuerSelectionRequired": {
+            "type": "boolean"
+          },
+          "candidates": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/components/schemas/McpOAuthIssuerCandidate"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "McpOAuthStart": {
+        "type": "object",
+        "required": [
+          "authorizationUrl"
+        ],
+        "properties": {
+          "authorizationUrl": {
+            "type": "string",
+            "format": "uri"
           }
         },
         "additionalProperties": false
@@ -22038,7 +22876,8 @@
             "enum": [
               "none",
               "bearer_token",
-              "custom_header"
+              "custom_header",
+              "oauth"
             ]
           },
           "credentialMode": {
@@ -23527,7 +24366,8 @@
             "enum": [
               "none",
               "bearer_token",
-              "custom_header"
+              "custom_header",
+              "oauth"
             ]
           },
           "credential_mode": {
@@ -24689,7 +25529,8 @@
                   "type": "string",
                   "enum": [
                     "bearer_token",
-                    "custom_header"
+                    "custom_header",
+                    "oauth"
                   ]
                 },
                 "owningAgent": {
