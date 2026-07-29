@@ -179,7 +179,7 @@
           "agents"
         ],
         "summary": "Change Agent conversation access mode",
-        "description": "Only the creator may explicitly elevate to read_write. The pinned capability ceiling remains unchanged.",
+        "description": "Only the creator may change access. read_write requires creator permission and a pinned Agent policy that allows writes; the pinned capability ceiling remains unchanged.",
         "security": [
           {
             "userSession": []
@@ -244,7 +244,14 @@
             "$ref": "#/components/responses/Error404"
           },
           "409": {
-            "$ref": "#/components/responses/Error409"
+            "description": "The pinned Agent policy is read-only.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           },
           "429": {
             "$ref": "#/components/responses/Error429"
@@ -6263,8 +6270,8 @@
         "tags": [
           "agents"
         ],
-        "summary": "Create a read-only Agent conversation",
-        "description": "Creates a console-only single-Agent conversation with a pinned Agent revision and capability ceiling.",
+        "summary": "Create an Agent conversation",
+        "description": "Creates a console-only single-Agent conversation with a pinned Agent revision, permissionMode, and capability ceiling. Access defaults to the intersection of the pinned Agent policy and the creator run permissions.",
         "security": [
           {
             "userSession": []
@@ -6280,7 +6287,7 @@
         ],
         "responses": {
           "201": {
-            "description": "Read-only Agent conversation created.",
+            "description": "Agent conversation created with policy-derived access.",
             "content": {
               "application/json": {
                 "schema": {
@@ -6296,7 +6303,7 @@
             "$ref": "#/components/responses/Error401"
           },
           "403": {
-            "description": "Requires create_sessions and create_read_only_runs.",
+            "description": "Requires create_sessions and a run capability compatible with the pinned Agent policy.",
             "content": {
               "application/json": {
                 "schema": {
@@ -19354,6 +19361,7 @@
           "workspaceId",
           "agentId",
           "agentVersion",
+          "permissionMode",
           "title",
           "createdBy",
           "accessMode",
@@ -19374,6 +19382,14 @@
           "agentVersion": {
             "type": "integer",
             "minimum": 1
+          },
+          "permissionMode": {
+            "type": "string",
+            "enum": [
+              "read_only",
+              "ask_before_changes",
+              "auto_allowed_changes"
+            ]
           },
           "title": {
             "type": "string"
@@ -19406,6 +19422,7 @@
           "id",
           "workspaceId",
           "name",
+          "avatarEmoji",
           "instructions",
           "status",
           "origin",
@@ -19426,6 +19443,12 @@
           },
           "name": {
             "type": "string"
+          },
+          "avatarEmoji": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "description": "Exactly one Unicode emoji grapheme used as the Agent visual identity."
           },
           "description": {
             "type": "string"
@@ -20023,6 +20046,12 @@
           },
           "name": {
             "type": "string"
+          },
+          "avatarEmoji": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "description": "Exactly one Unicode emoji grapheme."
           },
           "description": {
             "type": "string"
