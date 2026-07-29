@@ -1099,7 +1099,7 @@
             "enum": [
               "member_discovery",
               "ai_policy",
-              "password_signup"
+              "user_sign_in_methods"
             ]
           }
         }
@@ -3065,7 +3065,7 @@
             "enum": [
               "member_discovery",
               "ai_policy",
-              "password_signup"
+              "user_sign_in_methods"
             ]
           },
           "value": {

@@ -1724,10 +1724,17 @@
             }
           },
           "403": {
-            "$ref": "#/components/responses/Error403"
+            "description": "OIDC user login is disabled by platform policy.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           },
           "404": {
-            "description": "OIDC authentication is disabled.",
+            "description": "OIDC authentication is not configured.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1898,10 +1905,17 @@
             "$ref": "#/components/responses/Error401"
           },
           "403": {
-            "$ref": "#/components/responses/Error403"
+            "description": "OIDC user login is disabled by platform policy.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           },
           "404": {
-            "description": "OIDC authentication is disabled.",
+            "description": "OIDC authentication is not configured.",
             "content": {
               "application/json": {
                 "schema": {
