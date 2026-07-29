@@ -20988,6 +20988,18 @@
                   "info"
                 ]
               },
+              "scopeKind": {
+                "type": "string"
+              },
+              "scopeName": {
+                "type": "string"
+              },
+              "objectKind": {
+                "type": "string"
+              },
+              "objectName": {
+                "type": "string"
+              },
               "writeMode": {
                 "type": "string",
                 "enum": [
@@ -23134,6 +23146,28 @@
           "eligibleCurrentIssueCount": {
             "type": "integer",
             "minimum": 0
+          },
+          "queueSummary": {
+            "type": "object",
+            "required": [
+              "activeCount",
+              "waitingCount"
+            ],
+            "properties": {
+              "activeCount": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "waitingCount": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "oldestWaitingAt": {
+                "type": "string",
+                "format": "date-time"
+              }
+            },
+            "additionalProperties": false
           },
           "effectiveBehavior": {
             "$ref": "#/components/schemas/AutoTriageEffectiveBehavior"
