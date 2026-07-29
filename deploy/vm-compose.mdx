@@ -1,0 +1,47 @@
+---
+title: "Deploy the platform with VM Compose"
+description: "Run the central AcornOps services on one Linux VM"
+---
+
+This page hosts the central platform on a VM. To add a Linux VM for AcornOps to manage, see [Connect a Linux VM](/use/connect-vm).
+
+Use VM Compose for smaller environments and production-style operational testing where one machine hosts the central services.
+
+## Before you begin
+
+Complete the [deployment prerequisites](/deploy/prerequisites). Prepare durable databases and Redis, production hostnames, TLS termination, identity configuration, a model policy and provider credential plan, and unique internal secrets.
+
+## Prepare the environment
+
+From the AcornOps deployment repository:
+
+```bash
+cp env/vm/.env.example env/vm/.env.prod
+```
+
+Review the production environment file. Keep `TRUST_PROXY=1` when the edge proxy terminates TLS and owns forwarded host headers.
+
+## Start the platform
+
+```bash
+task prod-up
+```
+
+Database initialization runs before the services start. Treat initialization failures as deployment blockers.
+
+## Production posture
+
+- Pin the complete supported image matrix.
+- Keep the API and console behind TLS.
+- Keep internal service endpoints private.
+- Use durable state services and volumes.
+- Back up state before a reset or supported upgrade.
+- Review JWKS readiness, request limits, rate limits, and MCP egress.
+
+The current deployment reference describes a greenfield database epoch rather than a mixed-version rolling database upgrade. Follow the exact release guidance before replacing an existing environment.
+
+## Continue
+
+- Review the complete [VM Compose reference](/deploy/deployment-reference#vm-compose).
+- Apply the [configuration guide](/deploy/configuration).
+- Complete [production readiness validation](/deploy/production-readiness).

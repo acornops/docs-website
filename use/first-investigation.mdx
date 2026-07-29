@@ -1,0 +1,52 @@
+---
+title: "Run your first investigation"
+description: "Use a connected target to complete a safe, read-only operational run"
+---
+
+Start with target-native chat when you want to investigate one Kubernetes cluster or Linux VM without creating reusable automation.
+
+## Prerequisites
+
+- You are a member of the workspace.
+- The target reports as connected.
+- Your role permits reading the target and creating read-only runs.
+- At least one model provider is ready for the workspace.
+
+## 1. Review the target
+
+Open the target and confirm that current inventory or findings are available. An offline target may remain visible, but AcornOps cannot gather fresh evidence or invoke its tools.
+
+## 2. Start in read-only mode
+
+Open the target's chat surface and select read-only access. Ask a bounded question that names the symptom and desired evidence, for example:
+
+```text
+Identify why the checkout workload is unhealthy. Review recent events and logs,
+but do not make changes.
+```
+
+## 3. Review effective capabilities
+
+Before launch, inspect the tools that the target and your role make available. Target chat uses the target's generic assistant; it does not select one of the workspace's specialist Agents.
+
+Type `/` in the composer to reference an exact enabled tool or skill. A reference helps the assistant choose a capability, but it does not grant access or bypass the selected run mode.
+
+## 4. Observe the run
+
+Follow run events as AcornOps gathers evidence. The run retains its exact target and tool scope. If a required dependency becomes unavailable or authorization changes, the run fails closed rather than substituting another capability.
+
+## 5. Review the result
+
+Check that the conclusion is supported by the gathered evidence. Keep the session for follow-up questions so the conversation and run history remain together.
+
+Open the run trace to review compact tool evidence. When an eligible tool produced a retained complete result, choose **View full redacted result** to load it separately. A completed assistant answer can also be exported with **Generate PDF**.
+
+## When to use a Workflow
+
+Use a [Workflow](/use/agents-and-workflows) when the procedure should be reusable, scheduled, triggered by an event, or coordinated across specialist Agents. Use target chat for direct investigation of one connected target.
+
+See [Target chat and evidence](/use/target-chat) for references, evidence retention, PDF export, and collaboration behavior.
+
+<Note>
+  A write-capable follow-up uses a new effective scope and may pause for approval. Approval applies only to the exact requested tool and arguments.
+</Note>

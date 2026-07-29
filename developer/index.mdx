@@ -1,0 +1,36 @@
+---
+title: "Build with AcornOps"
+description: "Create API clients, bots, workflow adapters, webhooks, and MCP integrations"
+---
+
+This section is for developers extending an existing AcornOps deployment.
+
+<CardGroup cols={2}>
+  <Card title="Integration guide" icon="webhook" href="/developer/integrations">
+    Build external sessions, webhook consumers, bots, and MCP-backed capabilities.
+  </Card>
+  <Card title="API overview" icon="code" href="/developer/api-overview">
+    Understand authentication, endpoint families, and integration boundaries.
+  </Card>
+</CardGroup>
+
+## Choose an integration surface
+
+| Need | Surface |
+| --- | --- |
+| Read or manage workspace resources | Public control-plane API |
+| Follow a run | Server-sent run or execution events |
+| Start linked user-attributable work | External integration sessions |
+| Receive AcornOps events | Outbound webhooks |
+| Add reviewed external tools | Remote MCP server |
+| Perform deployment-wide support actions | Separately enabled admin API |
+
+Use the public API under `/api/v1` for workspace-facing integrations. The admin API under `/admin/v1` has separate enablement, authentication, scopes, and auditing. Internal component endpoints are not integration surfaces.
+
+## Start safely
+
+1. Identify the user or service identity behind the action.
+2. Request only the workspace grants and scopes the integration needs.
+3. Preserve AcornOps session, run, and approval attribution.
+4. Verify webhook signatures and handle at-least-once delivery.
+5. Treat run events and error reasons as bounded operational data, not a source of secrets.

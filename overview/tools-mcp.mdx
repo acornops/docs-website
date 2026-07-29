@@ -1,0 +1,32 @@
+---
+title: "Tools, skills, and MCP"
+description: "Where AcornOps capabilities come from and how they are controlled"
+---
+
+AcornOps assembles a run's capabilities from several explicit sources.
+
+## Tools
+
+Target connectors advertise built-in Kubernetes or VM tools. Workspace-native tools expose bounded AcornOps operations. Remote MCP servers can contribute additional reviewed tools.
+
+Tools have a read or write capability. Availability alone does not authorize use: the run's compiled scope must include the exact tool.
+
+## Skills
+
+Skills provide instructions and supporting resources to a specialist Agent or target. They guide behavior but do not grant tool access or bypass policy.
+
+## MCP
+
+Model Context Protocol servers expose external tools. An installation belongs to a specific workspace Agent or target. AcornOps discovers tools first, then requires explicit review before they can be enabled.
+
+Credentials can be workspace-managed or individual, depending on the installation and integration. Secrets remain in the configured secret backend and are not included in prompts, events, or documentation-facing diagnostics.
+
+## Layered enforcement
+
+A tool call must satisfy the user role, workspace policy, target policy, run mode, reviewed capability mapping, connection readiness, and any approval requirement. Remote MCP egress is also constrained by deployment networking policy.
+
+## Continue
+
+- [Configure tools and MCP](/use/tools-and-mcp)
+- [Discover servers through MCP registries](/use/mcp-registries)
+- [Configure MCP egress](/deploy/configuration-reference#mcp-egress-policy)

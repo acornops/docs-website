@@ -1,5 +1,5 @@
 ---
-title: "Architecture"
+title: "Platform architecture"
 description: "How AcornOps components, trust boundaries, and runtime flows fit together"
 ---
 
@@ -8,22 +8,55 @@ AcornOps separates the operator experience, platform state, run execution, model
 ## System overview
 
 ```mermaid
+%%{init: {"flowchart": {"nodeSpacing": 24, "rankSpacing": 32}}}%%
 flowchart LR
-  User["Operator browser"] --> Console["Management console"]
-  Console --> PublicIngress["Public ingress"]
-  PublicIngress --> ControlPlane["Control plane"]
-  ControlPlane --> Postgres["External Postgres"]
-  ControlPlane --> Redis["External Redis"]
-  ControlPlane --> ExecutionEngine["Execution engine"]
-  ExecutionEngine --> Redis
-  ExecutionEngine --> LLMGateway["LLM gateway"]
-  LLMGateway --> Postgres
-  LLMGateway --> Redis
-  WorkloadAgent["AgentK"] -->|Outbound WebSocket| ControlPlane
-  VMAgent["AgentV"] -->|Outbound WebSocket| ControlPlane
-  LLMGateway --> Providers["LLM providers"]
-  LLMGateway --> RemoteMcp["Remote MCP servers"]
+  Browser["Operator<br/>browser"]
+
+  subgraph AcornOps["AcornOps"]
+    direction LR
+    Console["Management<br/>console"]
+    ControlPlane["Control<br/>plane"]
+    ExecutionEngine["Execution<br/>engine"]
+    LLMGateway["LLM<br/>gateway"]
+
+    Console --> ControlPlane
+    ControlPlane --> ExecutionEngine
+    ExecutionEngine --> LLMGateway
+  end
+
+  External["LLM providers<br/>+ remote MCP"]
+
+  subgraph TargetConnectors[" "]
+    direction LR
+    AgentK["AgentK → Kubernetes cluster<br/>Outbound WebSocket · local RBAC"]
+    AgentV["AgentV → Linux / systemd VM<br/>Outbound WebSocket · local allowlist"]
+    AgentK ~~~ AgentV
+  end
+
+  Browser -->|OIDC + HTTPS| Console
+  LLMGateway --> External
+  AgentK --> ControlPlane
+  AgentV --> ControlPlane
+
+  classDef service fill:#FFFFFF,stroke:#D8CEC2,color:#282421,stroke-width:1.5px;
+  classDef gateway fill:#FFF0E8,stroke:#FF5A2F,color:#282421,stroke-width:2px;
+  classDef target fill:#FFFFFF,stroke:#D8CEC2,color:#282421,stroke-width:1.5px;
+
+  class Browser,Console,ControlPlane,ExecutionEngine,External service;
+  class LLMGateway gateway;
+  class AgentK,AgentV target;
+
+  style AcornOps fill:#FBFAF8,stroke:#D8CEC2,stroke-width:1.5px,color:#C44927
+  style TargetConnectors fill:transparent,stroke:transparent,color:transparent
+
+  linkStyle default stroke:#6A5040,stroke-width:1.5px;
+  linkStyle 3 stroke:transparent;
+  linkStyle 6,7 stroke:#C44927,stroke-width:2px;
 ```
+
+**Platform state:** Postgres provides durable state. Redis provides coordination, routing, and event fanout.
+
+**Outbound target connectors keep target access local; the central platform owns identity, orchestration, policy, and the run record.**
 
 ## Component responsibilities
 
@@ -33,14 +66,17 @@ flowchart LR
 | Control plane | Auth, workspaces, target core, Kubernetes and VM APIs, agent WebSockets, run state, webhooks, API authorization | `https://api.example.com/api/v1` |
 | Execution engine | Run lifecycle, orchestration loop, event emission, cancellation, tool-call coordination | Internal only |
 | LLM gateway | Provider routing, run-scoped model access, MCP registry, secret lookup, gateway auditing | Internal only |
+| Platform admin console (optional) | Deployment-wide governance UI and fixed-route BFF for the private admin API | Dedicated admin host |
 | AgentK | Kubernetes cluster snapshots, logs, and builtin Kubernetes tool execution | Outbound only |
 | AgentV | Bounded Linux/systemd snapshots and strict built-in tools; optional local helper for allowlisted service restart | Network outbound only |
+
+The optional platform admin console is intentionally outside the tenant runtime path shown above. It uses a dedicated OIDC client and forwards only fixed governance routes to the private control-plane admin API. It cannot access target operations, sessions, runs, prompts, tools, or tenant audit records.
 
 ## Runtime flow
 
 1. An operator signs in through OIDC and uses the management console with a cookie-backed control-plane session.
 2. The operator creates a workspace, registers a cluster or VM, and installs the generated agent command.
-3. The target agent authenticates with its agent key and opens an outbound WebSocket to the control plane.
+3. The target connector authenticates with its agent key and opens an outbound WebSocket to the control plane.
 4. The agent sends heartbeats, capability metadata, and snapshots. The control plane persists target state and synchronizes builtin tools into the LLM gateway.
 5. When an operator sends a troubleshooting message, the control plane creates a run and dispatches it to the execution engine.
 6. The execution engine fetches run context from the control plane, streams model requests through the LLM gateway, and calls allowed tools.
@@ -55,6 +91,8 @@ AcornOps uses separate credentials for separate trust boundaries:
 | Channel | Credential |
 | --- | --- |
 | Browser to control plane | Session cookie |
+| Platform admin browser to console BFF | Dedicated admin session cookie and CSRF evidence |
+| Platform admin console BFF to control plane | Narrow admin workload token plus the authenticated human session |
 | Control plane to execution engine | `EXECUTION_ENGINE_DISPATCH_TOKEN` |
 | Execution engine to control plane | `ORCH_SERVICE_TOKEN` |
 | Control plane to LLM gateway admin API | `LLM_GATEWAY_ADMIN_TOKEN` |

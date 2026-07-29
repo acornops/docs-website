@@ -1,0 +1,30 @@
+---
+title: "Core concepts"
+description: "A map of the AcornOps objects and how they relate"
+---
+
+Start here when you need the product model rather than installation steps or API fields.
+
+<CardGroup cols={2}>
+  <Card title="Workspaces and members" icon="users" href="/overview/workspaces">
+    Understand isolation, membership, roles, and workspace-owned state.
+  </Card>
+  <Card title="Targets and connectors" icon="bullseye-arrow" href="/overview/targets">
+    Understand Kubernetes and VM targets, AgentK, and AgentV.
+  </Card>
+  <Card title="Agents and Workflows" icon="diagram-project" href="/overview/agents-and-workflows">
+    Understand reusable specialists, coordination, and automation definitions.
+  </Card>
+  <Card title="Sessions, runs, and approvals" icon="play" href="/overview/sessions-runs-approvals">
+    Understand conversations, executions, events, and write decisions.
+  </Card>
+  <Card title="Tools, skills, and MCP" icon="wrench" href="/overview/tools-mcp">
+    Understand where capabilities come from and how AcornOps scopes them.
+  </Card>
+</CardGroup>
+
+## Relationship at a glance
+
+A **workspace** contains members, targets, specialist Agents, Workflows, integrations, and history. A **target** represents one connected Kubernetes cluster or Linux VM. A **session** preserves a conversation. Each execution within that conversation is a **run**. A run receives a compiled set of tools and may pause for an **approval** before a write.
+
+The [glossary](/overview/glossary) provides shorter definitions for terminology used across the documentation.

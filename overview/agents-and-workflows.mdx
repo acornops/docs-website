@@ -1,0 +1,47 @@
+---
+title: "Agents and Workflows"
+description: "How reusable specialists and runnable automation fit together"
+---
+
+AcornOps separates reusable specialist definitions from runnable automation.
+
+## Specialist Agents
+
+A specialist Agent is a versioned workspace definition with instructions and reviewed semantic capabilities. It may also have exact tools, skills, or remote MCP servers attached to it.
+
+An Agent does not start or own a run by itself.
+
+## Workflows
+
+A Workflow is the runnable automation definition. It combines:
+
+- a starter prompt,
+- one or more specialist Agents,
+- resource requirements and runtime parameters,
+- an effective capability policy,
+- optional schedules or event triggers.
+
+A Workflow with one Agent runs that specialist directly. A Workflow with multiple Agents lets AcornOps coordinate eligible specialists for the required capabilities.
+
+## Target chat is separate
+
+Target-native chat does not select a specialist Agent or launch a Workflow. It uses the target's generic assistant and the exact capabilities available for that target.
+
+## Safety model
+
+Semantic capabilities help route work but do not authorize tools by themselves. At launch, AcornOps resolves exact resources and intersects:
+
+- the signed-in member's permissions,
+- workspace and target policy,
+- selected Agent capabilities,
+- live integration and target readiness,
+- requested read or write mode,
+- exact reviewed tools.
+
+Write tools can still require approval for their exact arguments.
+
+## Continue
+
+- [Use Agents and Workflows](/use/agents-and-workflows)
+- [Understand sessions, runs, and approvals](/overview/sessions-runs-approvals)
+- [Configure automation runtime policy](/deploy/automation-runtime)

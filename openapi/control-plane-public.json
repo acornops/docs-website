@@ -2008,10 +2008,17 @@
             }
           },
           "403": {
-            "$ref": "#/components/responses/Error403"
+            "description": "OIDC user login is disabled by platform policy.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           },
           "404": {
-            "description": "OIDC authentication is disabled.",
+            "description": "OIDC authentication is not configured.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2182,10 +2189,17 @@
             "$ref": "#/components/responses/Error401"
           },
           "403": {
-            "$ref": "#/components/responses/Error403"
+            "description": "OIDC user login is disabled by platform policy.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           },
           "404": {
-            "description": "OIDC authentication is disabled.",
+            "description": "OIDC authentication is not configured.",
             "content": {
               "application/json": {
                 "schema": {
@@ -14523,13 +14537,13 @@
                           "validationErrors",
                           "bundleStats",
                           "source",
+                          "inherited",
                           "createdAt",
                           "updatedAt"
                         ],
                         "properties": {
                           "id": {
-                            "type": "string",
-                            "format": "uuid"
+                            "type": "string"
                           },
                           "workspaceId": {
                             "type": "string",
@@ -14638,6 +14652,9 @@
                                 ]
                               }
                             }
+                          },
+                          "inherited": {
+                            "type": "boolean"
                           },
                           "createdAt": {
                             "type": "string",
@@ -14754,13 +14771,13 @@
                         "validationErrors",
                         "bundleStats",
                         "source",
+                        "inherited",
                         "createdAt",
                         "updatedAt"
                       ],
                       "properties": {
                         "id": {
-                          "type": "string",
-                          "format": "uuid"
+                          "type": "string"
                         },
                         "workspaceId": {
                           "type": "string",
@@ -14869,6 +14886,9 @@
                               ]
                             }
                           }
+                        },
+                        "inherited": {
+                          "type": "boolean"
                         },
                         "createdAt": {
                           "type": "string",
@@ -14985,13 +15005,13 @@
                         "validationErrors",
                         "bundleStats",
                         "source",
+                        "inherited",
                         "createdAt",
                         "updatedAt"
                       ],
                       "properties": {
                         "id": {
-                          "type": "string",
-                          "format": "uuid"
+                          "type": "string"
                         },
                         "workspaceId": {
                           "type": "string",
@@ -15100,6 +15120,9 @@
                               ]
                             }
                           }
+                        },
+                        "inherited": {
+                          "type": "boolean"
                         },
                         "createdAt": {
                           "type": "string",
@@ -15248,13 +15271,13 @@
                         "validationErrors",
                         "bundleStats",
                         "source",
+                        "inherited",
                         "createdAt",
                         "updatedAt"
                       ],
                       "properties": {
                         "id": {
-                          "type": "string",
-                          "format": "uuid"
+                          "type": "string"
                         },
                         "workspaceId": {
                           "type": "string",
@@ -15363,6 +15386,9 @@
                               ]
                             }
                           }
+                        },
+                        "inherited": {
+                          "type": "boolean"
                         },
                         "createdAt": {
                           "type": "string",
@@ -15607,13 +15633,13 @@
                         "validationErrors",
                         "bundleStats",
                         "source",
+                        "inherited",
                         "createdAt",
                         "updatedAt"
                       ],
                       "properties": {
                         "id": {
-                          "type": "string",
-                          "format": "uuid"
+                          "type": "string"
                         },
                         "workspaceId": {
                           "type": "string",
@@ -15722,6 +15748,9 @@
                               ]
                             }
                           }
+                        },
+                        "inherited": {
+                          "type": "boolean"
                         },
                         "createdAt": {
                           "type": "string",
@@ -15911,13 +15940,13 @@
                         "validationErrors",
                         "bundleStats",
                         "source",
+                        "inherited",
                         "createdAt",
                         "updatedAt"
                       ],
                       "properties": {
                         "id": {
-                          "type": "string",
-                          "format": "uuid"
+                          "type": "string"
                         },
                         "workspaceId": {
                           "type": "string",
@@ -16026,6 +16055,9 @@
                               ]
                             }
                           }
+                        },
+                        "inherited": {
+                          "type": "boolean"
                         },
                         "createdAt": {
                           "type": "string",
@@ -19747,6 +19779,7 @@
           "canDelete",
           "canEditConnection",
           "canToggle",
+          "inherited",
           "authType",
           "credentialMode",
           "revision",
@@ -19757,8 +19790,7 @@
         ],
         "properties": {
           "id": {
-            "type": "string",
-            "format": "uuid"
+            "type": "string"
           },
           "name": {
             "type": "string"
@@ -19786,6 +19818,9 @@
             "type": "boolean"
           },
           "canToggle": {
+            "type": "boolean"
+          },
+          "inherited": {
             "type": "boolean"
           },
           "authType": {
@@ -20070,12 +20105,12 @@
           "revision",
           "contentDigest",
           "source",
+          "inherited",
           "files"
         ],
         "properties": {
           "id": {
-            "type": "string",
-            "format": "uuid"
+            "type": "string"
           },
           "name": {
             "type": "string"
@@ -20096,6 +20131,9 @@
           "source": {
             "type": "object",
             "additionalProperties": true
+          },
+          "inherited": {
+            "type": "boolean"
           },
           "files": {
             "type": "array",
@@ -22048,8 +22086,7 @@
         ],
         "properties": {
           "id": {
-            "type": "string",
-            "format": "uuid"
+            "type": "string"
           },
           "name": {
             "type": "string"
@@ -22074,6 +22111,9 @@
             "type": "boolean"
           },
           "canToggle": {
+            "type": "boolean"
+          },
+          "inherited": {
             "type": "boolean"
           },
           "authType": {
@@ -23395,12 +23435,12 @@
           "enabled",
           "auth_type",
           "credential_mode",
+          "inherited",
           "tools"
         ],
         "properties": {
           "id": {
-            "type": "string",
-            "format": "uuid"
+            "type": "string"
           },
           "workspace_id": {
             "type": "string",
@@ -23442,6 +23482,9 @@
               "workspace",
               "individual"
             ]
+          },
+          "inherited": {
+            "type": "boolean"
           },
           "auth_header_name": {
             "type": "string"
