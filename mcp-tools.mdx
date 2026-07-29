@@ -40,7 +40,11 @@ If you are building a bot or workflow adapter that reacts to AcornOps events, st
 | Builtin VM tools | AgentV | The agent advertises strict, read-only Linux/systemd tools over `tools/list`; the control plane synchronizes complete input, output, artifact, timeout, and capability contracts into the gateway for the VM target. |
 | Remote MCP servers | Workspace Agent or target | Owners or admins choose **Add MCP server**, then connect the endpoint by URL or browse configured registries from the Agent's **Capabilities** page or target **MCP servers** page. |
 
-Newly discovered remote MCP tools stay disabled until an owner or admin enables each tool with an explicit `read` or `write` capability.
+Newly discovered remote MCP tools stay disabled until an owner or admin reviews
+them. AcornOps suggests `read` only when the server provides an explicit,
+non-conflicting MCP `readOnlyHint: true` annotation; missing, malformed, false,
+or conflicting hints default to `write`. The reviewer can change the suggested
+capability before enabling each tool.
 
 ## Workspace-native tools
 
