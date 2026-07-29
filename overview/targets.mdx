@@ -1,0 +1,31 @@
+---
+title: "Targets and connectors"
+description: "The common target model for Kubernetes clusters and Linux VMs"
+---
+
+A target is an environment that AcornOps can observe or operate on. The current target types are Kubernetes clusters and Linux/systemd virtual machines.
+
+## Target records
+
+The control plane owns the target record, identity, policy, connection state, inventory, findings, sessions, and run history. Target-specific connectors report live state and execute allowed tools.
+
+## AgentK and AgentV
+
+| Connector | Runs in | Provides |
+| --- | --- | --- |
+| AgentK | A connected Kubernetes cluster | Cluster inventory, events, metrics, logs, and Kubernetes tools |
+| AgentV | A connected Linux/systemd VM | Host inventory, services, processes, ports, metrics, logs, and bounded VM tools |
+
+Both connectors authenticate with a target-specific agent key and connect outbound to the control plane. Connected targets do not require public inbound access.
+
+AgentK and AgentV are not specialist Agents. They are target connectors. See [Agents and Workflows](/overview/agents-and-workflows) for the workspace automation object.
+
+## Target-native chat
+
+Each target has a generic target-native assistant. At run creation, AcornOps evaluates the signed-in member, requested access mode, workspace policy, target policy, current connector capabilities, and enabled tools. It pins the resulting scope to the run.
+
+## Continue
+
+- [Connect a Kubernetes cluster](/use/connect-kubernetes)
+- [Connect a Linux VM](/use/connect-vm)
+- [Run your first target investigation](/use/first-investigation)

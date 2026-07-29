@@ -1,0 +1,99 @@
+---
+title: "Platform security"
+description: "How AcornOps layers identity, tool policy, approvals, and target-native enforcement"
+---
+
+AcornOps uses defence in depth. A platform decision does not replace the controls already present in a Kubernetes cluster or Linux VM. Each request must pass the platform's identity and policy checks, any required human approval, and the target's local enforcement.
+
+## Defence in depth
+
+```mermaid
+flowchart LR
+  Request["User request"]
+  Identity["Identity and<br/>target scope"]
+  ToolPolicy["Reviewed<br/>tool policy"]
+  Approval["Human approval<br/>for governed writes"]
+  Target["Target-native<br/>enforcement"]
+
+  Request --> Identity --> ToolPolicy --> Approval --> Target
+
+  classDef request fill:#FFFFFF,stroke:#D8CEC2,color:#282421,stroke-width:1.5px;
+  classDef control fill:#FFF0E8,stroke:#FF5A2F,color:#282421,stroke-width:1.5px;
+
+  class Request request;
+  class Identity,ToolPolicy,Approval,Target control;
+
+  linkStyle default stroke:#7A1F08,stroke-width:2px;
+```
+
+| Layer | What it enforces |
+| --- | --- |
+| Identity and target scope | Every request is bound to an authenticated principal, workspace, target, session, and run. Workspace permissions and run-scoped claims constrain what can happen. |
+| Tool policy | The model receives only tools compiled into the run's allowed scope. Discovered MCP tools remain disabled until reviewed and enabled. Skills provide instructions but never grant access. |
+| Human approval | Read-only and read/write execution are separate capabilities. When policy gates a write, the run pauses for a decision on the exact tool and arguments. Approval does not grant broader access. |
+| Target-native enforcement | AgentK remains subject to Kubernetes RBAC. AgentV exposes bounded operations and applies its local allowlist. Either target can reject an action that AcornOps allowed. |
+
+Authorization is checked again at dispatch and before tool execution. Changing a user's role or a target's policy therefore does not silently widen an already compiled run.
+
+<Note>
+  An approval authorizes one requested operation. It does not bypass workspace permissions, the run scope, Kubernetes RBAC, or a VM's local policy.
+</Note>
+
+## Secure connectivity model
+
+Targets initiate their connection to the central platform. You do not need to expose an inbound AcornOps control port on each connected cluster or VM.
+
+```mermaid
+flowchart LR
+  subgraph Kubernetes["Kubernetes cluster"]
+    AgentK["AgentK"]
+    KPolicy["Kubernetes RBAC"]
+    AgentK --> KPolicy
+  end
+
+  subgraph VM["Linux / systemd VM"]
+    AgentV["AgentV"]
+    VPolicy["Local tool allowlist"]
+    AgentV --> VPolicy
+  end
+
+  ControlPlane["AcornOps<br/>control plane"]
+
+  AgentK -->|Outbound WebSocket| ControlPlane
+  AgentV -->|Outbound WebSocket| ControlPlane
+
+  classDef target fill:#FFF0E8,stroke:#FF5A2F,color:#282421,stroke-width:1.5px;
+  classDef policy fill:#FFFFFF,stroke:#D8CEC2,color:#282421,stroke-width:1.5px;
+  classDef platform fill:#5F4E42,stroke:#5F4E42,color:#FFFFFF,stroke-width:1.5px;
+
+  class AgentK,AgentV target;
+  class KPolicy,VPolicy policy;
+  class ControlPlane platform;
+
+  style Kubernetes fill:#FBFAF8,stroke:#FF5A2F,stroke-width:1.5px
+  style VM fill:#FBFAF8,stroke:#FF5A2F,stroke-width:1.5px
+
+  linkStyle 2,3 stroke:#7A1F08,stroke-width:2px;
+```
+
+AgentK and AgentV authenticate with target-specific agent keys and establish outbound WebSocket connections to the control plane. The connection carries heartbeats, capability metadata, snapshots, and bounded tool requests. Target access stays with the connector inside the environment.
+
+Outbound connectivity describes the direction in which the session is established. Administrators must still restrict egress to the expected AcornOps endpoint, validate TLS, protect agent keys, and apply least-privilege target policy.
+
+## Credential boundaries
+
+AcornOps uses different credentials at different boundaries:
+
+- Browser users authenticate through the configured identity provider and use a cookie-backed control-plane session.
+- Target connectors use target-specific agent keys.
+- Internal services use dedicated service credentials.
+- Model and tool calls use run-scoped tokens that bind the workspace, target, run, provider, model, tools, and output budget.
+
+Secrets for providers and remote MCP servers remain in the configured secret backend. They are not included in prompts or ordinary run events.
+
+## Related guidance
+
+- Review [sessions, runs, and approvals](/overview/sessions-runs-approvals).
+- Understand [tools, skills, and MCP policy](/overview/tools-mcp).
+- Configure [authentication, approvals, and secrets](/deploy/configuration).
+- Follow the [production readiness checklist](/deploy/production-readiness).

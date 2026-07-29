@@ -1,0 +1,44 @@
+---
+title: "Investigate operational issues"
+description: "Review durable target issues, supporting observations, and related Workflow activity"
+---
+
+AcornOps turns repeated findings from Kubernetes and VM snapshots into durable issues. An issue keeps the latest severity and lifecycle state together with the observations that support it, so a transient finding is not confused with an ongoing incident.
+
+## Find issues that need attention
+
+The workspace overview highlights critical and warning issues. The Kubernetes and Virtual Machines inventories also include issue-aware status, so targets that need attention rise above healthy targets.
+
+Open a target to review its issues. Each issue includes:
+
+- severity: `critical`, `warning`, or `info`,
+- lifecycle state: `active`, `recovering`, or `resolved`,
+- the affected scope or object,
+- first-seen and last-seen times,
+- occurrence history and supporting observations,
+- related Workflow activity when automation has handled the issue.
+
+An issue can resolve after clean target snapshots and reopen if the same condition returns. The history remains attached to the issue.
+
+## Investigate an issue
+
+1. Open the issue from the workspace overview or target page.
+2. Review its current state, latest observation, affected object, and prior occurrences.
+3. Check related Workflow activity before starting duplicate work.
+4. Choose the available investigation action to open or start a target-scoped run.
+5. Start in read-only mode unless a change is required.
+6. Review the gathered evidence and keep follow-up questions in the same conversation.
+
+If automation is already running, the issue shows the most relevant execution and links to the exact run or the filtered Runs ledger. A run waiting for approval or review takes priority over starting another investigation.
+
+## Automate issue response
+
+A Workflow event trigger can react to `issue.created.v1`. Use filters to constrain the issue severity, type, or target scope, and keep the Workflow's target and tool ceilings narrower than the trigger.
+
+Issue-triggered executions keep immutable origin information and remain linked from the issue. Resolving an issue does not erase its execution history.
+
+See [Agents and Workflows](/use/agents-and-workflows) for trigger configuration and [Integrations](/developer/integrations) for issue lifecycle webhooks.
+
+<Note>
+  Issues are derived from target observations. They are operational signals, not proof that every affected workload is unavailable. Review the supporting evidence before acting.
+</Note>

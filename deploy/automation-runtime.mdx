@@ -1,0 +1,40 @@
+---
+title: "Configure automation runtime"
+description: "Roll out Workflow execution safely and monitor its operational state"
+---
+
+This page covers deployment-level automation controls. For authoring and using automation, see [Agents and Workflows](/use/agents-and-workflows).
+
+## Runtime modes
+
+Set `AUTOMATION_RUNTIME_MODE` or Helm `automation.runtimeMode` to:
+
+- `off` to stop new dispatch while preserving durable state,
+- `shadow` to create and inspect durable intent without dispatch,
+- `canary` to dispatch only named canary workspaces,
+- `on` to dispatch all eligible workspaces.
+
+Keep the runtime off while required migrations and startup upgrades complete. Progress through shadow and canary before enabling all workspaces.
+
+## Canary scope
+
+Set `AUTOMATION_CANARY_WORKSPACE_IDS` or `automation.canaryWorkspaceIds` to the exact workspaces eligible during canary rollout. Canary selection does not bypass workspace readiness, authorization, target compatibility, or integration checks.
+
+## Runtime and retention
+
+Workflow execution duration and report retention are deployment policies:
+
+| Helm value | Environment variable | Purpose |
+| --- | --- | --- |
+| `agent.runtime.maxRuntimeMs` | `AGENT_MAX_RUNTIME_MS` | Maximum Workflow and target-chat execution duration |
+| `components.controlPlane.reportArtifacts.maxRetentionDays` | `TARGET_CHAT_REPORT_RETENTION_DAYS` | Retention for Workflow and target-chat PDF reports |
+
+Workflow definitions cannot increase these limits.
+
+## Diagnostics
+
+Authorized workspace readers can inspect the automation diagnostics endpoint for runtime state, pending dispatch age, run counts, scheduler lag, pending approvals, template readiness, and retained report-source counts.
+
+Monitor the control-plane automation metrics and supplied Prometheus alert rules. Alert on delayed dispatch, scheduler lag, stale approvals, review-blocked runs, trigger rejection, MCP readiness failures, cleanup retries, report failures, and elevated terminal failures.
+
+Diagnostics and metrics must contain bounded IDs, states, counts, and reasons only. Do not export prompts, chat bodies, tool arguments, webhook payloads, reports, credentials, or continuation state.

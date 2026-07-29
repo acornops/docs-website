@@ -1,0 +1,53 @@
+---
+title: "Web Search"
+description: "Enable provider-native web search for a target and constrain its domain policy"
+---
+
+Web Search is a read-only, provider-native tool for target chat. It lets the selected model search the web without installing an MCP server. The setting belongs to one Kubernetes or VM target and is enabled by default.
+
+## Configure Web Search
+
+Open a target, select **Tools**, and find **Web Search**. A workspace role with `manage_tools` can enable or disable it and configure domain filters.
+
+Enter one fully qualified hostname per line, without a scheme, path, port, wildcard, query, or fragment:
+
+```text
+docs.example.com
+status.example.com
+```
+
+The lists behave as follows:
+
+- no filters allow the provider's normal search scope,
+- allowed domains constrain search to those hostnames,
+- blocked domains exclude those hostnames,
+- the same hostname cannot appear in both lists.
+
+Domain policy is sent as part of the run's signed native-tool allowance. Request-body fields cannot add or change an allowed search tool.
+
+## Provider availability
+
+Web Search follows the workspace's selected provider and model:
+
+| Provider configuration | Availability |
+| --- | --- |
+| OpenAI Responses API | Available, including supported allowed and blocked domain filters |
+| OpenAI Chat Completions API | Unavailable because that API surface does not support AcornOps native tools |
+| Anthropic | Available, including supported allowed and blocked domain filters |
+| Gemini | Available only without domain filters on the current gateway surface |
+
+When OpenAI Chat Completions is selected deployment-wide, the console preserves the target preference but marks Web Search unavailable and excludes it from ordinary target runs. The gateway also rejects unsupported native-tool requests as a second enforcement layer.
+
+For Gemini, remove allowed and blocked domains before using Web Search. AcornOps rejects domain-filtered Gemini searches instead of silently ignoring policy.
+
+## Run visibility
+
+Web Search appears in the assistant's effective capability list and the run's enabled tools. Because the provider executes it natively, it does not appear as an AcornOps function or MCP tool call.
+
+Web Search is not part of the `target.diagnostics.read` semantic capability used by starter specialist Agents. Enablement on a target does not automatically grant it to a Workflow.
+
+<Note>
+  Search results are external content. Treat them as untrusted evidence and compare material claims with target-native observations.
+</Note>
+
+Platform administrators can review provider routing and the OpenAI API surface in the [configuration reference](/deploy/configuration-reference#provider-routing-and-api-surfaces).

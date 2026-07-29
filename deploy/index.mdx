@@ -1,0 +1,49 @@
+---
+title: "Administer AcornOps"
+description: "Install, configure, secure, and maintain a self-hosted platform"
+---
+
+This section is for platform administrators and self-hosters. If your organization already operates AcornOps, use the [existing-platform quickstart](/use/get-started) instead.
+
+## Deployment layers
+
+AcornOps has two independent layers:
+
+1. The **central platform** runs the management console, control plane, execution engine, and LLM gateway.
+2. **Target connectors** run as AgentK in each Kubernetes target or AgentV on each Linux VM target.
+
+Deploy the central platform first. Workspace administrators connect targets afterward from the management console.
+
+## Choose a central-platform deployment
+
+<CardGroup cols={2}>
+  <Card title="Kubernetes" icon="dharmachakra" href="/deploy/kubernetes">
+    Use the AcornOps platform Helm chart with external Postgres and Redis.
+  </Card>
+  <Card title="VM Compose" icon="server" href="/deploy/vm-compose">
+    Use the single-machine stack for smaller environments and operational testing.
+  </Card>
+</CardGroup>
+
+## Recommended sequence
+
+1. [Prepare the prerequisites](/deploy/prerequisites).
+2. Deploy the central platform on [Kubernetes](/deploy/kubernetes) or with [VM Compose](/deploy/vm-compose).
+3. [Configure platform policy](/deploy/configuration).
+4. Complete the [production readiness checklist](/deploy/production-readiness).
+5. Optionally configure the [platform admin console](/deploy/platform-admin-console) for deployment-wide governance.
+6. Hand workspace onboarding to the intended owners and users.
+7. Use the [operations guide](/deploy/operations) for upgrades, health, and rotation.
+
+The [deployment reference](/deploy/deployment-reference) and [configuration reference](/deploy/configuration-reference) preserve the complete setting and behavior details.
+
+## Govern the deployment
+
+<CardGroup cols={2}>
+  <Card title="Platform admin console" icon="shield-halved" href="/deploy/platform-admin-console">
+    Manage users, workspace access, plans, platform policy, and admin audit history through the governance-only console.
+  </Card>
+  <Card title="Control-plane admin API" icon="terminal" href="/deploy/admin-operations">
+    Run narrowly scoped operational or break-glass administration that is not exposed in the console.
+  </Card>
+</CardGroup>

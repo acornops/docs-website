@@ -1,0 +1,31 @@
+---
+title: "Sessions, runs, and approvals"
+description: "How AcornOps represents conversations, executions, events, and write decisions"
+---
+
+These objects describe different parts of operational work.
+
+| Object | Purpose |
+| --- | --- |
+| Session | Preserves a target chat or Workflow conversation |
+| Run | Represents one execution attempt within a session |
+| Event | Records safe progress and state changes for a run |
+| Approval | Pauses a run until an authorized user accepts or rejects an exact write |
+
+## Sessions
+
+A session provides conversational continuity. A target session stays bound to its target. A Workflow session stays bound to the Workflow version and resources selected for the execution.
+
+## Runs
+
+Each launch creates a run with a compiled capability scope. AcornOps persists the run and dispatch intent before acknowledging it. Execution may be direct, coordinated, read-only, or write-capable depending on the selected path and policy.
+
+## Approvals
+
+Approval is not a broad elevation of access. The decision applies to the exact requested tool and arguments. Approving in the management console does not bypass the member's role, target policy, or compiled run scope.
+
+## Review
+
+The management console exposes active and historical runs, their origin, target, state, safe outputs, and pending approvals. Authorization is rechecked at dispatch and before each tool call.
+
+Continue with [your first target investigation](/use/first-investigation) or the detailed [Agents and Workflows guide](/use/agents-and-workflows).

@@ -1,6 +1,6 @@
 ---
-title: "VM targets"
-description: "Register Linux/systemd VMs, install AgentV, verify diagnostics, and optionally allowlist service restarts"
+title: "Connect a Linux VM"
+description: "Register a Linux target, install AgentV, and verify its diagnostics"
 ---
 
 Every Linux VM that AcornOps observes runs the unprivileged AgentV. The agent opens an outbound WebSocket, reports bounded host snapshots, and executes strict VM tools. It remains read-only unless you separately enable the root-owned action helper for exact service units.
@@ -25,6 +25,8 @@ wss://api.example.com/api/v1/agent/connect
 ```
 
 Replace `example.com` with your deployment domain. The public demo agent route is `wss://api.demo.acornops.dev/api/v1/agent/connect`. AgentV supports current Debian/Ubuntu and RHEL-family systemd hosts. Other distributions report degraded or unsupported collectors rather than claiming full support.
+
+When the platform certificate uses an organization-private CA, place the public PEM bundle in a root-managed readable path and set `ACORNOPS_AGENT_ADDITIONAL_CA_BUNDLE_FILE` in `/etc/acornops/agentv.env`. AgentV adds the bundle to normal public trust while preserving certificate and hostname verification.
 
 ## Inventory and findings
 

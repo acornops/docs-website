@@ -1,6 +1,6 @@
 ---
-title: "Agents and workflows"
-description: "Run one specialist directly or let AcornOps coordinate several"
+title: "Use Agents and Workflows"
+description: "Create reusable specialists, launch Workflows, and review their runs"
 ---
 
 Every workspace receives the versioned starter automation bundle during provisioning. The workspace, owner membership, definitions, completed installation marker, and audit events commit atomically before workspace creation returns. On startup, the control plane backfills missing installations and upgrades surviving definitions in place before it reports ready.
@@ -206,23 +206,4 @@ integration can launch an active Workflow when its grant permits it. AcornOps
 does not currently expose a generic public inbound webhook that starts a
 Workflow.
 
-## Rollout modes
-
-Set `AUTOMATION_RUNTIME_MODE` or Helm `automation.runtimeMode` to:
-
-- `off` to stop new automation dispatch while preserving durable state,
-- `shadow` to create and inspect durable intent without dispatch,
-- `canary` to dispatch only workspaces in `AUTOMATION_CANARY_WORKSPACE_IDS`, or
-- `on` to dispatch all eligible workspaces.
-
-Keep the mode `off` until migrations and the required startup starter upgrade complete, then use `shadow` and `canary` before enabling all eligible workspaces. Incident Report is provisioned active; the other starter Workflows retain their configured state.
-
-The main `/ready` endpoint continues to reflect Postgres and Redis correctness. External MCP readiness appears on Agent and Workflow records and does not remove the whole control plane from service.
-
-## Diagnostics and alerts
-
-Authorized workspace readers can inspect `GET /api/v1/workspaces/{workspaceId}/automation/diagnostics`. The response includes runtime enablement, dispatch state and oldest pending age, Workflow-run counts by executor role and root/child position, scheduler lag, pending approval age, template readiness reasons, and retained report-source count.
-
-Scrape `/metrics` and load `observability/prometheus/alerts/control-plane-automation.rules.yaml` from the deployment repository. Starter provisioning reports `control_plane_automation_template_seed_total{template_id,outcome}`. The supplied rules cover dispatch older than the 30-second objective, scheduler lag over 60 seconds, approvals older than 15 minutes, `needs_review`, trigger rejection, MCP failures, personal-credential cleanup retries, MCP-readiness schedule pauses, PDF rendering failures, and elevated terminal failures.
-
-Diagnostics and metrics contain IDs, states, counts, and bounded reasons only. Prompts, chat bodies, tool arguments, webhook payloads, report contents, PDF bytes, credentials, and continuation state must not be logged or exported as labels.
+Platform administrators control rollout modes, runtime limits, and operational alerts separately from Workflow authoring. See [Configure automation runtime](/deploy/automation-runtime).

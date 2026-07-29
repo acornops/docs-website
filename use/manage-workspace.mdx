@@ -1,0 +1,60 @@
+---
+title: "Manage a workspace"
+description: "Manage workspace members, AI settings, approvals, audit history, and personal integration access"
+---
+
+Workspace administration happens in the management console and is scoped to one workspace. It is separate from deployment-wide governance in the [platform admin console](/deploy/platform-admin-console).
+
+The actions you can see depend on your workspace role and its server-provided permissions. Owners and administrators usually manage configuration; custom roles may grant a narrower set of capabilities.
+
+## Members and invitations
+
+Open **Workspace Settings → Members** to review members and pending invitations. With the required permission, you can:
+
+- add an existing AcornOps user,
+- invite a person by email and choose a role from the deployment's role catalog,
+- change a member's role,
+- revoke a pending invitation,
+- remove a member.
+
+The invitation link is returned when the invitation is created. Share it through an approved channel. The recipient must accept it using the identity named by the invitation.
+
+AcornOps prevents membership changes that would leave a workspace without an owner. Only owners can assign protected roles.
+
+## Workspace settings
+
+Open **Workspace Settings → Workspace** for supported workspace-level settings. The deployment controls which role templates and policy boundaries are available; a workspace can assign roles from that catalog but cannot redefine their capabilities.
+
+## AI settings and provider credentials
+
+Open **Workspace Settings → AI** to choose the workspace's default provider, model, and supported reasoning settings.
+
+Provider credentials follow this precedence:
+
+1. a workspace credential, when configured;
+2. the platform default credential, when a platform administrator configured one;
+3. no credential.
+
+The page reports the effective source as `workspace`, `platform_default`, or `none`. Credential values are write-only: AcornOps reports whether a key is configured but never returns its plaintext. Saving a workspace credential replaces the existing value; deleting it falls back to the platform default when one is available.
+
+Model policy and credentials are separate. A configured key does not make a provider or model usable when the deployment policy disallows it.
+
+## Approvals
+
+Open **Governance → Approvals** to review pending and completed write approvals. A decision applies only to the queued tool call and exact arguments shown in the approval.
+
+Approving a request does not bypass target enforcement. Kubernetes RBAC or the VM's local helper policy can still reject the operation.
+
+## Workspace audit log
+
+Open **Governance → Audit Log** to review workspace-scoped security and operational events when your role permits it. Use the available category, actor, object, outcome, and time filters to narrow the ledger.
+
+Audit metadata is sanitized. Secret values, message bodies, pod logs, authentication headers, and complete tool arguments are not stored in the workspace audit log.
+
+## Your external integrations
+
+Account settings list external integrations linked to your AcornOps identity. During account linking, review the exact workspaces and capabilities requested before approving access.
+
+You can replace an integration's workspace grants or unlink it. Grants cannot exceed both your current workspace permissions and the deployment's registered capability ceiling for that integration client.
+
+For service-side setup and webhook contracts, see [Integrations](/developer/integrations).

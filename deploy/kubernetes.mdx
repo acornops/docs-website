@@ -1,0 +1,58 @@
+---
+title: "Deploy the platform on Kubernetes"
+description: "Install the central AcornOps services with the platform Helm chart"
+---
+
+This page deploys the central platform. To add a cluster for AcornOps to manage, see [Connect a Kubernetes cluster](/use/connect-kubernetes).
+
+## Before you begin
+
+Complete the [deployment prerequisites](/deploy/prerequisites). In particular, prepare external Postgres, external Redis, public API and console hosts, TLS, identity settings, a model policy and credential plan, and the platform Secret.
+
+## Services installed
+
+The `acornops-platform` chart installs:
+
+- management console,
+- control plane,
+- execution engine,
+- LLM gateway,
+- optional platform admin console when explicitly enabled,
+- database migration Jobs.
+
+The chart references operator-managed secret values rather than placing them directly in Helm values.
+
+## Install
+
+Create the Secret expected by your values, then install a pinned platform release:
+
+```bash
+helm upgrade --install acornops-platform oci://ghcr.io/acornops/charts/acornops-platform \
+  --namespace acornops-platform \
+  --create-namespace \
+  --values values.prod.yaml
+```
+
+Review public hosts, auth, workspace roles, run policy, model settings, target connectivity, gateway controls, internal transport, and network egress before installation.
+
+## Exposure
+
+For the core platform, expose only:
+
+- the management console,
+- the public control-plane API,
+- the control-plane Agent WebSocket route.
+
+Do not expose execution-engine or LLM-gateway service endpoints publicly.
+
+If you enable the platform admin console, expose its dedicated host through the console BFF and keep direct public `/admin/v1` ingress disabled. See [Platform admin console](/deploy/platform-admin-console#enable-the-console).
+
+## Replicas and rollout behavior
+
+The chart supports multiple replicas for the management console, control plane, execution engine, and LLM gateway. Redis coordinates agent routing, run reservation, and event fanout where required. Connected target agents reconnect during a control-plane rollout, but active commands can fail or time out and may need to be retried.
+
+## Continue
+
+- Review the complete [deployment reference](/deploy/deployment-reference#kubernetes).
+- Apply the [configuration guide](/deploy/configuration).
+- Complete [production readiness validation](/deploy/production-readiness).

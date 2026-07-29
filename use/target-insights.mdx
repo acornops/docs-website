@@ -1,0 +1,49 @@
+---
+title: "Target Insights"
+description: "Use target-scoped operational knowledge learned from completed investigations"
+---
+
+Target Insights is a built-in tool for Kubernetes and VM targets. It retrieves relevant operational knowledge during future investigations and learns durable insights after a conversation becomes idle.
+
+Insights belong to one target. They are not user preferences, specialist Agent instructions, skills, an MCP server, or a vector database.
+
+## How retrieval works
+
+During a live target run, AcornOps searches only the target's active entries. Matching is lexical and deterministic. When relevant entries match, the run receives a small set of bounded snippets and records the retrieval outcome in run details.
+
+If nothing matches, the run continues without Target Insights context. Disabling Target Insights stops retrieval and background learning for that target.
+
+## How learning works
+
+Target Insights never changes durable entries inside a live assistant run. After session activity becomes idle, a background checkpoint waits until:
+
+- no run is active,
+- no approval is pending,
+- the configured idle delay has passed,
+- the selected AI provider, model policy, and credential are ready.
+
+The checkpoint can create, update, archive, or leave entries unchanged. Repeated evidence can promote a pending entry to active and can generalize overly narrow observations.
+
+Missing AI credentials pause background learning. They do not prevent viewing, editing, exporting, or retrieving existing entries.
+
+## Review and manage insights
+
+Open a Kubernetes cluster or VM, then open **Tools** and find **Target Insights**.
+
+Available actions include:
+
+- **Edit files:** review active, pending, and archived entries presented as Markdown files;
+- **Settings:** configure learning delay, evidence threshold, checkpoint model, and retrieval limits;
+- **Activity:** review Target Insights audit events;
+- **Export:** download the target's portable insight content;
+- **Reset:** permanently delete the target's insight entries and pending checkpoint jobs.
+
+Owners and administrators have `manage_target_insights` by default. Users with target read access can view settings, entries, activity, and exports but cannot mutate them unless their role grants that permission.
+
+<Warning>
+  Reset does not delete run history or audit history. It permanently removes the current Target Insights entries for that target.
+</Warning>
+
+## Review before relying on an insight
+
+An insight is retained operational context, not an authorization decision or guaranteed diagnosis. Compare it with current target evidence. The run still receives only the tools and target scope allowed by the current user, workspace policy, target policy, and run mode.

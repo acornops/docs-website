@@ -31,7 +31,63 @@
   "redirects": [
     {
       "source": "/api-reference",
-      "destination": "/api-overview"
+      "destination": "/developer/api-overview"
+    },
+    {
+      "source": "/architecture",
+      "destination": "/overview/architecture"
+    },
+    {
+      "source": "/security",
+      "destination": "/overview/security"
+    },
+    {
+      "source": "/quickstart",
+      "destination": "/deploy"
+    },
+    {
+      "source": "/deployment",
+      "destination": "/deploy/deployment-reference"
+    },
+    {
+      "source": "/configuration",
+      "destination": "/deploy/configuration-reference"
+    },
+    {
+      "source": "/catalog-registries",
+      "destination": "/use/mcp-registries"
+    },
+    {
+      "source": "/automation",
+      "destination": "/use/agents-and-workflows"
+    },
+    {
+      "source": "/kubernetes-clusters",
+      "destination": "/use/connect-kubernetes"
+    },
+    {
+      "source": "/vm-targets",
+      "destination": "/use/connect-vm"
+    },
+    {
+      "source": "/integrations",
+      "destination": "/developer/integrations"
+    },
+    {
+      "source": "/api-overview",
+      "destination": "/developer/api-overview"
+    },
+    {
+      "source": "/mcp-tools",
+      "destination": "/use/tools-and-mcp"
+    },
+    {
+      "source": "/operations",
+      "destination": "/deploy/operations"
+    },
+    {
+      "source": "/admin-operations",
+      "destination": "/deploy/admin-operations"
     }
   ],
   "api": {
@@ -49,33 +105,136 @@
   "navigation": {
     "tabs": [
       {
-        "tab": "Platform",
+        "tab": "Overview",
         "groups": [
           {
-            "group": "Overview",
+            "group": "Start here",
             "pages": [
               "index",
-              "architecture"
+              "overview/how-acornops-works",
+              "overview/core-concepts"
             ]
           },
           {
-            "group": "Self-host",
+            "group": "Core concepts",
             "pages": [
-              "quickstart",
-              "deployment",
-              "configuration",
-              "catalog-registries",
-              "automation",
-              "kubernetes-clusters",
-              "vm-targets"
+              "overview/workspaces",
+              "overview/targets",
+              "overview/agents-and-workflows",
+              "overview/sessions-runs-approvals",
+              "overview/tools-mcp"
             ]
           },
+          {
+            "group": "Architecture",
+            "pages": [
+              "overview/architecture",
+              "overview/security",
+              "overview/glossary"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "User Guide",
+        "groups": [
+          {
+            "group": "Get started",
+            "pages": [
+              "use/index",
+              "use/get-started",
+              "use/first-investigation"
+            ]
+          },
+          {
+            "group": "Investigate",
+            "pages": [
+              "use/target-chat",
+              "use/issues-and-investigations"
+            ]
+          },
+          {
+            "group": "Connect targets",
+            "pages": [
+              "use/connect-targets",
+              "use/connect-kubernetes",
+              "use/connect-vm"
+            ]
+          },
+          {
+            "group": "Manage a workspace",
+            "pages": [
+              "use/manage-workspace"
+            ]
+          },
+          {
+            "group": "Automation",
+            "pages": [
+              "use/agents-and-workflows"
+            ]
+          },
+          {
+            "group": "Tools and extensions",
+            "pages": [
+              "use/web-search",
+              "use/target-insights",
+              "use/tools-and-mcp",
+              "use/mcp-registries"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Admin Guide",
+        "groups": [
+          {
+            "group": "Start here",
+            "pages": [
+              "deploy/index",
+              "deploy/prerequisites"
+            ]
+          },
+          {
+            "group": "Install",
+            "pages": [
+              "deploy/kubernetes",
+              "deploy/vm-compose",
+              "deploy/deployment-reference"
+            ]
+          },
+          {
+            "group": "Configure",
+            "pages": [
+              "deploy/configuration",
+              "deploy/configuration-reference",
+              "deploy/automation-runtime"
+            ]
+          },
+          {
+            "group": "Govern",
+            "pages": [
+              "deploy/platform-admin-console",
+              "deploy/admin-operations"
+            ]
+          },
+          {
+            "group": "Operate",
+            "pages": [
+              "deploy/production-readiness",
+              "deploy/operations"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Developer Guide",
+        "groups": [
           {
             "group": "Build integrations",
             "pages": [
-              "integrations",
-              "api-overview",
-              "mcp-tools"
+              "developer/index",
+              "developer/integrations",
+              "developer/api-overview"
             ]
           },
           {
@@ -217,13 +376,6 @@
             ]
           },
           {
-            "group": "Operate",
-            "pages": [
-              "operations",
-              "admin-operations"
-            ]
-          },
-          {
             "group": "Admin API reference",
             "openapi": {
               "source": "openapi/control-plane-admin.json",
@@ -298,7 +450,7 @@
         },
         {
           "anchor": "API",
-          "href": "/api-overview",
+          "href": "/developer/api-overview",
           "icon": "terminal"
         }
       ]

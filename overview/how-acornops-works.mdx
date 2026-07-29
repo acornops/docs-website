@@ -1,0 +1,62 @@
+---
+title: "Understand AcornOps"
+description: "Follow the path from a workspace request to target-scoped evidence and tools"
+---
+
+AcornOps separates the platform that coordinates operations from the Kubernetes clusters and Linux VMs that it manages.
+
+## The operating model
+
+1. A platform administrator deploys the central platform.
+2. A workspace owner creates a workspace and invites members.
+3. An authorized member registers a Kubernetes cluster or Linux VM as a target.
+4. The generated AgentK or AgentV installation connects outbound to the control plane.
+5. Members investigate the target through chat or launch a Workflow.
+6. AcornOps compiles the run's exact model, target, tool, and approval scope.
+7. The target connector executes only the operations allowed by the member, workspace, target, and run.
+8. The management console retains the run state and safe results for review.
+
+## Core platform
+
+The core runtime contains four services:
+
+| Component | Responsibility |
+| --- | --- |
+| Management console | Browser experience for workspaces, targets, Agents, Workflows, and runs |
+| Control plane | Authentication, workspace state, target connections, sessions, runs, and API authorization |
+| Execution engine | Run execution and tool-call coordination |
+| LLM gateway | Model access, remote MCP access, and run-scoped permission enforcement |
+
+The control plane is the public API boundary. The execution engine and LLM gateway remain internal in production.
+
+Deployments can optionally add the separate [platform admin console](/deploy/platform-admin-console), a governance-only browser application and same-origin BFF. It administers deployment-wide users, workspace access, plans, platform settings, and admin audit history without exposing tenant operations.
+
+## Connected targets
+
+AgentK runs in a connected Kubernetes cluster. AgentV runs as a systemd service on a connected Linux VM. Both initiate outbound connections, report inventory and health information, and advertise their available target-native tools.
+
+These connectors are different from [specialist Agents](/overview/agents-and-workflows). A specialist Agent is a workspace definition used by a Workflow. AgentK and AgentV are target-side services.
+
+## Two ways to run work
+
+- **Target chat** investigates one target with its target-native assistant and live capabilities.
+- **Workflows** apply reusable instructions through one or more specialist Agents and may run manually or through configured triggers.
+
+Both paths create durable sessions and runs. Write-capable tools remain subject to workspace permissions, target policy, run mode, and approval requirements.
+
+## Continue
+
+<CardGroup cols={2}>
+  <Card title="Learn the core concepts" icon="shapes" href="/overview/core-concepts">
+    Understand the objects you see in the management console.
+  </Card>
+  <Card title="Review the architecture" icon="diagram-project" href="/overview/architecture">
+    Examine component responsibilities and trust boundaries.
+  </Card>
+  <Card title="Use an existing platform" icon="display" href="/use/get-started">
+    Join a workspace and complete a first investigation.
+  </Card>
+  <Card title="Deploy AcornOps" icon="server" href="/deploy">
+    Prepare and install the central platform.
+  </Card>
+</CardGroup>

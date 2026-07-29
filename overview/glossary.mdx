@@ -1,0 +1,46 @@
+---
+title: "Glossary"
+description: "Canonical definitions for AcornOps terminology"
+---
+
+<AccordionGroup>
+  <Accordion title="Agent">
+    A versioned workspace specialist used by a Workflow. An Agent contains instructions and reviewed capabilities but does not start runs by itself.
+  </Accordion>
+  <Accordion title="AgentK">
+    The target connector installed in a Kubernetes cluster. It reports cluster state and executes allowed Kubernetes tools.
+  </Accordion>
+  <Accordion title="AgentV">
+    The target connector installed on a Linux/systemd VM. It reports host state and executes bounded VM tools.
+  </Accordion>
+  <Accordion title="Approval">
+    An authorized accept or reject decision for one exact write tool request and its arguments.
+  </Accordion>
+  <Accordion title="Control plane">
+    The central service that owns authentication, workspace and target state, connections, sessions, runs, and public API authorization.
+  </Accordion>
+  <Accordion title="Execution engine">
+    The internal service that executes runs and coordinates tool calls.
+  </Accordion>
+  <Accordion title="LLM gateway">
+    The internal service that enforces run-scoped model and remote MCP access.
+  </Accordion>
+  <Accordion title="Run">
+    One execution attempt within a session.
+  </Accordion>
+  <Accordion title="Session">
+    A persistent target-chat or Workflow conversation.
+  </Accordion>
+  <Accordion title="Target">
+    One connected Kubernetes cluster or Linux VM represented in a workspace.
+  </Accordion>
+  <Accordion title="Target connector">
+    AgentK or AgentV. A target-side service that connects outbound to the control plane.
+  </Accordion>
+  <Accordion title="Workflow">
+    A runnable automation definition that combines a prompt, one or more specialist Agents, resources, policy, and optional triggers.
+  </Accordion>
+  <Accordion title="Workspace">
+    The primary ownership and authorization boundary for members, targets, automation, integrations, and history.
+  </Accordion>
+</AccordionGroup>

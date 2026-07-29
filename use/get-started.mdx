@@ -1,0 +1,61 @@
+---
+title: "Get started on an existing platform"
+description: "Join a workspace and complete a first safe investigation without deploying AcornOps"
+---
+
+Use this path when your organization already operates AcornOps. You do not need the Helm chart, Compose stack, Postgres, Redis, or platform secrets.
+
+## Before you begin
+
+Ask your workspace owner or administrator for:
+
+- the management console URL,
+- a workspace invitation or existing membership,
+- the role you should have,
+- a target you may inspect.
+
+Your role controls whether you can connect targets, read logs, start runs, use write-capable tools, manage integrations, or approve changes.
+
+## 1. Sign in
+
+Open the management console URL supplied by your administrator. Sign in with one of the methods enabled for that deployment, such as its OIDC provider or username and password.
+
+If you received a workspace invitation, accept it with the same identity that the invitation targets.
+
+## 2. Open your workspace
+
+Select the workspace your team uses. A workspace contains its members, targets, specialist Agents, Workflows, integrations, and operational history.
+
+If you can sign in but cannot see the expected workspace, ask a workspace owner to verify your membership. Do not create a separate workspace as a workaround.
+
+## 3. Find a connected target
+
+Open a Kubernetes cluster or Linux VM that reports as connected. Review its inventory and current findings before starting a run.
+
+If your role includes target management and no target exists, follow:
+
+- [Connect a Kubernetes cluster](/use/connect-kubernetes)
+- [Connect a Linux VM](/use/connect-vm)
+
+## 4. Run a read-only investigation
+
+Start with a read-only target investigation. Use a narrow operational question, review the tool scope, and observe the events as AcornOps gathers evidence.
+
+Follow [Run your first investigation](/use/first-investigation) for the complete flow.
+
+## 5. Choose your next task
+
+<CardGroup cols={2}>
+  <Card title="Use Agents and Workflows" icon="diagram-project" href="/use/agents-and-workflows">
+    Launch starter automation or create reusable specialist workflows.
+  </Card>
+  <Card title="Configure tools and MCP" icon="wrench" href="/use/tools-and-mcp">
+    Review built-in tools and connect external capabilities.
+  </Card>
+  <Card title="Learn workspace boundaries" icon="users" href="/overview/workspaces">
+    Understand membership, roles, ownership, and isolation.
+  </Card>
+  <Card title="Learn sessions and runs" icon="play" href="/overview/sessions-runs-approvals">
+    Understand execution state, history, and approvals.
+  </Card>
+</CardGroup>
