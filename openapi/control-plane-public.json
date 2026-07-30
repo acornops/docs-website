@@ -57,6 +57,301 @@
     }
   ],
   "paths": {
+    "/api/v1/agent-conversations/{conversationId}": {
+      "get": {
+        "tags": [
+          "agents"
+        ],
+        "summary": "Read an Agent conversation",
+        "description": "Workspace members with data read access may inspect the conversation, messages, and runs.",
+        "security": [
+          {
+            "userSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/PathConversationId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Agent conversation detail.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentConversationDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "description": "Requires workspace read access.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Conversation not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error500"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "agents"
+        ],
+        "summary": "Delete an Agent conversation",
+        "description": "Only the creator may delete the conversation and delete_sessions is required.",
+        "security": [
+          {
+            "userSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/PathConversationId"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Conversation deleted."
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "description": "Creator ownership or delete_sessions is required.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error500"
+          }
+        }
+      }
+    },
+    "/api/v1/agent-conversations/{conversationId}/access": {
+      "patch": {
+        "tags": [
+          "agents"
+        ],
+        "summary": "Change Agent conversation access mode",
+        "description": "Only the creator may change access. read_write requires creator permission and a pinned Agent policy that allows writes; the pinned capability ceiling remains unchanged.",
+        "security": [
+          {
+            "userSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/PathConversationId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "accessMode"
+                ],
+                "properties": {
+                  "accessMode": {
+                    "type": "string",
+                    "enum": [
+                      "read_only",
+                      "read_write"
+                    ]
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Conversation access changed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentConversationAccessResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "description": "Creator ownership and the matching run capability are required.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "description": "The pinned Agent policy is read-only.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error500"
+          }
+        }
+      }
+    },
+    "/api/v1/agent-conversations/{conversationId}/messages": {
+      "post": {
+        "tags": [
+          "agents"
+        ],
+        "summary": "Continue an Agent conversation",
+        "description": "Only the creator may dispatch a message. Revoked pinned capabilities fail closed and newly added capabilities are excluded.",
+        "security": [
+          {
+            "userSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/PathConversationId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "content"
+                ],
+                "properties": {
+                  "content": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "clientRequestId": {
+                    "type": "string",
+                    "format": "uuid"
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Agent conversation message accepted through workflow execution.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkflowMessageAccepted"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "description": "Only the creator may continue the conversation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "description": "A pinned capability was revoked or runtime readiness failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error500"
+          }
+        }
+      }
+    },
     "/api/v1/agents/{agentId}": {
       "get": {
         "tags": [
@@ -6024,6 +6319,142 @@
           },
           "409": {
             "$ref": "#/components/responses/Error409"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error500"
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/agents/{agentId}/conversations": {
+      "get": {
+        "tags": [
+          "agents"
+        ],
+        "summary": "List Agent conversations",
+        "description": "Workspace-readable manual conversations for one Agent. System workflow carriers are never returned.",
+        "security": [
+          {
+            "userSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/PathWorkspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/PathAgentId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Agent conversation summaries.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentConversationList"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "description": "Requires workspace read access.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Agent not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error500"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "agents"
+        ],
+        "summary": "Create an Agent conversation",
+        "description": "Creates a console-only single-Agent conversation with a pinned Agent revision, permissionMode, and capability ceiling. Access defaults to the intersection of the pinned Agent policy and the creator run permissions.",
+        "security": [
+          {
+            "userSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/PathWorkspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/PathAgentId"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Agent conversation created with policy-derived access.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentConversationDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "description": "Requires create_sessions and a run capability compatible with the pinned Agent policy.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "description": "Agent is not ready for chat.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           },
           "429": {
             "$ref": "#/components/responses/Error429"
@@ -19437,6 +19868,15 @@
           "example": "5b006e4c-509c-458a-9f02-5aafbdc01ade"
         }
       },
+      "PathConversationId": {
+        "in": "path",
+        "name": "conversationId",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
       "PathEntryId": {
         "in": "path",
         "name": "entryId",
@@ -19800,12 +20240,164 @@
         },
         "additionalProperties": true
       },
+      "AgentConversationAccessResponse": {
+        "type": "object",
+        "required": [
+          "conversation"
+        ],
+        "properties": {
+          "conversation": {
+            "$ref": "#/components/schemas/AgentConversationSummary"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AgentConversationDetail": {
+        "type": "object",
+        "required": [
+          "conversation",
+          "messages",
+          "runs"
+        ],
+        "properties": {
+          "conversation": {
+            "$ref": "#/components/schemas/AgentConversationSummary"
+          },
+          "messages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AgentConversationMessage"
+            }
+          },
+          "runs": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "AgentConversationList": {
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AgentConversationSummary"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "AgentConversationMessage": {
+        "type": "object",
+        "required": [
+          "id",
+          "role",
+          "content",
+          "createdAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "user",
+              "assistant",
+              "system"
+            ]
+          },
+          "content": {
+            "type": "string"
+          },
+          "runId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": true
+      },
+      "AgentConversationSummary": {
+        "type": "object",
+        "required": [
+          "id",
+          "workspaceId",
+          "agentId",
+          "agentVersion",
+          "permissionMode",
+          "title",
+          "createdBy",
+          "accessMode",
+          "createdAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "workspaceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "agentId": {
+            "type": "string"
+          },
+          "agentVersion": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "permissionMode": {
+            "type": "string",
+            "enum": [
+              "read_only",
+              "ask_before_changes",
+              "auto_allowed_changes"
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "createdBy": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "accessMode": {
+            "type": "string",
+            "enum": [
+              "read_only",
+              "read_write"
+            ]
+          },
+          "launchedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
       "AgentDefinition": {
         "type": "object",
         "required": [
           "id",
           "workspaceId",
           "name",
+          "avatarEmoji",
           "instructions",
           "status",
           "origin",
@@ -19826,6 +20418,12 @@
           },
           "name": {
             "type": "string"
+          },
+          "avatarEmoji": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "description": "Exactly one Unicode emoji grapheme used as the Agent visual identity."
           },
           "description": {
             "type": "string"
@@ -20424,6 +21022,12 @@
           },
           "name": {
             "type": "string"
+          },
+          "avatarEmoji": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "description": "Exactly one Unicode emoji grapheme."
           },
           "description": {
             "type": "string"
