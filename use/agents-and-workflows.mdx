@@ -3,9 +3,9 @@ title: "Use Agents and Workflows"
 description: "Create reusable specialists, launch Workflows, and review their runs"
 ---
 
-Every workspace receives the versioned starter automation bundle during provisioning. The workspace, owner membership, definitions, completed installation marker, and audit events commit atomically before workspace creation returns. On startup, the control plane backfills missing installations and upgrades surviving definitions in place before it reports ready.
+Every new workspace receives the versioned starter automation bundle during provisioning. The workspace, owner membership, definitions, completed installation marker, and audit events commit atomically before workspace creation returns.
 
-Definitions record an origin of `manual` or `template`. Origin does not add capabilities, bypass authorization, alter readiness, or choose a different execution path. Visible template-created definitions may be disabled, duplicated, or deleted, but their definition fields and version history are immutable; duplicate one before editing. A completed installation marker remains as a tombstone, so deleting starter content does not silently recreate it. An explicit **Use template** reinstall is required to restore deleted template content.
+Definitions record an origin of `manual` or `template`. Origin does not add capabilities, bypass authorization, alter readiness, or choose a different execution path. Workspace-owned starter definitions may be edited, disabled, duplicated, or deleted. A completed installation marker remains as a tombstone, so deleting starter content does not silently recreate it. Existing workspaces and operator edits are not overwritten when the shipped starter bundle changes. An explicit **Use template** reinstall is required to restore deleted starter content.
 
 Readiness is explicit for every definition:
 
@@ -18,6 +18,13 @@ Missing configuration never activates fallback Agents, tools, MCP servers, crede
 ## Specialist Agents
 
 Workspace administrators create specialist Agents through the editor or API. A specialist receives reviewed semantic capabilities and exact operational resources from the live catalog.
+
+New workspaces start with two workspace-owned specialists:
+
+- **Kubernetes Agent** is scoped to Kubernetes targets. It receives every read and write tool currently advertised by the selected target's built-in **AcornOps Kubernetes Tools** MCP server. Every write remains approval-gated.
+- **Virtual Machine Agent** is scoped to Linux virtual-machine targets and receives all eight read-only diagnostic tools advertised by a default AgentV installation. It does not request remediation capability, so it is ready without AgentV's optional privileged helper.
+
+The built-in server belongs to the target rather than the Agent. When AgentK or AgentV connects, AcornOps creates the server as enabled and enables every advertised tool in its catalog by default. AcornOps maintains exact per-target routing mappings within each starter Agent's capability ceiling. An administrator can still disable the server or individual tools. If AgentV is configured to advertise `restart_service`, its catalog entry is enabled, but an administrator must explicitly grant VM remediation capability before a workspace Agent can use it. The starter Agents also retain the prompt-resource and PDF tools used by the current reporting Workflows.
 
 Coordination is system-owned. The coordinator is a versioned, code-owned Workflow executor, not an Agent. Its profile is snapshotted into each new coordinator root attempt and is never exposed through Agent APIs.
 
@@ -61,7 +68,7 @@ Manual Workflow defaults are server-owned. When policy fields are omitted, the c
 
 Execution duration and PDF report retention are deployment policies, not per-Workflow settings. `AGENT_MAX_RUNTIME_MS` sets the execution limit. `TARGET_CHAT_REPORT_RETENTION_DAYS` sets retention for both Workflow and target-chat reports. Legacy API requests may still include `maxRuntimeSeconds` or `retentionDays`, but the control plane ignores those values and returns the effective deployment policy.
 
-Direct readiness checks the selected specialist. Coordinated readiness requires an eligible selected specialist mapping for every effective capability.
+Direct readiness checks the selected specialist. Coordinated readiness requires an eligible selected specialist mapping for every effective capability. Each automatic health check selects its matching target Agent directly. Kubernetes-only remediation selects the Kubernetes Agent, while Incident investigation coordinates both Agents.
 
 Before **Launch**, the console requests a capability preview. Definition review
 keeps semantic capabilities separate from direct MCP servers, installed skills,
@@ -77,21 +84,21 @@ the final source of truth.
 
 Targets outside the Workflow resource policy are denied by the target provider. Offline targets remain visible
 as unavailable. Targets that cannot satisfy a required mapping or access mode
-remain unsupported. AgentV currently
-advertises diagnostics only, so virtual machines are available for Target
-diagnostics but disabled for Target remediation with an explicit write-support
-explanation.
+remain unsupported. The automatic VM health check and starter VM Agent remain
+read-only even when AgentV advertises `restart_service`. The current opt-in
+Target remediation template remains Kubernetes-only until that Workflow is
+redesigned.
 
 The template drawer exposes these Workflow records:
 
 | Workflow | Install mode | Behavior |
 | --- | --- | --- |
-| Target diagnostics | Automatic, active | One exact Kubernetes or virtual-machine target and optional focus. Reads only diagnostic tools compiled for that target. |
-| Incident report | Automatic, active | One or more `@chat[...]` references. Creates an authenticated PDF artifact retained for the deployment-configured period. |
+| Kubernetes health check | Automatic, active | One exact Kubernetes target. Reviews workload readiness, pod restarts, warning events, resource pressure, and relevant logs without making changes. |
+| Virtual machine health check | Automatic, active | One exact Linux VM. Reviews host and filesystem pressure, processes, listeners, degraded systemd services, and allowlisted journal logs without making changes. |
 | Target remediation | Opt-in, paused | One exact Kubernetes target and requested change. Approval is required before every write. |
 | Incident investigation | Opt-in, paused | One exact target, selected chats, and an investigation question. Coordinates diagnostics and reporting. |
 
-Template manifests contain prose, safe policy defaults, semantic requirements, and symbolic relationships only. Provisioning generates record IDs and resolves relationships inside the workspace transaction. It does not contain workspace or target IDs, MCP server IDs or URLs, external tool aliases, skill installation IDs, credentials, or connection assumptions. Upgrades replace Managed response with Incident investigation in place while preserving IDs, status, schedules, and tombstones.
+Template manifests contain prose, safe policy defaults, semantic requirements, and symbolic relationships only. Provisioning generates record IDs and resolves relationships inside the workspace transaction. It does not contain workspace or target IDs, MCP server IDs or URLs, external tool aliases, skill installation IDs, credentials, or connection assumptions. Shipped bundle changes do not overwrite existing workspace-owned definitions.
 
 Schedules store cadence, principal, and approved context grants—not launch inputs. Every occurrence compiles the current active saved prompt and reauthorizes the execution scope. An invalid definition, deletion, integration outage, membership change, or authorization failure auto-pauses the schedule with a bounded actionable reason; repair the cause and resume it manually.
 
