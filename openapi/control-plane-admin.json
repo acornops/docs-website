@@ -100,8 +100,11 @@
             "schema": {
               "type": "string",
               "enum": [
-                "workspace_access_modified",
-                "workspace_status_modified"
+                "platform_settings_modified",
+                "llm_provider_defaults_modified",
+                "workspace_defaults_modified",
+                "workspace_status_modified",
+                "workspace_access_modified"
               ]
             },
             "description": "Fixed related-action group. Cannot be combined with action."
