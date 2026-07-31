@@ -103,39 +103,40 @@ Template manifests contain prose, safe policy defaults, semantic requirements, a
 
 Schedules store an `inputs` object keyed by the active Workflow's derived parameters. Preview validates the exact values before creation or update. Every occurrence compiles the current active prompt and reauthorizes stored resource IDs. A definition mismatch, missing value, deletion, integration outage, membership change, or authorization failure auto-pauses the schedule with a bounded actionable reason; repair the cause and resume it manually.
 
-## Observe runs and triggers
+## Organize workflows and Activity
 
 Open **Workflows** in the management console to use three views:
 
-- **Library** contains installed Workflow definitions and manual launch.
-- **Runs** shows open and historical executions across the workspace.
-- **Triggers** contains schedules, AcornOps issue events, and incoming webhook
-  triggers.
+- **All Workflows** contains installed Workflow definitions and manual launch.
+- **Schedules** contains recurring Workflow dispatches.
+- **Incoming Webhooks** contains signed endpoints that start Workflows from
+  external systems.
 
-The Workflows and Runs navigation badges show the number of open executions.
-The Runs ledger defaults to open work. You can search it or filter by state,
+Open **Activity** from Automation to see open and historical executions across
+the workspace. Its navigation badge shows the number of open executions. The
+Activity ledger defaults to open work. You can search it or filter by state,
 origin, Workflow, and issue. Each row identifies the Workflow, the schedule or
-event that started it, its target, current state, start or completion time, and
-an exact run link.
+webhook that started it, its target, current state, start or completion time,
+and an exact execution link.
 
 Issue rows show related automation directly on the workspace, Kubernetes, and
 virtual-machine issue surfaces. Use **Review run** for approval or review
-states, **Open run** for one active execution, or **View runs** when several
+states, **Open run** for one active execution, or **View activity** when several
 executions relate to the same issue. Manual triage remains available.
 
-Trigger rows keep three facts separate:
+Schedule and incoming-webhook rows keep three facts separate:
 
-- **Configuration** shows whether the trigger is enabled or paused.
-- **Last dispatch** shows whether the latest trigger occurrence dispatched,
+- **Configuration** shows whether the schedule or webhook is enabled or paused.
+- **Last dispatch** shows whether the latest occurrence dispatched,
   failed, was rejected, or was skipped.
 - **Latest execution** shows the actual run state when dispatch created one.
 
 A dispatch failure does not appear as a running execution and does not erase
 the previous successful run link. AcornOps retains the run's origin label even
-if you later delete the trigger.
+if you later delete the schedule or webhook.
 
 **Outbound webhooks** is a separate Automation destination. Outbound webhooks
-send AcornOps events to another system; incoming webhook triggers start an
+send AcornOps events to another system; incoming workflow webhooks start an
 AcornOps Workflow.
 
 ## Create a custom workflow

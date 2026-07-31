@@ -29,15 +29,16 @@ An issue can resolve after clean target snapshots and reopen if the same conditi
 5. Start in read-only mode unless a change is required.
 6. Review the gathered evidence and keep follow-up questions in the same conversation.
 
-If automation is already running, the issue shows the most relevant execution and links to the exact run or the filtered Runs ledger. A run waiting for approval or review takes priority over starting another investigation.
+If automation is already running, the issue shows the most relevant execution
+and links to the exact run or the filtered Activity ledger. A run waiting for
+approval or review takes priority over starting another investigation.
 
-## Automate issue response
+Historical issue-triggered executions remain visible as historical Activity.
+Resolving an issue does not erase its execution history.
 
-A Workflow event trigger can react to `issue.created.v1`. Use filters to constrain the issue severity, type, or target scope, and keep the Workflow's target and tool ceilings narrower than the trigger.
-
-Issue-triggered executions keep immutable origin information and remain linked from the issue. Resolving an issue does not erase its execution history.
-
-See [Agents and Workflows](/use/agents-and-workflows) for trigger configuration and [Integrations](/developer/integrations) for issue lifecycle webhooks.
+See [Agents and Workflows](/use/agents-and-workflows) for Workflow configuration
+and [Integrations](/developer/integrations) for outbound issue lifecycle
+webhooks.
 
 <Note>
   Issues are derived from target observations. They are operational signals, not proof that every affected workload is unavailable. Review the supporting evidence before acting.
