@@ -46,9 +46,9 @@ When no registry is configured, the browser offers **Connect by URL** and, for a
 
 ## Agent and workflow permissions
 
-Every workflow step selects exactly one Agent. The workflow can retain a subset of that Agent's MCP, skill, and tool grants or remove them; it cannot add a capability the Agent does not already grant. Target-owned installations remain available only through that target's default Agent and do not become workflow-owned credentials.
+Every workflow step selects exactly one Agent. The workflow inherits that Agent's MCP, skill, and tool grants unless its capability policy narrows them; it cannot add a capability the Agent does not already grant. Target-owned tools remain target-scoped routes available through eligible Agent mappings and do not become workflow-owned credentials.
 
-An empty workflow restriction grants no capability. It does not inherit all Agent permissions.
+In `restrict` mode, an empty workflow restriction grants no capability. In `inherit` mode, the workflow receives the assigned Agent's eligible tools subject to the workflow's read/write mode.
 
 Runtime tool identity includes both the stable server ID and tool name. This keeps tools with the same name on different servers independently selectable and prevents name-only authorization.
 

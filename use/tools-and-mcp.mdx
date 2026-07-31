@@ -25,9 +25,9 @@ AcornOps ships these code-owned semantic capabilities:
 
 `scm.repository.read` is a supported semantic capability, but it is not built in. It needs a reviewed repository integration.
 
-Semantic capability IDs do not authorize tools by themselves. For `target.diagnostics.read`, the control plane creates reviewed mappings from each eligible specialist Agent to each exact target after built-in tool synchronization. A direct or delegated specialist Workflow run must select one target. The compiled authority is the intersection of the Agent target scope, Workflow target constraints, the exact-target mapping, the acting user's permissions, and the live target catalog.
+Semantic capability IDs do not authorize tools by themselves. For `target.diagnostics.read`, the control plane creates reviewed mappings from each eligible specialist Agent to each exact target after built-in tool synchronization. A Workflow does not select a target when it is authored or launched. Instead, the model supplies `target_id` when it calls a target MCP tool. The compiled authority is the intersection of the Agent target scope, the exact-target mapping, the acting user's permissions, and the live target catalog.
 
-Workspace administrators set the Agent and Workflow ceilings. Starter diagnostics allow Kubernetes and virtual-machine target types. An administrator can narrow either definition to exact target IDs. Operators choose one target when launching a run; they cannot widen the administrator-defined scope. Remote MCP tools, skills, web search, target insights, workspace-native tools, and write-capable target tools are not included in `target.diagnostics.read`.
+Workspace administrators set the Agent and Workflow ceilings. Starter diagnostics allow Kubernetes and virtual-machine target types. An administrator can narrow the Agent to exact target IDs. Operators can name a target in the prompt, but the resulting tool call cannot widen the administrator-defined scope. Remote MCP tools, skills, web search, target insights, workspace-native tools, and write-capable target tools are not included in `target.diagnostics.read`.
 
 If you are building a bot or workflow adapter that reacts to AcornOps events, start with [Integrations](/developer/integrations). Use this page when you are configuring tools that AcornOps can call.
 

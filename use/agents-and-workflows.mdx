@@ -9,8 +9,8 @@ Definitions record an origin of `manual` or `template`. Origin does not add capa
 
 Readiness is explicit for every definition:
 
-- `ready` means the saved definition and every required concrete reference can resolve.
-- `needs_setup` lists missing live prerequisites such as a target, reviewed capability mapping, or installed integration.
+- `ready` means the saved definition and its assigned Agents can provide their reviewed capability ceiling.
+- `needs_setup` lists missing live prerequisites such as a reviewed capability mapping or installed integration.
 - `blocked` identifies a policy or capability mismatch that an administrator must resolve.
 
 Missing configuration never activates fallback Agents, tools, MCP servers, credentials, or workflows.
@@ -21,41 +21,32 @@ Workspace administrators create specialist Agents through the editor or API. A s
 
 New workspaces start with two workspace-owned specialists:
 
-- **Kubernetes Agent** is scoped to Kubernetes targets. It receives every read and write tool currently advertised by the selected target's built-in **AcornOps Kubernetes Tools** MCP server. Every write remains approval-gated.
+- **Kubernetes Agent** is scoped to Kubernetes targets. It receives the reviewed read and write tools advertised by available targets' built-in **AcornOps Kubernetes Tools** MCP servers. Every write remains approval-gated.
 - **Virtual Machine Agent** is scoped to Linux virtual-machine targets and receives all eight read-only diagnostic tools advertised by a default AgentV installation. It does not request remediation capability, so it is ready without AgentV's optional privileged helper.
 
 The built-in server belongs to the target rather than the Agent. When AgentK or AgentV connects, AcornOps creates the server as enabled and enables every advertised tool in its catalog by default. AcornOps maintains exact per-target routing mappings within each starter Agent's capability ceiling. An administrator can still disable the server or individual tools. If AgentV is configured to advertise `restart_service`, its catalog entry is enabled, but an administrator must explicitly grant VM remediation capability before a workspace Agent can use it. The starter Agents also retain the prompt-resource and PDF tools used by the current reporting Workflows.
 
 Coordination is system-owned. The coordinator is a versioned, code-owned Workflow executor, not an Agent. Its profile is snapshotted into each new coordinator root attempt and is never exposed through Agent APIs.
 
-A coordinated workflow asks AcornOps to perform work for a semantic capability and exact target. The control plane chooses an eligible selected specialist by reviewed mapping priority and stable Agent ID. It intersects the selected Agents, target compatibility, principal permissions, workspace policy, and connection readiness. Semantic labels never authorize tools on their own.
+A coordinated workflow asks AcornOps to perform work for a semantic capability. A delegation may optionally pin one exact target; otherwise the specialist receives its eligible Agent tools and chooses a signed target route only if its task needs one. The control plane chooses an eligible selected specialist by reviewed mapping priority and stable Agent ID. It intersects the selected Agents, target compatibility when supplied, principal permissions, workspace policy, and connection readiness. Semantic labels never authorize tools on their own.
 
 Coordination is one level deep and allows at most four concurrent child runs and eight child runs total. These limits are server-owned. Writes require approval for the exact tool and arguments. AcornOps does not automatically retry after execution starts or after a write has an uncertain result. Successful child results remain available if another child fails; required and optional failures are reported separately.
 
 ## Workflow V2
 
-A Workflow contains a starter prompt, required `agentIds`, generic
-prompt-resource requirements, a semantic capability policy, and optional
-schedule configuration. Agent selection is a set; array order has no routing
+A Workflow contains a plain-text prompt, required `agentIds`, a semantic
+capability policy, and optional schedule configuration. Agent selection is a set; array order has no routing
 meaning and IDs must be unique and non-empty.
 
 Select one Agent to run the Workflow directly. Select two or more Agents for AcornOps to coordinate. Workflow responses derive `executionMode` as `direct` or `coordinated`; it is not an authoring input.
 
 Creating a Workflow session records a non-executable capability ceiling. The first structured launch message contains only `kind: "launch"` and an optional idempotency key. The control plane compiles the saved prompt and revalidates current authorization under the authenticated user. Semantic capability IDs such as `target.diagnostics.read` describe routing requirements but never authorize a tool by themselves. Existing runs keep their pinned execution mode and scope when you edit a Workflow. Future runs use the new definition and live provider state.
 
-## Prompt resource references
-
-Use `@type[display label]` wherever a Workflow needs exact evidence or routing. The initial providers are `target`, `chat`, `repository`, and the implicit current Workflow conversation. Repository references remain visible but unavailable until a compatible source-control integration is installed and authorized. Kubernetes clusters resolve through the `target` provider.
-
-Labels are Unicode-normalized. Escape a backslash as `\\` and a closing bracket as `\]`. Empty references are invalid: `@target[]` and `@chat[]` cannot be saved. Mixed concrete types and repeated provider-permitted types are resolved together in prompt order. Missing, ambiguous, stale, unauthorized, unavailable, or timed-out references fail closed with a bounded reason.
-
 ## Saved prompts
 
 Workflow prompts are saved plain text and do not accept runtime parameters. Launches from the console, schedules, webhooks, and external integrations all run the same saved definition. Literal `{{...}}` text has no template meaning.
 
-Concrete `@type[label]` references remain deterministic authoring choices. Suggestion and resolution previews are display-only and return concrete-reference results. Tools, skills, Agents, and semantic capabilities remain configuration choices rather than prompt evidence references.
-
-The current Workflow conversation is captured as an implicit resource binding through the message that initiated the run. Later concurrently submitted messages are excluded. Other inline or tool-loaded evidence is retrieved only by binding ID with per-resource and aggregate limits.
+Workflows do not bind targets. Name a target in the prompt when the task needs one. The model interprets that text and may call an eligible target MCP tool with the corresponding `target_id`. This is intentionally non-deterministic: an ambiguous, unknown, or unavailable target is reported only if the model attempts that tool call. Workflows that do not concern infrastructure targets, such as source-control automation, simply use the other tools on their assigned Agents.
 
 The capability policy has two explicit modes:
 
@@ -72,9 +63,8 @@ Direct readiness checks the selected specialist. Coordinated readiness requires 
 
 Before **Launch**, the console requests a capability preview. Definition review
 keeps semantic capabilities separate from direct MCP servers, installed skills,
-and directly attached tools. For target-bound Workflows, the preview evaluates
-the current target and capability-mapping snapshot, then lists the exact read
-and write tools available for the selected target. Write rows identify their
+and directly attached tools. It lists target MCP tools inherited from the
+assigned Agents without selecting or evaluating a target. Write rows identify their
 approval requirement. Credentialed MCP dependencies appear in a **Required
 auth** row with the server name, personal or workspace ownership, credential
 label, and required setup information. The preview never returns the credential
@@ -82,9 +72,8 @@ value. The preview does not create a session or reserve access;
 launch revalidates current authority and the dispatched run's compiled scope is
 the final source of truth.
 
-Targets outside the Workflow resource policy are denied by the target provider. Offline targets remain visible
-as unavailable. Targets that cannot satisfy a required mapping or access mode
-remain unsupported. The automatic VM health check and starter VM Agent remain
+The signed run scope limits target MCP calls to routes allowed by the assigned
+Agent's target scope and reviewed mappings. The automatic VM health check and starter VM Agent remain
 read-only even when AgentV advertises `restart_service`. The current opt-in
 Target remediation template remains Kubernetes-only until that Workflow is
 redesigned.
@@ -93,10 +82,10 @@ The template drawer exposes these Workflow records:
 
 | Workflow | Install mode | Behavior |
 | --- | --- | --- |
-| Kubernetes health check | Automatic, active | One exact Kubernetes target. Reviews workload readiness, pod restarts, warning events, resource pressure, and relevant logs without making changes. |
-| Virtual machine health check | Automatic, active | One exact Linux VM. Reviews host and filesystem pressure, processes, listeners, degraded systemd services, and allowlisted journal logs without making changes. |
-| Target remediation | Opt-in, paused | One exact Kubernetes target and requested change. Approval is required before every write. |
-| Incident investigation | Opt-in, paused | One exact target, selected chats, and an investigation question. Coordinates diagnostics and reporting. |
+| Kubernetes health check | Automatic, active | Reviews available Kubernetes targets for workload readiness, pod restarts, warning events, resource pressure, and relevant logs without making changes. |
+| Virtual machine health check | Automatic, active | Reviews available Linux VMs for host and filesystem pressure, processes, listeners, degraded systemd services, and allowlisted journal logs without making changes. |
+| Target remediation | Opt-in, paused | Diagnoses and changes a Kubernetes target named in the request. Approval is required before every write. |
+| Incident investigation | Opt-in, paused | Coordinates diagnostics and reporting from the targets and context named in the request. |
 
 Template manifests contain prose, safe policy defaults, semantic requirements, and symbolic relationships only. Provisioning generates record IDs and resolves relationships inside the workspace transaction. It does not contain workspace or target IDs, MCP server IDs or URLs, external tool aliases, skill installation IDs, credentials, or connection assumptions. Shipped bundle changes do not overwrite existing workspace-owned definitions.
 

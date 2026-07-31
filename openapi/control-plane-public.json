@@ -5259,12 +5259,6 @@
                       "minLength": 1
                     }
                   },
-                  "resourceRequirements": {
-                    "type": "array",
-                    "items": {
-                      "$ref": "#/components/schemas/PromptResourceRequirement"
-                    }
-                  },
                   "capabilityPolicy": {
                     "type": "object",
                     "properties": {
@@ -19806,12 +19800,6 @@
                       "minLength": 1
                     }
                   },
-                  "resourceRequirements": {
-                    "type": "array",
-                    "items": {
-                      "$ref": "#/components/schemas/PromptResourceRequirement"
-                    }
-                  },
                   "capabilityPolicy": {
                     "type": "object",
                     "properties": {
@@ -26178,7 +26166,6 @@
           "checkedAt",
           "status",
           "reasonCodes",
-          "targetCandidates",
           "tools",
           "directMcpServers",
           "enabledSkills",
@@ -26223,7 +26210,6 @@
           "status": {
             "type": "string",
             "enum": [
-              "needs_target",
               "ready",
               "blocked"
             ]
@@ -26233,27 +26219,10 @@
             "items": {
               "type": "string",
               "enum": [
-                "TARGET_REQUIRED",
-                "TARGET_NOT_FOUND",
-                "TARGET_TYPE_MISMATCH",
-                "TARGET_OFFLINE",
-                "TARGET_STATUS_UNKNOWN",
-                "TARGET_WRITE_UNSUPPORTED",
                 "CAPABILITY_MAPPING_UNAVAILABLE",
-                "TARGET_TOOL_MAPPING_UNAVAILABLE",
-                "TARGET_TOOL_CATALOG_UNAVAILABLE",
                 "MCP_CONNECTION_UNAVAILABLE"
               ]
             }
-          },
-          "targetCandidates": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/WorkflowTargetCapabilityCandidate"
-            }
-          },
-          "selectedTarget": {
-            "$ref": "#/components/schemas/WorkflowTargetCapabilityCandidate"
           },
           "tools": {
             "type": "object",
@@ -26364,33 +26333,6 @@
                   },
                   "additionalProperties": false
                 },
-                "owningTarget": {
-                  "type": "object",
-                  "required": [
-                    "id",
-                    "name",
-                    "targetType"
-                  ],
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "minLength": 1
-                    },
-                    "name": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 160
-                    },
-                    "targetType": {
-                      "type": "string",
-                      "enum": [
-                        "kubernetes",
-                        "virtual_machine"
-                      ]
-                    }
-                  },
-                  "additionalProperties": false
-                },
                 "connectionState": {
                   "type": "string",
                   "enum": [
@@ -26466,8 +26408,6 @@
           "counts": {
             "type": "object",
             "required": [
-              "targets",
-              "readyTargets",
               "tools",
               "readTools",
               "writeTools",
@@ -26476,14 +26416,6 @@
               "approvals"
             ],
             "properties": {
-              "targets": {
-                "type": "integer",
-                "minimum": 0
-              },
-              "readyTargets": {
-                "type": "integer",
-                "minimum": 0
-              },
               "tools": {
                 "type": "integer",
                 "minimum": 0
@@ -26612,6 +26544,13 @@
           },
           "serverId": {
             "type": "string"
+          },
+          "serverIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "uniqueItems": true
           }
         },
         "additionalProperties": false
@@ -26746,7 +26685,6 @@
           "prompt",
           "agentIds",
           "executionMode",
-          "resourceRequirements",
           "capabilityPolicy",
           "requiredPermissions",
           "createdBy"
@@ -26800,12 +26738,6 @@
               "coordinated"
             ],
             "readOnly": true
-          },
-          "resourceRequirements": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/PromptResourceRequirement"
-            }
           },
           "capabilityPolicy": {
             "$ref": "#/components/schemas/WorkflowCapabilityPolicy"
@@ -27579,58 +27511,6 @@
           }
         },
         "additionalProperties": true
-      },
-      "WorkflowTargetCapabilityCandidate": {
-        "type": "object",
-        "required": [
-          "id",
-          "name",
-          "targetType",
-          "status"
-        ],
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "targetType": {
-            "type": "string",
-            "enum": [
-              "kubernetes",
-              "virtual_machine"
-            ]
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "ready",
-              "unavailable",
-              "unsupported"
-            ]
-          },
-          "reasonCode": {
-            "type": "string",
-            "enum": [
-              "TARGET_REQUIRED",
-              "TARGET_NOT_FOUND",
-              "TARGET_TYPE_MISMATCH",
-              "TARGET_OFFLINE",
-              "TARGET_STATUS_UNKNOWN",
-              "TARGET_WRITE_UNSUPPORTED",
-              "CAPABILITY_MAPPING_UNAVAILABLE",
-              "TARGET_TOOL_MAPPING_UNAVAILABLE",
-              "TARGET_TOOL_CATALOG_UNAVAILABLE",
-              "MCP_CONNECTION_UNAVAILABLE"
-            ]
-          },
-          "reason": {
-            "type": "string",
-            "maxLength": 256
-          }
-        },
-        "additionalProperties": false
       },
       "WorkflowWebhook": {
         "type": "object",
