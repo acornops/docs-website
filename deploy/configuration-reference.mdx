@@ -88,6 +88,32 @@ OpenAI uses the Responses API by default. Select an API-compatible Chat Completi
 
 The gateway never probes or falls back between surfaces. Chat Completions supports normalized text and custom function calls, but it does not support AcornOps provider-native tools or reasoning summaries. Configured [Web Search](/use/web-search) remains visible but unavailable for ordinary target runs. Restore `responses` to roll back.
 
+## Git skill import hosts
+
+Users import a skill by pasting one repository, folder, or `SKILL.md` URL.
+Configure the accepted GitHub and GitLab hosts with `gitImports.hosts`. The
+chart enables GitHub.com and GitLab.com by default. Setting this array replaces
+those defaults, so include every host that users should access.
+
+```yaml
+gitImports:
+  hosts:
+    - provider: github
+      webBaseUrl: https://github.example.com
+      apiBaseUrl: https://github.example.com/api/v3
+    - provider: gitlab
+      webBaseUrl: https://gitlab.example.com
+      apiBaseUrl: https://gitlab.example.com/api/v4
+```
+
+The control plane matches the pasted URL against this allowlist, infers the
+provider, ref, and subpath, and stores a pinned Markdown snapshot. Requests are
+anonymous, so repositories must be publicly readable from the control-plane
+pod. For an internal host, add the destination to
+`networkPolicies.extraEgress.controlPlane` using its stable IP or CIDR and HTTPS
+port. Add organization CA trust when the host does not use a public certificate
+chain.
+
 ## Automation runtime
 
 | Environment variable | Helm value | Default | Purpose |
