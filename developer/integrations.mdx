@@ -76,13 +76,12 @@ The external client may use:
 - `GET /api/v1/workspaces/{workspaceId}/workflows` to list eligible definitions.
 - `GET /api/v1/workflows/{workflowId}?workspaceId={workspaceId}` to refresh one eligible definition.
 - `POST /api/v1/workflows/{workflowId}/sessions` to create a session owned by the linked AcornOps user.
-- `POST /api/v1/workflow-sessions/{sessionId}/messages` with only `content` and a stable `clientRequestId` to dispatch an execution in that owned session.
+- `POST /api/v1/workflow-sessions/{sessionId}/messages` with `{ kind: "launch", clientRequestId? }` for the first execution, then `{ kind: "follow_up", content, clientRequestId? }` for replies.
 
 Reuse `clientRequestId` only when retrying the same provider message; use a new
 value for a new user message. This makes transport retries idempotent without
-making unrelated requests collide. Prompt references are the only input and
-target-selection authority; stale `inputs`, `targetId`, and `targetType` body
-fields are rejected. External credentials cannot list arbitrary Workflow
+making unrelated requests collide. Runtime `inputs`, `targetId`, and
+`targetType` body fields are rejected. External credentials cannot list arbitrary Workflow
 sessions or use another user's session, and write access remains an explicit
 three-layer opt-in.
 

@@ -4498,7 +4498,7 @@
           "workflows"
         ],
         "summary": "Update workflow schedule",
-        "description": "Updates schedule cadence, enabled state, workflow, grants, or runtime inputs. Requires manage_workflows.",
+        "description": "Updates schedule cadence, enabled state, workflow, or grants. Requires manage_workflows.",
         "security": [
           {
             "userSession": []
@@ -4526,7 +4526,6 @@
                   "name",
                   "cron",
                   "timezone",
-                  "inputs",
                   "principal"
                 ],
                 "properties": {
@@ -4550,13 +4549,6 @@
                   "timezone": {
                     "type": "string",
                     "example": "UTC"
-                  },
-                  "inputs": {
-                    "type": "object",
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "description": "Exact workflow runtime parameter values re-resolved and reauthorized for every occurrence."
                   },
                   "approvedContextGrants": {
                     "type": "array",
@@ -4678,7 +4670,7 @@
           "workflows"
         ],
         "summary": "Post a workflow session message and dispatch a run",
-        "description": "A session accepts one launch followed by ordinary follow-up messages. Idempotent launch retries return the original execution. Resource parameters are reauthorized by stable ID on every follow-up.",
+        "description": "A session accepts one parameterless launch followed by ordinary follow-up messages. Idempotent launch retries return the original execution.",
         "security": [
           {
             "userSession": []
@@ -4710,8 +4702,7 @@
                   {
                     "type": "object",
                     "required": [
-                      "kind",
-                      "inputs"
+                      "kind"
                     ],
                     "properties": {
                       "kind": {
@@ -4719,12 +4710,6 @@
                         "enum": [
                           "launch"
                         ]
-                      },
-                      "inputs": {
-                        "type": "object",
-                        "additionalProperties": {
-                          "type": "string"
-                        }
                       },
                       "clientRequestId": {
                         "type": "string",
@@ -4980,7 +4965,7 @@
           "workflows"
         ],
         "summary": "Submit a signed workflow webhook event",
-        "description": "Accepts an inputs object after verifying X-AcornOps-Event-Id, X-AcornOps-Timestamp, and an HMAC SHA-256 X-AcornOps-Signature over `<timestamp>.<raw body>`. Events are replay-protected and limited to 256 KiB.",
+        "description": "Accepts signed event metadata after verifying X-AcornOps-Event-Id, X-AcornOps-Timestamp, and an HMAC SHA-256 X-AcornOps-Signature over `<timestamp>.<raw body>`. Event metadata does not alter the saved workflow prompt. Events are replay-protected and limited to 256 KiB.",
         "security": [],
         "parameters": [
           {
@@ -5020,18 +5005,7 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "inputs"
-                ],
-                "properties": {
-                  "inputs": {
-                    "type": "object",
-                    "additionalProperties": {
-                      "type": "string"
-                    }
-                  }
-                },
-                "additionalProperties": false
+                "additionalProperties": true
               }
             }
           }
@@ -5477,8 +5451,7 @@
                 "type": "object",
                 "required": [
                   "workspaceId",
-                  "approvedContextGrants",
-                  "inputs"
+                  "approvedContextGrants"
                 ],
                 "properties": {
                   "workspaceId": {
@@ -5491,13 +5464,6 @@
                     "items": {
                       "type": "string"
                     }
-                  },
-                  "inputs": {
-                    "type": "object",
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "description": "Exact runtime parameter values compiled using the same path as launch."
                   }
                 },
                 "additionalProperties": false
@@ -12356,7 +12322,7 @@
           "prompt resources"
         ],
         "summary": "Preview prompt resource resolution",
-        "description": "Authoring-only preview that parses concrete @type[label] references and returns derived runtime parameters. Run creation always resolves and authorizes again.",
+        "description": "Authoring-only preview that parses concrete @type[label] references. Run creation always resolves and authorizes again.",
         "security": [
           {
             "userSession": []
@@ -12398,7 +12364,7 @@
         },
         "responses": {
           "200": {
-            "description": "Parsed concrete references, derived parameters, candidate status, binding preview, and blockers.",
+            "description": "Parsed concrete references, candidate status, binding preview, and blockers.",
             "content": {
               "application/json": {
                 "schema": {
@@ -19382,7 +19348,6 @@
                   "name",
                   "cron",
                   "timezone",
-                  "inputs",
                   "principal"
                 ],
                 "properties": {
@@ -19406,13 +19371,6 @@
                   "timezone": {
                     "type": "string",
                     "example": "UTC"
-                  },
-                  "inputs": {
-                    "type": "object",
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "description": "Exact workflow runtime parameter values re-resolved and reauthorized for every occurrence."
                   },
                   "approvedContextGrants": {
                     "type": "array",
@@ -19486,7 +19444,7 @@
           "workflows"
         ],
         "summary": "Preview a workflow schedule",
-        "description": "Compiles the active workflow with the submitted inputs and validates context grants, cron, and timezone without creating or changing a schedule.",
+        "description": "Compiles the active saved workflow definition and validates context grants, cron, and timezone without creating or changing a schedule.",
         "security": [
           {
             "userSession": []
@@ -19508,7 +19466,6 @@
                   "name",
                   "cron",
                   "timezone",
-                  "inputs",
                   "principal"
                 ],
                 "properties": {
@@ -19532,13 +19489,6 @@
                   "timezone": {
                     "type": "string",
                     "example": "UTC"
-                  },
-                  "inputs": {
-                    "type": "object",
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "description": "Exact workflow runtime parameter values re-resolved and reauthorized for every occurrence."
                   },
                   "approvedContextGrants": {
                     "type": "array",
@@ -23868,7 +23818,6 @@
           "promptDigest",
           "bindingDigest",
           "tokens",
-          "parameters",
           "candidates",
           "bindings",
           "blockers",
@@ -23908,37 +23857,6 @@
                 },
                 "end": {
                   "type": "integer"
-                }
-              },
-              "additionalProperties": false
-            }
-          },
-          "parameters": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "required": [
-                "key",
-                "type",
-                "required"
-              ],
-              "properties": {
-                "key": {
-                  "type": "string"
-                },
-                "type": {
-                  "type": "string",
-                  "enum": [
-                    "text",
-                    "target",
-                    "chat"
-                  ]
-                },
-                "required": {
-                  "type": "boolean",
-                  "enum": [
-                    true
-                  ]
                 }
               },
               "additionalProperties": false
@@ -26830,7 +26748,6 @@
           "executionMode",
           "resourceRequirements",
           "capabilityPolicy",
-          "parameters",
           "requiredPermissions",
           "createdBy"
         ],
@@ -26897,39 +26814,6 @@
             "type": "array",
             "items": {
               "type": "string"
-            }
-          },
-          "parameters": {
-            "type": "array",
-            "readOnly": true,
-            "items": {
-              "type": "object",
-              "required": [
-                "key",
-                "type",
-                "required"
-              ],
-              "properties": {
-                "key": {
-                  "type": "string",
-                  "pattern": "^[a-z][a-z0-9_]{0,63}$"
-                },
-                "type": {
-                  "type": "string",
-                  "enum": [
-                    "text",
-                    "target",
-                    "chat"
-                  ]
-                },
-                "required": {
-                  "type": "boolean",
-                  "enum": [
-                    true
-                  ]
-                }
-              },
-              "additionalProperties": false
             }
           },
           "requiredPermissions": {
@@ -27476,12 +27360,6 @@
           },
           "timezone": {
             "type": "string"
-          },
-          "inputs": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "string"
-            }
           },
           "approvedContextGrants": {
             "type": "array",

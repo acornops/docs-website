@@ -9,7 +9,7 @@ Definitions record an origin of `manual` or `template`. Origin does not add capa
 
 Readiness is explicit for every definition:
 
-- `ready` means you can launch after every required concrete reference and runtime parameter resolves.
+- `ready` means the saved definition and every required concrete reference can resolve.
 - `needs_setup` lists missing live prerequisites such as a target, reviewed capability mapping, or installed integration.
 - `blocked` identifies a policy or capability mismatch that an administrator must resolve.
 
@@ -34,7 +34,7 @@ meaning and IDs must be unique and non-empty.
 
 Select one Agent to run the Workflow directly. Select two or more Agents for AcornOps to coordinate. Workflow responses derive `executionMode` as `direct` or `coordinated`; it is not an authoring input.
 
-Creating a Workflow session records a non-executable capability ceiling. It does not resolve prompt resources. The first structured launch message submits values for the Workflow's server-derived parameters. The control plane compiles the saved prompt, resolves and authorizes concrete references and resource IDs under the authenticated user, and atomically pins stable bindings with prompt and binding digests. Semantic capability IDs such as `target.diagnostics.read` describe routing requirements but never authorize a tool by themselves. Existing runs keep their pinned execution mode and bindings when you edit a Workflow. Future runs use the new definition and live provider state.
+Creating a Workflow session records a non-executable capability ceiling. The first structured launch message contains only `kind: "launch"` and an optional idempotency key. The control plane compiles the saved prompt and revalidates current authorization under the authenticated user. Semantic capability IDs such as `target.diagnostics.read` describe routing requirements but never authorize a tool by themselves. Existing runs keep their pinned execution mode and scope when you edit a Workflow. Future runs use the new definition and live provider state.
 
 ## Prompt resource references
 
@@ -42,19 +42,11 @@ Use `@type[display label]` wherever a Workflow needs exact evidence or routing. 
 
 Labels are Unicode-normalized. Escape a backslash as `\\` and a closing bracket as `\]`. Empty references are invalid: `@target[]` and `@chat[]` cannot be saved. Mixed concrete types and repeated provider-permitted types are resolved together in prompt order. Missing, ambiguous, stale, unauthorized, unavailable, or timed-out references fail closed with a bounded reason.
 
-## Runtime parameters
+## Saved prompts
 
-Use runtime parameters when an operator or schedule must supply a value at launch:
+Workflow prompts are saved plain text and do not accept runtime parameters. Launches from the console, schedules, webhooks, and external integrations all run the same saved definition. Literal `{{...}}` text has no template meaning.
 
-```text
-Investigate {{target:cluster}} for {{text:investigation_focus}} using {{chat:incident_context}}.
-```
-
-Supported types are `text`, `target`, and `chat`. Keys start with a lowercase letter, contain only lowercase letters, digits, or underscores, and are at most 64 characters. Every parameter is required. Repeating the same type and key reuses one value; reusing a key with a different type is invalid. Write `\{{` for literal `{{` text.
-
-The saved prompt is the template authority. Workflow responses expose a derived `parameters` list; create and update requests cannot set it independently. A structured launch sends `{ kind: "launch", inputs, clientRequestId? }`, and the submitted key set must exactly match that list. Text values stay literal. Target and chat values are stable IDs, never display labels. The compiler materializes readable references without rescanning substituted text, then resolves current authorization and provider state. The same compiler powers capability preview, interactive launch, schedules, and external integrations.
-
-Concrete `@type[label]` references remain deterministic authoring choices. Suggestion and resolution previews are display-only and return concrete-reference results plus parsed runtime parameters. Tools, skills, Agents, and semantic capabilities remain configuration choices rather than prompt evidence references.
+Concrete `@type[label]` references remain deterministic authoring choices. Suggestion and resolution previews are display-only and return concrete-reference results. Tools, skills, Agents, and semantic capabilities remain configuration choices rather than prompt evidence references.
 
 The current Workflow conversation is captured as an implicit resource binding through the message that initiated the run. Later concurrently submitted messages are excluded. Other inline or tool-loaded evidence is retrieved only by binding ID with per-resource and aggregate limits.
 
@@ -92,7 +84,7 @@ explanation.
 
 The template drawer exposes these Workflow records:
 
-| Workflow | Install mode | Inputs and behavior |
+| Workflow | Install mode | Behavior |
 | --- | --- | --- |
 | Target diagnostics | Automatic, active | One exact Kubernetes or virtual-machine target and optional focus. Reads only diagnostic tools compiled for that target. |
 | Incident report | Automatic, active | One or more `@chat[...]` references. Creates an authenticated PDF artifact retained for the deployment-configured period. |
@@ -101,7 +93,7 @@ The template drawer exposes these Workflow records:
 
 Template manifests contain prose, safe policy defaults, semantic requirements, and symbolic relationships only. Provisioning generates record IDs and resolves relationships inside the workspace transaction. It does not contain workspace or target IDs, MCP server IDs or URLs, external tool aliases, skill installation IDs, credentials, or connection assumptions. Upgrades replace Managed response with Incident investigation in place while preserving IDs, status, schedules, and tombstones.
 
-Schedules store an `inputs` object keyed by the active Workflow's derived parameters. Preview validates the exact values before creation or update. Every occurrence compiles the current active prompt and reauthorizes stored resource IDs. A definition mismatch, missing value, deletion, integration outage, membership change, or authorization failure auto-pauses the schedule with a bounded actionable reason; repair the cause and resume it manually.
+Schedules store cadence, principal, and approved context grants—not launch inputs. Every occurrence compiles the current active saved prompt and reauthorizes the execution scope. An invalid definition, deletion, integration outage, membership change, or authorization failure auto-pauses the schedule with a bounded actionable reason; repair the cause and resume it manually.
 
 ## Organize workflows and Activity
 
