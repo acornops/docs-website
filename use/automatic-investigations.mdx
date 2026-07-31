@@ -1,0 +1,75 @@
+---
+title: "Configure auto-triage"
+description: "Start durable investigations automatically for qualifying Kubernetes and VM issues"
+---
+
+Auto-triage lets AcornOps begin a target investigation when a new issue
+lifecycle reaches your configured severity. The feature is experimental and
+uses the same target chat, approval, audit, and retention paths as a manual
+investigation.
+
+## Enable automatic investigations
+
+1. Open a Kubernetes cluster or virtual machine.
+2. Open **Settings** and find **Automatic investigations**.
+3. Choose the minimum issue severity.
+4. Choose how the investigation may use write-capable tools.
+5. Add optional investigation instructions.
+6. For a Kubernetes cluster, configure namespace eligibility if needed.
+7. Save the settings.
+
+Saving does not start investigations for issues that already exist. After you
+enable the feature, use the separate action for current eligible issues if you
+want to queue them. Future matching issue lifecycles queue automatically.
+
+Each issue lifecycle has at most one automatic investigation. Repeated
+observations of the same lifecycle do not create duplicate conversations.
+
+## Limit Kubernetes issue eligibility
+
+Kubernetes targets provide three eligibility settings:
+
+| Setting | Behavior |
+| --- | --- |
+| Namespace include list | When non-empty, only issues in the listed namespaces are eligible. An empty list allows every observed namespace. |
+| Namespace exclude list | Removes listed namespaces after include filtering. Exclusion always wins. |
+| Include cluster-scoped issues | Controls issues that do not belong to a namespace. |
+
+Use lowercase Kubernetes namespace names. You can provide up to 100 names in
+each list.
+
+These settings only decide which observed issues may start an automatic
+investigation. They do not expand AgentK collection, Kubernetes RBAC, or tool
+access. Configure AgentK namespace scope separately in Cluster Settings. See
+[Connect a Kubernetes cluster](/use/connect-kubernetes#namespace-scope).
+
+## Virtual machine eligibility
+
+Virtual-machine automatic investigations are target-wide. Severity is the only
+issue eligibility filter; Kubernetes namespace settings do not apply.
+
+## Choose action safety
+
+The saved action mode cannot grant more access than the target, connected
+agent, workspace role, and selected diagnostic tools already permit.
+
+- **Diagnose only** exposes no write tools.
+- **Ask before changes** pauses for approval before a permitted write.
+- **Allow changes** skips confirmation only when the target policy also allows
+  it.
+- **Follow target settings** inherits the target's effective write policy.
+
+If required AI credentials, the target connection, or diagnostic tools are not
+ready, AcornOps keeps the issue waiting and shows the setup reason instead of
+starting a partial investigation.
+
+## Review activity
+
+The target Settings page shows active and waiting counts. Open the target's
+issues to review the associated investigation, approval, findings, or retry
+state. Automatic conversations also appear under **Investigations** in target
+chat history.
+
+Disabling automatic investigations prevents queued work from starting and
+stops new issue lifecycles from being queued. It does not erase completed
+investigation history.

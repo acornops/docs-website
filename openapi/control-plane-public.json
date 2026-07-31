@@ -13040,6 +13040,34 @@
                   "additionalInstructions": {
                     "type": "string",
                     "maxLength": 4000
+                  },
+                  "namespaceInclude": {
+                    "type": "array",
+                    "default": [],
+                    "maxItems": 100,
+                    "uniqueItems": true,
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 63,
+                      "pattern": "^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$"
+                    }
+                  },
+                  "namespaceExclude": {
+                    "type": "array",
+                    "default": [],
+                    "maxItems": 100,
+                    "uniqueItems": true,
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 63,
+                      "pattern": "^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$"
+                    }
+                  },
+                  "includeClusterScopedIssues": {
+                    "type": "boolean",
+                    "default": true
                   }
                 },
                 "additionalProperties": false
@@ -23068,6 +23096,14 @@
           }
         ],
         "properties": {
+          "agentAccessMode": {
+            "type": "string",
+            "enum": [
+              "read_only",
+              "read_write",
+              "unknown"
+            ]
+          },
           "namespaceInclude": {
             "type": "array",
             "items": {
@@ -24580,9 +24616,13 @@
           "minimumSeverity",
           "writeMode",
           "additionalInstructions",
+          "namespaceInclude",
+          "namespaceExclude",
+          "includeClusterScopedIssues",
           "revision",
           "canEdit",
           "eligibleCurrentIssueCount",
+          "queueSummary",
           "effectiveBehavior",
           "readiness"
         ],
@@ -24618,6 +24658,31 @@
           "additionalInstructions": {
             "type": "string",
             "maxLength": 4000
+          },
+          "namespaceInclude": {
+            "type": "array",
+            "maxItems": 100,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 63,
+              "pattern": "^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$"
+            }
+          },
+          "namespaceExclude": {
+            "type": "array",
+            "maxItems": 100,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 63,
+              "pattern": "^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$"
+            }
+          },
+          "includeClusterScopedIssues": {
+            "type": "boolean"
           },
           "revision": {
             "type": "integer",

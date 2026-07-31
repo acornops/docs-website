@@ -159,7 +159,8 @@
             "group": "Investigate",
             "pages": [
               "use/target-chat",
-              "use/issues-and-investigations"
+              "use/issues-and-investigations",
+              "use/automatic-investigations"
             ]
           },
           {

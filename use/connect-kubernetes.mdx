@@ -29,6 +29,11 @@ Use namespace include and exclude lists to limit what the agent observes and wha
 
 In the management console, namespace scope is edited from Cluster Settings.
 
+Automatic investigations have a separate namespace eligibility policy. That
+policy can narrow which observed issues start an investigation, but it cannot
+expand AgentK collection, RBAC, or tool access. See
+[Configure automatic investigations](/use/automatic-investigations#limit-kubernetes-issue-eligibility).
+
 ## RBAC scope
 
 The agent chart can create cluster-scoped RBAC or namespace-scoped RBAC.
