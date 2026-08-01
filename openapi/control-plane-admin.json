@@ -960,7 +960,8 @@
                 ],
                 "properties": {
                   "value": {
-                    "type": "object"
+                    "type": "object",
+                    "description": "Typed setting override. kubernetes_rbac_additions accepts KubernetesRbacAdditionsOverride; the response value is the resolved effective catalog."
                   },
                   "expectedVersion": {
                     "type": "integer",
@@ -1112,7 +1113,8 @@
             "enum": [
               "member_discovery",
               "ai_policy",
-              "user_sign_in_methods"
+              "user_sign_in_methods",
+              "kubernetes_rbac_additions"
             ]
           }
         }
@@ -3664,7 +3666,8 @@
             "enum": [
               "member_discovery",
               "ai_policy",
-              "user_sign_in_methods"
+              "user_sign_in_methods",
+              "kubernetes_rbac_additions"
             ]
           },
           "value": {

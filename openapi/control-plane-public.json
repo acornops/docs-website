@@ -10524,6 +10524,15 @@
                     ],
                     "default": "read_only",
                     "description": "Controls the generated Helm command RBAC mode. read_write adds rbac.write.enabled=true."
+                  },
+                  "rbacAdditionKeys": {
+                    "type": "array",
+                    "maxItems": 25,
+                    "uniqueItems": true,
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Administrator-defined Kubernetes integration bundle keys to snapshot for this cluster installation."
                   }
                 },
                 "example": {
@@ -10535,7 +10544,10 @@
                   "namespaceExclude": [
                     "sandbox"
                   ],
-                  "agentAccessMode": "read_only"
+                  "agentAccessMode": "read_only",
+                  "rbacAdditionKeys": [
+                    "cnpg"
+                  ]
                 }
               }
             }
@@ -11528,8 +11540,7 @@
         "tags": [
           "workspaces"
         ],
-        "summary": "List governed Kubernetes RBAC onboarding additions",
-        "description": "Returns an empty versioned catalog until governed RBAC additions are supported end-to-end.",
+        "summary": "List administrator-defined Kubernetes integration bundles available for cluster onboarding",
         "security": [
           {
             "userSession": []
@@ -11542,7 +11553,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Versioned RBAC addition catalog. The current catalog is empty.",
+            "description": "Current bundle summaries containing only version, key, name, and description.",
             "content": {
               "application/json": {
                 "schema": {
@@ -11558,7 +11569,7 @@
             "$ref": "#/components/responses/Error401"
           },
           "403": {
-            "description": "The caller cannot manage targets in this workspace.",
+            "description": "Requires manage_targets.",
             "content": {
               "application/json": {
                 "schema": {
@@ -22881,30 +22892,32 @@
         "properties": {
           "version": {
             "type": "integer",
-            "minimum": 1
+            "minimum": 0
           },
           "items": {
             "type": "array",
-            "maxItems": 0,
             "items": {
-              "type": "object",
-              "required": [
-                "key",
-                "name"
-              ],
-              "properties": {
-                "key": {
-                  "type": "string"
-                },
-                "name": {
-                  "type": "string"
-                },
-                "description": {
-                  "type": "string"
-                }
-              },
-              "additionalProperties": false
+              "$ref": "#/components/schemas/KubernetesRbacAdditionSummary"
             }
+          }
+        },
+        "additionalProperties": false
+      },
+      "KubernetesRbacAdditionSummary": {
+        "type": "object",
+        "required": [
+          "key",
+          "name"
+        ],
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
           }
         },
         "additionalProperties": false
