@@ -589,7 +589,7 @@
           "agents"
         ],
         "summary": "Duplicate an agent as a manual draft",
-        "description": "Copies the effective definition only. Runs, triggers, activity, schedules, and origin attribution are not copied.",
+        "description": "Copies the effective definition only. Runs, triggers, activity, and schedules are not copied.",
         "security": [
           {
             "userSession": []
@@ -20305,7 +20305,6 @@
           "avatarEmoji",
           "instructions",
           "status",
-          "origin",
           "reviewState",
           "providerType",
           "ownerUserId",
@@ -20341,25 +20340,6 @@
               "disabled",
               "draft"
             ]
-          },
-          "origin": {
-            "type": "object",
-            "required": [
-              "type"
-            ],
-            "properties": {
-              "type": {
-                "type": "string",
-                "enum": [
-                  "template",
-                  "manual"
-                ]
-              },
-              "templateId": {
-                "type": "string"
-              }
-            },
-            "additionalProperties": false
           },
           "reviewState": {
             "type": "string",
@@ -26249,7 +26229,6 @@
         "required": [
           "id",
           "workspaceId",
-          "origin",
           "name",
           "status",
           "prompt",
@@ -26267,9 +26246,6 @@
           "workspaceId": {
             "type": "string",
             "format": "uuid"
-          },
-          "origin": {
-            "$ref": "#/components/schemas/WorkflowOrigin"
           },
           "name": {
             "type": "string"
@@ -26767,25 +26743,6 @@
           }
         },
         "additionalProperties": true
-      },
-      "WorkflowOrigin": {
-        "type": "object",
-        "required": [
-          "type"
-        ],
-        "properties": {
-          "type": {
-            "type": "string",
-            "enum": [
-              "template",
-              "manual"
-            ]
-          },
-          "templateId": {
-            "type": "string"
-          }
-        },
-        "additionalProperties": false
       },
       "WorkflowSchedule": {
         "type": "object",
