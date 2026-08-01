@@ -82,7 +82,7 @@ The optional platform admin console is intentionally outside the tenant runtime 
 6. The execution engine fetches run context from the control plane, streams model requests through the LLM gateway, and calls allowed tools.
 7. The control plane records run events and streams them back to the management console.
 
-Remote MCP servers use the same run-scoped tool permission model. Each installation belongs to one Agent. The gateway discovers remote tools from `tools/list`, stores them pending explicit review, and invokes only an exact `{serverId, toolName}` reference allowed by the pinned Agent version.
+Remote MCP servers use the same run-scoped tool permission model. Each installation belongs to one Agent. The gateway discovers remote tools from `tools/list`, stores them pending explicit review, and invokes only an exact `{serverId, toolName}` reference allowed by the immutable run snapshot.
 
 ## Auth and trust boundaries
 

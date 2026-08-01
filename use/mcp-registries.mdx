@@ -23,7 +23,7 @@ Package-only and stdio-only registry entries remain visible as incompatible. Aco
 
 | Destination | Entry point | Stored scope | Available to |
 | --- | --- | --- | --- |
-| One Agent | **Agents → Agent detail → Capabilities → MCP servers → Add MCP server → Browse registries** | Exact workspace and Agent ID, with optional authoritative target type/ID constraints | Runs pinned to that Agent version |
+| One Agent | **Agents → Agent detail → Capabilities → MCP servers → Add MCP server → Browse registries** | Exact workspace and Agent ID, with optional authoritative target type/ID constraints | New runs using a pinned capability snapshot |
 | One target | **Target → MCP servers → Add MCP server → Browse registries** | Exact workspace and target ID | Runs through that target's default Agent |
 
 Installing the same artifact on another Agent creates an independent installation. Each installation has its own server ID, endpoint configuration, enabled state, reviewed tools, provenance, pinned digest, connections, version history, and lifecycle. An installation never leaks to another Agent or target.

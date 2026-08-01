@@ -101,7 +101,7 @@ Approval decisions are intentionally not just webhook acknowledgements. The firs
 For a Workflow, keep the returned `workflowSessionId` as the external thread
 mapping. Each external message requires a new `clientRequestId` and creates a
 new execution in that session. A reply after completion retains the conversation
-history and pinned Workflow version, but it creates new run IDs and fresh
+history and stored Workflow snapshot, but it creates new run IDs and fresh
 approvals. The current Workflow must remain active, and AcornOps recompiles the
 session's access from current effective permissions for every message.
 

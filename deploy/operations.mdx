@@ -69,7 +69,7 @@ For production, keep component API docs disabled unless you intentionally expose
 | Agent or Workflow dispatch delayed | Workspace automation diagnostics, `control_plane_automation_runtime` gauges, control-plane outbox worker logs, execution-engine readiness |
 | Run needs review | Approval and terminal audit records; confirm whether a write result was uncertain before authorizing resume |
 | Model calls fail | LLM-gateway logs, effective provider credential status, run JWT claims, provider allow-list |
-| MCP tools fail | Pinned Agent version, exact server/tool reference, target constraints, reviewed state, principal connection scopes, permission-mode decision, and gateway egress policy |
+| MCP tools fail | Immutable run snapshot, exact server/tool reference, reviewed state, principal connection scopes, permission-mode decision, gateway egress policy, and call-time target identity for Targets MCP calls |
 | Webhook verification fails | Consumer raw-body handling, timestamp, signature header, subscription secret |
 | Webhook backlog grows | Worker pause setting, Postgres health, retry metrics, destination status |
 

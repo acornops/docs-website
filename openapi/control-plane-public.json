@@ -45,7 +45,7 @@
     },
     {
       "name": "agents",
-      "description": "Workspace-scoped custom agent definitions, triggers, versions, tests, and activity."
+      "description": "Workspace-scoped Agent definitions, direct conversations, tests, and activity."
     },
     {
       "name": "admin",
@@ -162,7 +162,14 @@
             "$ref": "#/components/responses/Error404"
           },
           "409": {
-            "$ref": "#/components/responses/Error409"
+            "description": "The conversation still has an active run.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           },
           "429": {
             "$ref": "#/components/responses/Error429"
@@ -179,7 +186,7 @@
           "agents"
         ],
         "summary": "Change Agent conversation access mode",
-        "description": "Only the creator may change access. read_write requires creator permission and a pinned Agent policy that allows writes; the pinned capability ceiling remains unchanged.",
+        "description": "Only the creator may change access. read_write requires creator permission and a current Agent policy that allows writes; effective run authority is recomputed for each message.",
         "security": [
           {
             "userSession": []
@@ -244,7 +251,7 @@
             "$ref": "#/components/responses/Error404"
           },
           "409": {
-            "description": "The pinned Agent policy is read-only.",
+            "description": "The current Agent policy is read-only or the Agent is unavailable.",
             "content": {
               "application/json": {
                 "schema": {
@@ -268,7 +275,7 @@
           "agents"
         ],
         "summary": "Continue an Agent conversation",
-        "description": "Only the creator may dispatch a message. Revoked pinned capabilities fail closed and newly added capabilities are excluded.",
+        "description": "Only the creator may dispatch a message. The current Agent definition and actor permissions are resolved for each run, then pinned immutably on that run.",
         "security": [
           {
             "userSession": []
@@ -291,11 +298,13 @@
                 "properties": {
                   "content": {
                     "type": "string",
-                    "minLength": 1
+                    "minLength": 1,
+                    "maxLength": 32768
                   },
                   "clientRequestId": {
                     "type": "string",
-                    "format": "uuid"
+                    "minLength": 1,
+                    "maxLength": 128
                   }
                 },
                 "additionalProperties": false
@@ -305,11 +314,11 @@
         },
         "responses": {
           "202": {
-            "description": "Agent conversation message accepted through workflow execution.",
+            "description": "Agent conversation message accepted as an interactive run.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/WorkflowMessageAccepted"
+                  "$ref": "#/components/schemas/AgentConversationMessageAccepted"
                 }
               }
             }
@@ -334,7 +343,7 @@
             "$ref": "#/components/responses/Error404"
           },
           "409": {
-            "description": "A pinned capability was revoked or runtime readiness failed.",
+            "description": "The Agent is unavailable, its policy no longer permits the requested access, or runtime readiness failed.",
             "content": {
               "application/json": {
                 "schema": {
@@ -556,7 +565,7 @@
             "$ref": "#/components/responses/Error404"
           },
           "409": {
-            "description": "The Agent is still assigned to one or more dependent workflows.",
+            "description": "The Agent is still assigned to dependent workflows or has active direct-conversation runs.",
             "content": {
               "application/json": {
                 "schema": {
@@ -580,7 +589,7 @@
           "agents"
         ],
         "summary": "Duplicate an agent as a manual draft",
-        "description": "Copies the effective definition only. Runs, triggers, activity, schedules, version history, and origin attribution are not copied.",
+        "description": "Copies the effective definition only. Runs, triggers, activity, schedules, and origin attribution are not copied.",
         "security": [
           {
             "userSession": []
@@ -640,233 +649,6 @@
                 }
               }
             }
-          },
-          "429": {
-            "$ref": "#/components/responses/Error429"
-          },
-          "500": {
-            "$ref": "#/components/responses/Error500"
-          }
-        }
-      }
-    },
-    "/api/v1/agents/{agentId}/versions": {
-      "get": {
-        "tags": [
-          "agents"
-        ],
-        "summary": "List saved agent version snapshots",
-        "security": [
-          {
-            "userSession": []
-          }
-        ],
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/PathAgentId"
-          },
-          {
-            "$ref": "#/components/parameters/QueryWorkspaceId"
-          },
-          {
-            "$ref": "#/components/parameters/QueryQ"
-          },
-          {
-            "$ref": "#/components/parameters/QueryLimit2"
-          },
-          {
-            "$ref": "#/components/parameters/QueryCursor"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Agent version snapshots.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AgentVersionList"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/Error400"
-          },
-          "401": {
-            "$ref": "#/components/responses/Error401"
-          },
-          "403": {
-            "description": "Requires read_workspace_data.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "$ref": "#/components/responses/Error404"
-          },
-          "409": {
-            "$ref": "#/components/responses/Error409"
-          },
-          "429": {
-            "$ref": "#/components/responses/Error429"
-          },
-          "500": {
-            "$ref": "#/components/responses/Error500"
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "agents"
-        ],
-        "summary": "Snapshot the current agent version",
-        "security": [
-          {
-            "userSession": []
-          }
-        ],
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/PathAgentId"
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "workspaceId"
-                ],
-                "properties": {
-                  "workspaceId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "example": "4b930d98-add9-4924-ab26-3c16d96ec373"
-                  }
-                },
-                "additionalProperties": true
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Agent version snapshot created.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AgentVersionResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/Error400"
-          },
-          "401": {
-            "$ref": "#/components/responses/Error401"
-          },
-          "403": {
-            "$ref": "#/components/responses/Error403"
-          },
-          "404": {
-            "$ref": "#/components/responses/Error404"
-          },
-          "409": {
-            "$ref": "#/components/responses/Error409"
-          },
-          "429": {
-            "$ref": "#/components/responses/Error429"
-          },
-          "500": {
-            "$ref": "#/components/responses/Error500"
-          }
-        }
-      }
-    },
-    "/api/v1/agents/{agentId}/versions/{versionId}/restore": {
-      "post": {
-        "tags": [
-          "agents"
-        ],
-        "summary": "Restore a saved agent version snapshot",
-        "security": [
-          {
-            "userSession": []
-          }
-        ],
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/PathAgentId"
-          },
-          {
-            "in": "path",
-            "name": "versionId",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "workspaceId"
-                ],
-                "properties": {
-                  "workspaceId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "example": "4b930d98-add9-4924-ab26-3c16d96ec373"
-                  }
-                },
-                "additionalProperties": true
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Agent restored from snapshot as a new current version.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AgentResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/Error400"
-          },
-          "401": {
-            "$ref": "#/components/responses/Error401"
-          },
-          "403": {
-            "description": "Requires manage_agents.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "$ref": "#/components/responses/Error404"
-          },
-          "409": {
-            "$ref": "#/components/responses/Error409"
           },
           "429": {
             "$ref": "#/components/responses/Error429"
@@ -3960,7 +3742,14 @@
             "$ref": "#/components/responses/Error404"
           },
           "409": {
-            "$ref": "#/components/responses/Error409"
+            "description": "The session still has an active run.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           },
           "429": {
             "$ref": "#/components/responses/Error429"
@@ -4784,7 +4573,7 @@
             "$ref": "#/components/responses/Error404"
           },
           "409": {
-            "description": "Workflow version, target, or exact MCP readiness is unavailable. MCP conflicts include bounded structured installation and tool failures.",
+            "description": "Workflow or exact MCP readiness is unavailable. MCP conflicts include bounded structured installation and tool failures.",
             "content": {
               "application/json": {
                 "schema": {
@@ -5041,7 +4830,7 @@
             "$ref": "#/components/responses/Error404"
           },
           "409": {
-            "description": "Target workflow changed after the webhook was saved.",
+            "description": "The workflow changed after the webhook was saved.",
             "content": {
               "application/json": {
                 "schema": {
@@ -5426,7 +5215,7 @@
           "workflows"
         ],
         "summary": "Preview the effective workflow capability scope",
-        "description": "Compiles a non-reserving, secret-free snapshot of semantic capabilities, eligible targets, exact effective tools, direct MCP attachments, skills, and approval requirements. The stored target type is authoritative. Requires read_workspace_data and the same run-creation capability as launch. Dispatch always recompiles and remains authoritative.",
+        "description": "Compiles a non-reserving, secret-free snapshot of semantic capabilities, exact effective tools, direct MCP attachments, skills, and approval requirements. Requires read_workspace_data and the same run-creation capability as launch. Dispatch always recompiles and remains authoritative.",
         "security": [
           {
             "userSession": []
@@ -5513,7 +5302,7 @@
           "workflows"
         ],
         "summary": "Duplicate a workflow as a custom draft",
-        "description": "Copies the effective definition only. Runs, sessions, schedules, workflow webhooks, activity, and version history are not copied.",
+        "description": "Copies the effective definition only. Runs, sessions, schedules, workflow webhooks, and activity are not copied.",
         "security": [
           {
             "userSession": []
@@ -6279,7 +6068,7 @@
           "agents"
         ],
         "summary": "List Agent conversations",
-        "description": "Workspace-readable manual conversations for one Agent. System workflow carriers are never returned.",
+        "description": "Workspace-readable manual conversations for one Agent, backed by the interactive conversation runtime.",
         "security": [
           {
             "userSession": []
@@ -6346,7 +6135,7 @@
           "agents"
         ],
         "summary": "Create an Agent conversation",
-        "description": "Creates a console-only single-Agent conversation with a pinned Agent revision, permissionMode, and capability ceiling. Access defaults to the intersection of the pinned Agent policy and the creator run permissions.",
+        "description": "Creates a single-Agent interactive conversation. Access defaults to the intersection of the current Agent policy and the creator run permissions; each message resolves the current Agent and pins the effective definition and scope on its run.",
         "security": [
           {
             "userSession": []
@@ -6533,29 +6322,6 @@
                     "additionalProperties": {
                       "type": "string"
                     }
-                  },
-                  "targetConstraints": {
-                    "type": "object",
-                    "properties": {
-                      "targetTypes": {
-                        "type": "array",
-                        "items": {
-                          "type": "string",
-                          "enum": [
-                            "kubernetes",
-                            "virtual_machine"
-                          ]
-                        }
-                      },
-                      "targetIds": {
-                        "type": "array",
-                        "items": {
-                          "type": "string",
-                          "format": "uuid"
-                        }
-                      }
-                    },
-                    "additionalProperties": false
                   }
                 },
                 "additionalProperties": false
@@ -6663,31 +6429,6 @@
                   },
                   "authHeaderPrefix": {
                     "type": "string"
-                  },
-                  "targetConstraints": {
-                    "type": "object",
-                    "properties": {
-                      "targetTypes": {
-                        "type": "array",
-                        "maxItems": 16,
-                        "items": {
-                          "type": "string",
-                          "enum": [
-                            "kubernetes",
-                            "virtual_machine"
-                          ]
-                        }
-                      },
-                      "targetIds": {
-                        "type": "array",
-                        "maxItems": 200,
-                        "items": {
-                          "type": "string",
-                          "minLength": 1
-                        }
-                      }
-                    },
-                    "additionalProperties": false
                   }
                 },
                 "additionalProperties": false
@@ -7582,28 +7323,6 @@
                     "type": "integer",
                     "minimum": 1,
                     "description": "Required only for explicit reimport."
-                  },
-                  "targetConstraints": {
-                    "type": "object",
-                    "properties": {
-                      "targetTypes": {
-                        "type": "array",
-                        "items": {
-                          "type": "string",
-                          "enum": [
-                            "kubernetes",
-                            "virtual_machine"
-                          ]
-                        }
-                      },
-                      "targetIds": {
-                        "type": "array",
-                        "items": {
-                          "type": "string"
-                        }
-                      }
-                    },
-                    "additionalProperties": false
                   }
                 },
                 "additionalProperties": false
@@ -7971,28 +7690,6 @@
                     "type": "integer",
                     "minimum": 1,
                     "description": "Required only for explicit reimport."
-                  },
-                  "targetConstraints": {
-                    "type": "object",
-                    "properties": {
-                      "targetTypes": {
-                        "type": "array",
-                        "items": {
-                          "type": "string",
-                          "enum": [
-                            "kubernetes",
-                            "virtual_machine"
-                          ]
-                        }
-                      },
-                      "targetIds": {
-                        "type": "array",
-                        "items": {
-                          "type": "string"
-                        }
-                      }
-                    },
-                    "additionalProperties": false
                   }
                 },
                 "additionalProperties": false
@@ -8048,7 +7745,7 @@
           "agents"
         ],
         "summary": "Grant a workspace-native tool to a specialist Agent",
-        "description": "Transactionally grants or updates a workspace-native tool, its optional validated configuration, the Agent version, reviewed routing mappings, semantic ceiling, and dependent readiness. Requires manage_agents; manage_mcp is not required.",
+        "description": "Transactionally grants or updates a workspace-native tool, its optional validated configuration, reviewed routing mappings, semantic ceiling, and dependent readiness. Requires manage_agents; manage_mcp is not required.",
         "security": [
           {
             "userSession": []
@@ -9029,7 +8726,7 @@
           "workflows"
         ],
         "summary": "List workspace approval inbox",
-        "description": "Normalizes target write-tool approvals and workflow approval gates into a single workspace inbox. pendingCount is the total pending count across both sources before pagination and is independent of the requested status filter. Decisions remain on the run-scoped approval decision endpoint.",
+        "description": "Normalizes interactive tool approvals and workflow approval gates into a single workspace inbox. pendingCount is the total pending count across both sources before pagination and is independent of the requested status filter. Decisions remain on the run-scoped approval decision endpoint.",
         "security": [
           {
             "userSession": []
@@ -9086,7 +8783,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/WorkflowApprovalInbox"
+                  "$ref": "#/components/schemas/WorkspaceApprovalInbox"
                 }
               }
             }
@@ -11810,6 +11507,65 @@
           },
           "403": {
             "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error500"
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/kubernetes-rbac-additions": {
+      "get": {
+        "tags": [
+          "workspaces"
+        ],
+        "summary": "List governed Kubernetes RBAC onboarding additions",
+        "description": "Returns an empty versioned catalog until governed RBAC additions are supported end-to-end.",
+        "security": [
+          {
+            "userSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/PathWorkspaceId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Versioned RBAC addition catalog. The current catalog is empty.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KubernetesRbacAdditions"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "description": "The caller cannot manage targets in this workspace.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           },
           "404": {
             "$ref": "#/components/responses/Error404"
@@ -14822,28 +14578,6 @@
                     "type": "integer",
                     "minimum": 1,
                     "description": "Required only for explicit reimport."
-                  },
-                  "targetConstraints": {
-                    "type": "object",
-                    "properties": {
-                      "targetTypes": {
-                        "type": "array",
-                        "items": {
-                          "type": "string",
-                          "enum": [
-                            "kubernetes",
-                            "virtual_machine"
-                          ]
-                        }
-                      },
-                      "targetIds": {
-                        "type": "array",
-                        "items": {
-                          "type": "string"
-                        }
-                      }
-                    },
-                    "additionalProperties": false
                   }
                 },
                 "additionalProperties": false
@@ -15155,7 +14889,7 @@
           "catalog"
         ],
         "summary": "Install a pinned catalog MCP server on one target",
-        "description": "Requires manage_mcp. The server resolves workspace ownership and target type; browser-supplied target type and Agent target constraints are rejected. Credential ownership must be supported by the selected endpoint.",
+        "description": "Requires manage_mcp. The server resolves workspace ownership and target type; browser-supplied routing fields are rejected. Credential ownership must be supported by the selected endpoint.",
         "security": [
           {
             "userSession": []
@@ -15235,28 +14969,6 @@
                     "type": "integer",
                     "minimum": 1,
                     "description": "Required only for explicit reimport."
-                  },
-                  "targetConstraints": {
-                    "type": "object",
-                    "properties": {
-                      "targetTypes": {
-                        "type": "array",
-                        "items": {
-                          "type": "string",
-                          "enum": [
-                            "kubernetes",
-                            "virtual_machine"
-                          ]
-                        }
-                      },
-                      "targetIds": {
-                        "type": "array",
-                        "items": {
-                          "type": "string"
-                        }
-                      }
-                    },
-                    "additionalProperties": false
                   }
                 },
                 "additionalProperties": false
@@ -19147,14 +18859,6 @@
           },
           {
             "in": "query",
-            "name": "sourceIssueId",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
             "name": "search",
             "required": false,
             "schema": {
@@ -19751,7 +19455,7 @@
           "workflows"
         ],
         "summary": "Create a workspace workflow definition",
-        "description": "Creates a Workflow V2 definition from one or more active reviewed specialist Agent IDs. One Agent produces a specialist root run; multiple Agents produce a coordinator root with delegated specialist children. Selection order has no meaning and executionMode is derived. Requires manage_workflows.",
+        "description": "Creates a Workflow definition from one or more active reviewed specialist Agent IDs. One Agent produces a specialist root run; multiple Agents produce a coordinator root with delegated specialist children. Selection order has no meaning and executionMode is derived. Requires manage_workflows.",
         "security": [
           {
             "userSession": []
@@ -20286,8 +19990,7 @@
               "builtin_tool",
               "mcp_tool",
               "skill",
-              "context",
-              "target"
+              "context"
             ]
           },
           "providerAgentId": {
@@ -20347,8 +20050,7 @@
           "runs": {
             "type": "array",
             "items": {
-              "type": "object",
-              "additionalProperties": true
+              "$ref": "#/components/schemas/AgentConversationRun"
             }
           }
         },
@@ -20404,18 +20106,43 @@
         },
         "additionalProperties": true
       },
-      "AgentConversationSummary": {
+      "AgentConversationMessageAccepted": {
+        "type": "object",
+        "required": [
+          "message_id",
+          "run_id",
+          "status"
+        ],
+        "properties": {
+          "message_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "run_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AgentConversationRun": {
         "type": "object",
         "required": [
           "id",
           "workspaceId",
           "agentId",
-          "agentVersion",
-          "permissionMode",
-          "title",
-          "createdBy",
-          "accessMode",
-          "createdAt"
+          "sessionId",
+          "messageId",
+          "toolAccessMode",
+          "status",
+          "requestedAt",
+          "startedAt",
+          "endedAt",
+          "errorCode",
+          "events"
         ],
         "properties": {
           "id": {
@@ -20429,9 +20156,90 @@
           "agentId": {
             "type": "string"
           },
-          "agentVersion": {
-            "type": "integer",
-            "minimum": 1
+          "sessionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "messageId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "toolAccessMode": {
+            "type": "string",
+            "enum": [
+              "read_only",
+              "read_write"
+            ]
+          },
+          "status": {
+            "type": "string"
+          },
+          "requestedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "startedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "endedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "errorCode": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "assistantMessage": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "usage": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RunEvent"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "AgentConversationSummary": {
+        "type": "object",
+        "required": [
+          "id",
+          "workspaceId",
+          "agentId",
+          "permissionMode",
+          "title",
+          "createdBy",
+          "accessMode",
+          "createdAt",
+          "expiresAt",
+          "status"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "workspaceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "agentId": {
+            "type": "string"
           },
           "permissionMode": {
             "type": "string",
@@ -20462,6 +20270,17 @@
           "createdAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "open",
+              "archived"
+            ]
           }
         },
         "additionalProperties": false
@@ -20478,11 +20297,9 @@
           "origin",
           "reviewState",
           "providerType",
-          "version",
           "ownerUserId",
           "createdBy",
-          "nativeToolConfigs",
-          "workflowUsage"
+          "nativeToolConfigs"
         ],
         "properties": {
           "id": {
@@ -20529,10 +20346,6 @@
               },
               "templateId": {
                 "type": "string"
-              },
-              "templateVersion": {
-                "type": "integer",
-                "minimum": 1
               }
             },
             "additionalProperties": false
@@ -20550,9 +20363,6 @@
               "internal",
               "external"
             ]
-          },
-          "version": {
-            "type": "integer"
           },
           "ownerUserId": {
             "type": "string"
@@ -20619,10 +20429,6 @@
               "type": "string"
             }
           },
-          "targetScope": {
-            "type": "object",
-            "additionalProperties": true
-          },
           "approvalPolicy": {
             "type": "object",
             "additionalProperties": true
@@ -20650,42 +20456,6 @@
             "items": {
               "$ref": "#/components/schemas/AgentCapability"
             }
-          },
-          "workflowsUsingAgent": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "workflowUsage": {
-            "type": "object",
-            "required": [
-              "workflowRunCount"
-            ],
-            "properties": {
-              "workflowRunCount": {
-                "type": "integer",
-                "minimum": 0
-              },
-              "lastRunAt": {
-                "type": "string",
-                "format": "date-time"
-              },
-              "lastStatus": {
-                "type": "string",
-                "enum": [
-                  "queued",
-                  "dispatching",
-                  "running",
-                  "waiting_for_approval",
-                  "needs_review",
-                  "completed",
-                  "failed",
-                  "cancelled"
-                ]
-              }
-            },
-            "additionalProperties": false
           },
           "readiness": {
             "type": "object",
@@ -20856,7 +20626,6 @@
           "authType",
           "credentialMode",
           "revision",
-          "targetConstraints",
           "publicHeaders",
           "connectionStatus",
           "tools"
@@ -20925,10 +20694,6 @@
           },
           "revision": {
             "type": "integer"
-          },
-          "targetConstraints": {
-            "type": "object",
-            "additionalProperties": true
           },
           "provenance": {
             "type": "object",
@@ -21142,10 +20907,6 @@
             "type": "object",
             "additionalProperties": true
           },
-          "targetScope": {
-            "type": "object",
-            "additionalProperties": true
-          },
           "permissionMode": {
             "type": "string",
             "enum": [
@@ -21254,68 +21015,6 @@
           }
         },
         "additionalProperties": false
-      },
-      "AgentVersionList": {
-        "type": "object",
-        "required": [
-          "items"
-        ],
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AgentVersionSnapshot"
-            }
-          }
-        }
-      },
-      "AgentVersionResponse": {
-        "type": "object",
-        "required": [
-          "version"
-        ],
-        "properties": {
-          "version": {
-            "$ref": "#/components/schemas/AgentVersionSnapshot"
-          }
-        }
-      },
-      "AgentVersionSnapshot": {
-        "type": "object",
-        "required": [
-          "id",
-          "agentId",
-          "workspaceId",
-          "version",
-          "snapshot",
-          "createdBy",
-          "createdAt"
-        ],
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "agentId": {
-            "type": "string"
-          },
-          "workspaceId": {
-            "type": "string"
-          },
-          "version": {
-            "type": "integer"
-          },
-          "snapshot": {
-            "$ref": "#/components/schemas/AgentDefinition"
-          },
-          "createdBy": {
-            "type": "string"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        },
-        "additionalProperties": true
       },
       "ApprovalDecision": {
         "$ref": "#/components/schemas/RunApproval"
@@ -21552,7 +21251,6 @@
         "required": [
           "workspaceId",
           "templateId",
-          "templateVersion",
           "state",
           "installedBy",
           "recordIds",
@@ -21564,10 +21262,6 @@
           },
           "templateId": {
             "type": "string"
-          },
-          "templateVersion": {
-            "type": "integer",
-            "minimum": 1
           },
           "state": {
             "type": "string",
@@ -21612,7 +21306,6 @@
         "type": "object",
         "required": [
           "id",
-          "version",
           "name",
           "description",
           "installMode",
@@ -21623,10 +21316,6 @@
         "properties": {
           "id": {
             "type": "string"
-          },
-          "version": {
-            "type": "integer",
-            "minimum": 1
           },
           "name": {
             "type": "string"
@@ -23028,9 +22717,6 @@
       "Issue": {
         "type": "object",
         "properties": {
-          "workflowActivity": {
-            "$ref": "#/components/schemas/WorkflowActivitySummary"
-          },
           "automaticInvestigation": {
             "$ref": "#/components/schemas/AutomaticInvestigationSummary"
           }
@@ -23185,6 +22871,43 @@
             "type": "string"
           }
         }
+      },
+      "KubernetesRbacAdditions": {
+        "type": "object",
+        "required": [
+          "version",
+          "items"
+        ],
+        "properties": {
+          "version": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "items": {
+            "type": "array",
+            "maxItems": 0,
+            "items": {
+              "type": "object",
+              "required": [
+                "key",
+                "name"
+              ],
+              "properties": {
+                "key": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            }
+          }
+        },
+        "additionalProperties": false
       },
       "McpCatalog": {
         "type": "object",
@@ -24084,7 +23807,6 @@
         "required": [
           "id",
           "workspaceId",
-          "sourceVersion",
           "mediaType",
           "title",
           "sourceSizeBytes",
@@ -24101,21 +23823,17 @@
             "type": "string",
             "format": "uuid"
           },
-          "executionId": {
+          "workflowExecutionId": {
             "type": "string"
           },
-          "runId": {
+          "workflowRunId": {
             "type": "string"
           },
-          "targetRunId": {
+          "conversationRunId": {
             "type": "string"
           },
           "toolCallId": {
             "type": "string"
-          },
-          "sourceVersion": {
-            "type": "integer",
-            "minimum": 1
           },
           "mediaType": {
             "type": "string",
@@ -26021,144 +25739,10 @@
         },
         "additionalProperties": true
       },
-      "WorkflowActivitySummary": {
-        "type": "object",
-        "required": [
-          "totalCount",
-          "openCount",
-          "attentionCount"
-        ],
-        "properties": {
-          "totalCount": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "openCount": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "attentionCount": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "openExecution": {
-            "$ref": "#/components/schemas/WorkflowExecutionSummary"
-          },
-          "latestExecution": {
-            "$ref": "#/components/schemas/WorkflowExecutionSummary"
-          }
-        },
-        "additionalProperties": false
-      },
-      "WorkflowApprovalInbox": {
-        "type": "object",
-        "required": [
-          "items",
-          "pendingCount"
-        ],
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/WorkflowApprovalInboxRow"
-            }
-          },
-          "pendingCount": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "nextCursor": {
-            "type": "string"
-          }
-        }
-      },
-      "WorkflowApprovalInboxRow": {
-        "type": "object",
-        "required": [
-          "approvalId",
-          "runId",
-          "source",
-          "status",
-          "summary"
-        ],
-        "properties": {
-          "approvalId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "runId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "source": {
-            "type": "string",
-            "enum": [
-              "target_tool",
-              "workflow_gate",
-              "agent_gate",
-              "agent_tool",
-              "workflow_tool"
-            ]
-          },
-          "workflowId": {
-            "type": "string",
-            "example": "workflow-cluster-daily-triage"
-          },
-          "targetId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "targetType": {
-            "type": "string"
-          },
-          "summary": {
-            "type": "string"
-          },
-          "toolName": {
-            "type": "string"
-          },
-          "requestedBy": {
-            "type": "string"
-          },
-          "expiresAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "pending",
-              "approved",
-              "rejected",
-              "expired"
-            ]
-          },
-          "decision": {
-            "type": "string",
-            "enum": [
-              "approved",
-              "rejected"
-            ]
-          },
-          "decidedBy": {
-            "type": "string"
-          },
-          "decidedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "requestedAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        },
-        "additionalProperties": true
-      },
       "WorkflowCapabilitiesPreview": {
         "type": "object",
         "required": [
           "workflowId",
-          "workflowVersion",
           "promptDigest",
           "bindingDigest",
           "mode",
@@ -26177,10 +25761,6 @@
           "workflowId": {
             "type": "string",
             "example": "workflow-cluster-daily-triage"
-          },
-          "workflowVersion": {
-            "type": "integer",
-            "minimum": 1
           },
           "promptDigest": {
             "type": "string",
@@ -26537,7 +26117,6 @@
           "source": {
             "type": "string",
             "enum": [
-              "target",
               "mcp",
               "builtin"
             ]
@@ -26560,7 +26139,6 @@
         "required": [
           "id",
           "capabilityId",
-          "target",
           "agent",
           "required",
           "status"
@@ -26574,26 +26152,6 @@
           },
           "capabilityId": {
             "type": "string"
-          },
-          "target": {
-            "type": "object",
-            "required": [
-              "id",
-              "targetType"
-            ],
-            "properties": {
-              "id": {
-                "type": "string"
-              },
-              "targetType": {
-                "type": "string",
-                "enum": [
-                  "kubernetes",
-                  "virtual_machine"
-                ]
-              }
-            },
-            "additionalProperties": false
           },
           "agent": {
             "type": "object",
@@ -26678,7 +26236,6 @@
         "required": [
           "id",
           "workspaceId",
-          "version",
           "origin",
           "name",
           "status",
@@ -26697,10 +26254,6 @@
           "workspaceId": {
             "type": "string",
             "format": "uuid"
-          },
-          "version": {
-            "type": "integer",
-            "minimum": 1
           },
           "origin": {
             "$ref": "#/components/schemas/WorkflowOrigin"
@@ -26838,7 +26391,6 @@
                 "enum": [
                   "manual",
                   "external_integration",
-                  "agent_chat",
                   "historical_event"
                 ]
               }
@@ -26885,7 +26437,6 @@
             "enum": [
               "manual",
               "external_integration",
-              "agent_chat",
               "schedule",
               "webhook",
               "historical_event"
@@ -26967,8 +26518,7 @@
             "type": "object",
             "required": [
               "id",
-              "name",
-              "version"
+              "name"
             ],
             "properties": {
               "id": {
@@ -26976,10 +26526,6 @@
               },
               "name": {
                 "type": "string"
-              },
-              "version": {
-                "type": "integer",
-                "minimum": 1
               }
             },
             "additionalProperties": false
@@ -27010,19 +26556,6 @@
             "properties": {
               "id": {
                 "type": "string"
-              },
-              "targetId": {
-                "type": "string"
-              },
-              "targetName": {
-                "type": "string"
-              },
-              "targetType": {
-                "type": "string",
-                "enum": [
-                  "kubernetes",
-                  "virtual_machine"
-                ]
               },
               "requestedAt": {
                 "type": "string",
@@ -27119,7 +26652,6 @@
                 "type": "string",
                 "enum": [
                   "workspace",
-                  "target",
                   "agent"
                 ]
               },
@@ -27128,19 +26660,6 @@
                 "enum": [
                   "github",
                   "gitlab"
-                ]
-              },
-              "targetId": {
-                "type": "string"
-              },
-              "targetName": {
-                "type": "string"
-              },
-              "targetType": {
-                "type": "string",
-                "enum": [
-                  "kubernetes",
-                  "virtual_machine"
                 ]
               },
               "agentId": {
@@ -27251,10 +26770,6 @@
           },
           "templateId": {
             "type": "string"
-          },
-          "templateVersion": {
-            "type": "integer",
-            "minimum": 1
           }
         },
         "additionalProperties": false
@@ -27273,9 +26788,6 @@
           "workflowId": {
             "type": "string",
             "example": "workflow-cluster-daily-triage"
-          },
-          "workflowVersion": {
-            "type": "integer"
           },
           "name": {
             "type": "string"
@@ -27438,7 +26950,6 @@
           "id",
           "workspaceId",
           "workflowId",
-          "workflowVersion",
           "createdBy"
         ],
         "properties": {
@@ -27453,9 +26964,6 @@
           "workflowId": {
             "type": "string",
             "example": "workflow-cluster-daily-triage"
-          },
-          "workflowVersion": {
-            "type": "integer"
           },
           "createdBy": {
             "type": "string",
@@ -27938,6 +27446,103 @@
         },
         "additionalProperties": false
       },
+      "WorkspaceApprovalInbox": {
+        "type": "object",
+        "required": [
+          "items",
+          "pendingCount"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkspaceApprovalInboxRow"
+            }
+          },
+          "pendingCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "nextCursor": {
+            "type": "string"
+          }
+        }
+      },
+      "WorkspaceApprovalInboxRow": {
+        "type": "object",
+        "required": [
+          "approvalId",
+          "runId",
+          "source",
+          "status",
+          "summary"
+        ],
+        "properties": {
+          "approvalId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "runId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "interactive_tool",
+              "workflow_gate",
+              "agent_gate",
+              "agent_tool",
+              "workflow_tool"
+            ]
+          },
+          "workflowId": {
+            "type": "string",
+            "example": "workflow-cluster-daily-triage"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "toolName": {
+            "type": "string"
+          },
+          "requestedBy": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "approved",
+              "rejected",
+              "expired"
+            ]
+          },
+          "decision": {
+            "type": "string",
+            "enum": [
+              "approved",
+              "rejected"
+            ]
+          },
+          "decidedBy": {
+            "type": "string"
+          },
+          "decidedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "requestedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": true
+      },
       "WorkspaceAuditEvent": {
         "type": "object",
         "required": [
@@ -28232,12 +27837,6 @@
           "description": {
             "type": "string"
           },
-          "targetCatalogDescription": {
-            "type": "string"
-          },
-          "targetToggleable": {
-            "type": "boolean"
-          },
           "semanticCapabilityId": {
             "type": "string"
           },
@@ -28247,7 +27846,7 @@
               "type": "string",
               "enum": [
                 "workflow",
-                "target_chat"
+                "agent_chat"
               ]
             }
           },

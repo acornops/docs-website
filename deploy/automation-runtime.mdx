@@ -27,7 +27,7 @@ Workflow execution duration and report retention are deployment policies:
 | Helm value | Environment variable | Purpose |
 | --- | --- | --- |
 | `agent.runtime.maxRuntimeMs` | `AGENT_MAX_RUNTIME_MS` | Maximum Workflow and target-chat execution duration |
-| `components.controlPlane.reportArtifacts.maxRetentionDays` | `TARGET_CHAT_REPORT_RETENTION_DAYS` | Retention for Workflow and target-chat PDF reports |
+| `components.controlPlane.reportArtifacts.maxRetentionDays` | `GENERATED_DOCUMENT_RETENTION_DAYS` | Retention for generated documents |
 
 Workflow definitions cannot increase these limits.
 

@@ -18,16 +18,16 @@ Built-in cluster and VM tools are AcornOps built-in target tools. They are not w
 
 AcornOps ships these code-owned semantic capabilities:
 
-- `target.diagnostics.read` routes to read-only built-in tools advertised by AgentK or AgentV for one exact target.
+- `infrastructure.diagnostics.read` routes to read-only built-in tools advertised by AgentK or AgentV for one exact target.
 - `prompt.resources.read` reads only exact prompt-resource binding IDs pinned to a Workflow run.
 - `http.fetch.get` reads configured public HTTPS text or JSON through the control plane.
 - `reports.pdf.generate` creates a bounded report artifact from approved Workflow evidence.
 
 `scm.repository.read` is a supported semantic capability, but it is not built in. It needs a reviewed repository integration.
 
-Semantic capability IDs do not authorize tools by themselves. For `target.diagnostics.read`, the control plane creates reviewed mappings from each eligible specialist Agent to each exact target after built-in tool synchronization. A Workflow does not select a target when it is authored or launched. Instead, the model supplies `target_id` when it calls a target MCP tool. The compiled authority is the intersection of the Agent target scope, the exact-target mapping, the acting user's permissions, and the live target catalog.
+Semantic capability IDs do not authorize tools by themselves. For `infrastructure.diagnostics.read`, the control plane creates a reviewed mapping from each eligible specialist Agent to the stable, target-independent Targets MCP catalog. A Workflow does not select a target when it is authored or launched. Instead, the model supplies `target_id` and `target_type` when it calls a target MCP tool. The compiled authority is the intersection of the Agent's generic capability mapping, the acting user's permissions, the pinned run scope, and call-time validation against the selected target's live connector support.
 
-Workspace administrators set the Agent and Workflow ceilings. Starter diagnostics allow Kubernetes and virtual-machine target types. An administrator can narrow the Agent to exact target IDs. Operators can name a target in the prompt, but the resulting tool call cannot widen the administrator-defined scope. Remote MCP tools, skills, web search, target insights, workspace-native tools, and write-capable target tools are not included in `target.diagnostics.read`.
+Workspace administrators set the Agent and Workflow ceilings. Starter diagnostics allow Kubernetes and virtual-machine target types. An administrator can narrow the Agent to exact target IDs. Operators can name a target in the prompt, but the resulting tool call cannot widen the administrator-defined scope. Remote MCP tools, skills, web search, target insights, workspace-native tools, and write-capable target tools are not included in `infrastructure.diagnostics.read`.
 
 If you are building a bot or workflow adapter that reacts to AcornOps events, start with [Integrations](/developer/integrations). Use this page when you are configuring tools that AcornOps can call.
 
@@ -54,7 +54,7 @@ The native catalog currently contains:
 - `http.fetch.get`, exposed as `acornops_fetch`, performs an unauthenticated HTTPS `GET` through the control plane. Configure one to 20 complete URL patterns on the Agent's **Capabilities → Tools** page. A pattern may contain `*` only in its path or query, where it matches zero or more characters; scheme, hostname, and port always match exactly. Exact patterns do not authorize extra query values. Redirects, credentials, fragments, IP-literal and private-network destinations, binary media, responses over 256 KiB, and requests exceeding 15 seconds are rejected. Treat returned content as untrusted external data.
 - `reports.pdf.generate`, which creates a bounded, provenance-linked PDF report with authenticated download and idempotency per run and tool call.
 
-Native tools are code-owned, so granting or revoking one requires `manage_agents`, not `manage_mcp`. Assignment updates the Agent version, reviewed semantic mapping, and dependent Workflow readiness together. Internal coordinator runs cannot receive operational tools.
+Native tools are code-owned, so granting or revoking one requires `manage_agents`, not `manage_mcp`. Assignment updates the mutable Agent definition, reviewed semantic mapping, and dependent Workflow readiness together. Internal coordinator runs cannot receive operational tools.
 
 `prompt.resources.read` and `http.fetch.get` have Workflow-only invocation scope. `reports.pdf.generate` is available to Workflows and target chat. Delegated specialist children cannot invoke workspace-native tools. Target adapters reject workspace tools; Kubernetes and VM native tools continue through AgentK and AgentV.
 
@@ -111,7 +111,6 @@ Tools are authorized by server ID plus tool name. Two installed servers can ther
 | `publicHeaders` | Optional non-secret headers sent to the remote MCP server. |
 | Authentication | Bearer token or a validated custom header for authenticated endpoints. |
 | Credential ownership | No credential, workspace-managed, or individual. |
-| Target constraints | Optional authoritative target types and target IDs within the Agent's own target ceiling. |
 
 Agent and target records never store credential plaintext or secret references. The gateway encrypts each connection value separately for the exact installation and owner. A change to the effective URL, authentication metadata, public headers, catalog trust, or credential ownership blocks invocation and invalidates affected connections before the new configuration can be used.
 
@@ -231,7 +230,7 @@ An Agent sets the maximum permission mode. A workflow or `/permissions` may only
 - **Ask before changes** runs reads automatically and requires approval for every write. This is the default.
 - **Auto-run allowed changes** may run only administrator-approved, non-destructive writes automatically. High-risk and destructive actions always require approval.
 
-Every invocation intersects current principal RBAC, the pinned Agent snapshot, workflow/session restrictions, target constraints, reviewed tool state, permission mode, and the exact resolved installation connection state.
+Every invocation intersects current principal RBAC, the pinned Agent snapshot, workflow/session restrictions, reviewed tool state, permission mode, and the exact resolved installation connection state. The generic Targets MCP catalog is stable and independent from workspace target inventory. A Targets MCP invocation additionally validates the call-time `target_id` and `target_type` against the current workspace target and its live connector tool support.
 
 ## Write confirmations
 

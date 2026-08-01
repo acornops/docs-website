@@ -353,7 +353,7 @@ Workflow execution duration, PDF report retention, and complete tool-result arti
 | Helm value | Rendered environment variable | Default | Purpose |
 | --- | --- | --- | --- |
 | `agent.runtime.maxRuntimeMs` | `AGENT_MAX_RUNTIME_MS` | `600000` | Maximum execution duration for Workflow and target-chat runs. |
-| `components.controlPlane.reportArtifacts.maxRetentionDays` | `TARGET_CHAT_REPORT_RETENTION_DAYS` | `30` | Retention period for Workflow and target-chat PDF reports. Accepts `1` through `365`. |
+| `components.controlPlane.reportArtifacts.maxRetentionDays` | `GENERATED_DOCUMENT_RETENTION_DAYS` | `30` | Retention period for generated documents. Accepts `1` through `365`. |
 | `components.controlPlane.toolResultArtifacts.retentionDays` | `TOOL_RESULT_ARTIFACT_RETENTION_DAYS` | `7` | Retention for eligible complete redacted tool results. Accepts `1` through `7`. |
 | `components.controlPlane.toolResultArtifacts.maxBytes` | `TOOL_RESULT_ARTIFACT_MAX_BYTES` | `2097152` | Maximum uncompressed complete-result artifact size, up to 2 MiB. |
 

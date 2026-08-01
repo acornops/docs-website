@@ -7,9 +7,9 @@ AcornOps separates reusable specialist definitions from runnable automation.
 
 ## Specialist Agents
 
-A specialist Agent is a versioned workspace definition with instructions and reviewed semantic capabilities. It may also have exact tools, skills, or remote MCP servers attached to it.
+A specialist Agent is a mutable workspace definition with instructions and reviewed semantic capabilities. It may also have exact tools, skills, or remote MCP servers attached to it.
 
-An Agent does not start or own a run by itself.
+You can chat with an Agent directly. Each message resolves the Agent's current configuration and stores an immutable snapshot on that run. Direct Agent chat does not create or use a Workflow.
 
 ## Workflows
 
@@ -21,20 +21,20 @@ A Workflow is the runnable automation definition. It combines:
 - an effective capability policy,
 - optional schedules or incoming workflow webhooks.
 
-A Workflow with one Agent runs that specialist directly. A Workflow with multiple Agents lets AcornOps coordinate eligible specialists for the required capabilities.
+A Workflow with one Agent runs that specialist directly. A Workflow with multiple Agents lets AcornOps coordinate eligible specialists for the required capabilities. Workflow runs use their own sessions and execution records; they do not use target-chat sessions.
 
 ## Target chat is separate
 
-Target-native chat does not select a specialist Agent or launch a Workflow. It uses the target's generic assistant and the exact capabilities available for that target.
+Target-native chat does not select a specialist Agent or launch a Workflow. It uses the target's generic assistant and the exact capabilities available for that target. Agents and Workflows can use the generic Targets MCP tools without being bound to a target definition; each tool call supplies and validates `target_id` and `target_type` at invocation time.
 
 ## Safety model
 
 Semantic capabilities help route work but do not authorize tools by themselves. At launch, AcornOps resolves exact resources and intersects:
 
 - the signed-in member's permissions,
-- workspace and target policy,
+- workspace policy and, for a Targets MCP invocation, the selected target's policy,
 - selected Agent capabilities,
-- live integration and target readiness,
+- current MCP integration readiness and call-time connector availability,
 - requested read or write mode,
 - exact reviewed tools.
 

@@ -45,7 +45,7 @@
     },
     {
       "name": "agents",
-      "description": "Workspace-scoped custom agent definitions, triggers, versions, tests, and activity."
+      "description": "Workspace-scoped Agent definitions, direct conversations, tests, and activity."
     },
     {
       "name": "admin",
