@@ -3058,7 +3058,7 @@
           "runs",
           "workflows"
         ],
-        "summary": "Get report artifact metadata",
+        "summary": "Get generated document metadata",
         "security": [
           {
             "userSession": []
@@ -3082,7 +3082,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Report metadata without report source or PDF bytes.",
+            "description": "Document metadata without source or artifact bytes.",
             "content": {
               "application/json": {
                 "schema": {
@@ -3121,7 +3121,7 @@
           "runs",
           "workflows"
         ],
-        "summary": "Render and stream a report artifact",
+        "summary": "Render and stream a generated document",
         "security": [
           {
             "userSession": []
@@ -3145,12 +3145,17 @@
         ],
         "responses": {
           "200": {
-            "description": "Freshly rendered PDF stream.",
+            "description": "PDF or Markdown document stream.",
             "content": {
               "application/pdf": {
                 "schema": {
                   "type": "string",
                   "format": "binary"
+                }
+              },
+              "text/markdown": {
+                "schema": {
+                  "type": "string"
                 }
               }
             }
@@ -5048,51 +5053,7 @@
                       "minLength": 1
                     }
                   },
-                  "capabilityPolicy": {
-                    "type": "object",
-                    "properties": {
-                      "mode": {
-                        "type": "string",
-                        "enum": [
-                          "read_only",
-                          "read_write"
-                        ]
-                      },
-                      "restrictionMode": {
-                        "type": "string",
-                        "enum": [
-                          "inherit",
-                          "restrict"
-                        ]
-                      },
-                      "semanticCapabilityIds": {
-                        "type": "array",
-                        "items": {
-                          "type": "string"
-                        }
-                      },
-                      "contextGrants": {
-                        "type": "array",
-                        "items": {
-                          "type": "string"
-                        }
-                      },
-                      "approvalRequirements": {
-                        "type": "array",
-                        "items": {
-                          "type": "string"
-                        }
-                      }
-                    },
-                    "additionalProperties": false
-                  },
                   "tags": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    }
-                  },
-                  "requiredPermissions": {
                     "type": "array",
                     "items": {
                       "type": "string"
@@ -7764,7 +7725,7 @@
             "required": true,
             "schema": {
               "type": "string",
-              "example": "reports.pdf.generate"
+              "example": "documents.create"
             }
           }
         ],
@@ -7857,7 +7818,7 @@
             "required": true,
             "schema": {
               "type": "string",
-              "example": "reports.pdf.generate"
+              "example": "documents.create"
             }
           }
         ],
@@ -18708,7 +18669,7 @@
           "workflows"
         ],
         "summary": "List server-compiled workflow options",
-        "description": "Returns workflow options. Runtime and retention policy lists contain the single effective deployment-wide value. When agentId is supplied, MCP servers, exact tool references, and skills are limited to that Agent’s installed capability ceiling. The endpoint never exposes catalog installation actions.",
+        "description": "Returns the active and inactive specialist Agents available for Workflow assignment. Tools, MCP servers, skills, context, permissions, and approval behavior are owned by Agents and are not authorable Workflow options.",
         "security": [
           {
             "userSession": []
@@ -18717,14 +18678,6 @@
         "parameters": [
           {
             "$ref": "#/components/parameters/PathWorkspaceId"
-          },
-          {
-            "in": "query",
-            "name": "agentId",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
           }
         ],
         "responses": {
@@ -19298,51 +19251,7 @@
                       "minLength": 1
                     }
                   },
-                  "capabilityPolicy": {
-                    "type": "object",
-                    "properties": {
-                      "mode": {
-                        "type": "string",
-                        "enum": [
-                          "read_only",
-                          "read_write"
-                        ]
-                      },
-                      "restrictionMode": {
-                        "type": "string",
-                        "enum": [
-                          "inherit",
-                          "restrict"
-                        ]
-                      },
-                      "semanticCapabilityIds": {
-                        "type": "array",
-                        "items": {
-                          "type": "string"
-                        }
-                      },
-                      "contextGrants": {
-                        "type": "array",
-                        "items": {
-                          "type": "string"
-                        }
-                      },
-                      "approvalRequirements": {
-                        "type": "array",
-                        "items": {
-                          "type": "string"
-                        }
-                      }
-                    },
-                    "additionalProperties": false
-                  },
                   "tags": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    }
-                  },
-                  "requiredPermissions": {
                     "type": "array",
                     "items": {
                       "type": "string"
@@ -23334,7 +23243,8 @@
           "mediaType": {
             "type": "string",
             "enum": [
-              "application/pdf"
+              "application/pdf",
+              "text/markdown"
             ]
           },
           "title": {
@@ -25522,65 +25432,6 @@
         },
         "additionalProperties": false
       },
-      "WorkflowCapabilityPolicy": {
-        "type": "object",
-        "required": [
-          "mode",
-          "restrictionMode",
-          "semanticCapabilityIds",
-          "contextGrants",
-          "maxRuntimeSeconds",
-          "retentionDays",
-          "approvalRequirements"
-        ],
-        "properties": {
-          "mode": {
-            "type": "string",
-            "enum": [
-              "read_only",
-              "read_write"
-            ]
-          },
-          "restrictionMode": {
-            "type": "string",
-            "enum": [
-              "inherit",
-              "restrict"
-            ],
-            "description": "inherit resolves the selected Agents current combined ceiling. restrict uses semanticCapabilityIds as an explicit subset, including an intentionally empty subset."
-          },
-          "semanticCapabilityIds": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "description": "Must be empty when restrictionMode is inherit."
-          },
-          "contextGrants": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "maxRuntimeSeconds": {
-            "type": "integer",
-            "minimum": 1,
-            "description": "Effective deployment-wide execution limit. Workflow mutations cannot override this value."
-          },
-          "retentionDays": {
-            "type": "integer",
-            "minimum": 1,
-            "description": "Effective deployment-wide report retention period. Workflow mutations cannot override this value."
-          },
-          "approvalRequirements": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          }
-        },
-        "additionalProperties": false
-      },
       "WorkflowCapabilityToolPreview": {
         "type": "object",
         "required": [
@@ -25737,8 +25588,6 @@
           "prompt",
           "agentIds",
           "executionMode",
-          "capabilityPolicy",
-          "requiredPermissions",
           "createdBy"
         ],
         "properties": {
@@ -25784,16 +25633,7 @@
             ],
             "readOnly": true
           },
-          "capabilityPolicy": {
-            "$ref": "#/components/schemas/WorkflowCapabilityPolicy"
-          },
           "tags": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "requiredPermissions": {
             "type": "array",
             "items": {
               "type": "string"
@@ -26166,49 +26006,7 @@
       "WorkflowOptionsCatalog": {
         "type": "object",
         "properties": {
-          "mcpServers": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/WorkflowOption"
-            }
-          },
-          "mcpTools": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/WorkflowOption"
-            }
-          },
-          "skills": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/WorkflowOption"
-            }
-          },
           "agents": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/WorkflowOption"
-            }
-          },
-          "outputFormats": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/WorkflowOption"
-            }
-          },
-          "approvalPolicies": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/WorkflowOption"
-            }
-          },
-          "runtimeLimits": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/WorkflowOption"
-            }
-          },
-          "retentionPolicies": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/WorkflowOption"
