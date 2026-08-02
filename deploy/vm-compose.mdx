@@ -21,6 +21,13 @@ cp env/vm/.env.example env/vm/.env.prod
 
 Review the production environment file. Keep `TRUST_PROXY=1` when the edge proxy terminates TLS and owns forwarded host headers.
 
+Copy all four exact image references from the `vm-prod-v1` entry in the
+[`stack-versions.yaml` release matrix](https://github.com/acornops/acornops-deployment/blob/main/release/stack-versions.yaml)
+into `MANAGEMENT_CONSOLE_IMAGE`, `CONTROL_PLANE_IMAGE`,
+`EXECUTION_ENGINE_IMAGE`, and `LLM_GATEWAY_IMAGE`. Treat them as one tested
+set; a newer tag in an individual repository does not make it part of the
+supported VM stack.
+
 ## Start the platform
 
 ```bash
@@ -31,7 +38,7 @@ Database initialization runs before the services start. Treat initialization fai
 
 ## Production posture
 
-- Pin the complete supported image matrix.
+- Pin the complete supported image matrix from `stack-versions.yaml`.
 - Keep the API and console behind TLS.
 - Keep internal service endpoints private.
 - Use durable state services and volumes.

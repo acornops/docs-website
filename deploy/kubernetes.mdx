@@ -24,14 +24,23 @@ The chart references operator-managed secret values rather than placing them dir
 
 ## Install
 
-Create the Secret expected by your values, then install a pinned platform release:
+Choose `ACORNOPS_PLATFORM_VERSION` from the `acornopsPlatform` entry in the
+[`stack-versions.yaml` release matrix](https://github.com/acornops/acornops-deployment/blob/main/release/stack-versions.yaml).
+Create the Secret expected by your values, then install that exact chart version:
 
 ```bash
+export ACORNOPS_PLATFORM_VERSION="<version-from-stack-versions.yaml>"
+
 helm upgrade --install acornops-platform oci://ghcr.io/acornops/charts/acornops-platform \
+  --version "${ACORNOPS_PLATFORM_VERSION}" \
   --namespace acornops-platform \
   --create-namespace \
   --values values.prod.yaml
 ```
+
+The chart pins the compatible platform images. Do not override one component
+with an independently released tag unless a newer complete stack matrix lists
+that combination.
 
 Review public hosts, auth, workspace roles, run policy, model settings, target connectivity, gateway controls, internal transport, and network egress before installation.
 
