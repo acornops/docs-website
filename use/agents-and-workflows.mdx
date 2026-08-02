@@ -24,7 +24,7 @@ New workspaces start with two workspace-owned specialists:
 - **Kubernetes Agent** specializes in Kubernetes operations. It can use reviewed read and write tools exposed through the generic **Targets** MCP server. Every write remains approval-gated.
 - **Virtual Machine Agent** specializes in Linux virtual-machine diagnostics. It requests read-only diagnostic capability and does not request remediation capability, so it is ready without AgentV's optional privileged helper.
 
-When AgentK or AgentV connects, AcornOps records the built-in tools advertised by that target. Reviewed built-in tools are projected through a workspace-level `targets` MCP facade; Agents and Workflows do not store target IDs or target types. Each target is selected and validated from `target_id` and `target_type` only when the tool is called. An administrator can disable the built-in server or individual tools. If AgentV advertises `restart_service`, its catalog entry is enabled, but an administrator must explicitly grant remediation capability before an Agent can use it. The starter Agents also retain the prompt-resource and PDF tools used by the current reporting Workflows.
+When AgentK or AgentV connects, AcornOps records the built-in tools advertised by that target. Reviewed built-in tools are projected through a workspace-level `targets` MCP facade; Agents and Workflows do not store target IDs or target types. Each target is selected and validated from `target_id` and `target_type` only when the tool is called. An administrator can disable the built-in server or individual tools. If AgentV advertises `restart_service`, its catalog entry is enabled, but an administrator must explicitly grant remediation capability before an Agent can use it. The starter Agents also retain the PDF tool used by the current reporting Workflows.
 
 Coordination is system-owned. The coordinator is a code-owned Workflow executor, not an Agent. Its profile is snapshotted into each new coordinator root attempt and is never exposed through Agent APIs.
 
@@ -76,8 +76,8 @@ The signed run scope limits target MCP calls to exact generic Targets MCP tool
 references allowed by reviewed mappings. The automatic VM health check and starter VM Agent remain
 read-only even when AgentV advertises `restart_service`. The current opt-in
 Infrastructure remediation template instructs its assigned Kubernetes specialist to
-operate on a Kubernetes target named in the request; this is prompt behavior,
-not a persisted target binding.
+operate on a Kubernetes target named in the request; the Agent's Targets MCP
+policy remains authoritative.
 
 The template drawer exposes these Workflow records:
 
@@ -90,7 +90,7 @@ The template drawer exposes these Workflow records:
 
 Template manifests contain prose, safe policy defaults, semantic requirements, and symbolic relationships only. Provisioning generates record IDs and resolves relationships inside the workspace transaction. It does not contain workspace or target IDs, MCP server IDs or URLs, external tool aliases, skill installation IDs, credentials, or connection assumptions. Shipped bundle changes do not overwrite existing workspace-owned definitions.
 
-Schedules store cadence and principal—not launch inputs or access grants. Every occurrence compiles the current active saved prompt and reauthorizes its explicit resource bindings and execution scope. An invalid definition, deletion, integration outage, membership change, or authorization failure auto-pauses the schedule with a bounded actionable reason; repair the cause and resume it manually.
+Schedules store cadence and principal—not launch inputs or access grants. Every occurrence compiles the current active saved prompt and execution scope from the assigned Agent capabilities. An invalid definition, deletion, integration outage, membership change, or authorization failure auto-pauses the schedule with a bounded actionable reason; repair the cause and resume it manually.
 
 ## Organize workflows and Activity
 
@@ -107,7 +107,7 @@ Activity ledger defaults to open work. You can search it or filter by state,
 origin, Workflow, and issue. Each row identifies the Workflow, the schedule or
 webhook that started it, its current state, start or completion time, and an
 exact execution link. A target appears only on a recorded target tool call or
-approval, not as an execution binding.
+approval.
 
 Issue rows show related automation directly on the workspace, Kubernetes, and
 virtual-machine issue surfaces. Use **Review run** for approval or review

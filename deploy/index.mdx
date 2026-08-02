@@ -28,12 +28,13 @@ Deploy the central platform first. Workspace administrators connect targets afte
 ## Recommended sequence
 
 1. [Prepare the prerequisites](/deploy/prerequisites).
-2. Deploy the central platform on [Kubernetes](/deploy/kubernetes) or with [VM Compose](/deploy/vm-compose).
-3. [Configure platform policy](/deploy/configuration).
-4. Complete the [production readiness checklist](/deploy/production-readiness).
-5. Optionally configure the [platform admin console](/deploy/platform-admin-console) for deployment-wide governance.
-6. Hand workspace onboarding to the intended owners and users.
-7. Use the [operations guide](/deploy/operations) for upgrades, health, and rotation.
+2. Select one complete, published stack from the [`stack-versions.yaml` release matrix](https://github.com/acornops/acornops-deployment/blob/main/release/stack-versions.yaml). Do not combine independently released component tags.
+3. Deploy the central platform on [Kubernetes](/deploy/kubernetes) or with [VM Compose](/deploy/vm-compose).
+4. [Configure platform policy](/deploy/configuration).
+5. Complete the [production readiness checklist](/deploy/production-readiness).
+6. Optionally configure the [platform admin console](/deploy/platform-admin-console) for deployment-wide governance.
+7. Hand workspace onboarding to the intended owners and users.
+8. Use the [operations guide](/deploy/operations) for upgrades, health, and rotation.
 
 The [deployment reference](/deploy/deployment-reference) and [configuration reference](/deploy/configuration-reference) preserve the complete setting and behavior details.
 

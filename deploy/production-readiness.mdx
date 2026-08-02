@@ -5,6 +5,12 @@ description: "Validate a self-hosted deployment before operational use"
 
 Complete this checklist after installation and after material platform configuration changes.
 
+## Release integrity
+
+- The installed Helm chart or VM image references exactly match one published [`stack-versions.yaml` release matrix](https://github.com/acornops/acornops-deployment/blob/main/release/stack-versions.yaml).
+- No component was upgraded independently from the rest of its pinned stack.
+- The deployed image digests were recorded after registries resolved the pinned tags.
+
 ## Public access
 
 - The management console loads through the intended console host.

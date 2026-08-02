@@ -9,7 +9,7 @@ This page covers day-two operations for the central platform and connected Kuber
 
 For production-style environments:
 
-1. Select one pinned stack matrix whose execution contract version is exactly 2.
+1. Select one pinned stack from the [`stack-versions.yaml` release matrix](https://github.com/acornops/acornops-deployment/blob/main/release/stack-versions.yaml) whose execution contract version is exactly 2.
 2. Confirm Postgres and Redis availability, then explicitly recreate the pre-release control-plane and gateway databases for this greenfield schema epoch.
 3. Deploy gateway, control plane, execution engine, deployment metadata, and documentation as one stack. Do not roll any image independently.
 4. Smoke test OIDC sign-in, workspace listing, agent connectivity, built-in tools, approval receipt execution, workspace and individual credential lifecycles, and a read-only run.
@@ -124,7 +124,7 @@ Also register `https://console.example.com/api/v1/auth/oidc/logout/callback`
 as an exact post-logout redirect. If logout reports that only the AcornOps
 session was cleared, verify the provider discovery document exposes
 `end_session_endpoint` or configure the public
-`auth.oidc.logout.endSessionEndpointOverride`. Never use an internal service
+`userAccess.oidc.logout.endSessionEndpointOverride`. Never use an internal service
 hostname for the browser-facing logout endpoint.
 
 Keep query strings out of edge and ingress access logs. OIDC callbacks and

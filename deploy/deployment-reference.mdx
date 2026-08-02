@@ -45,7 +45,8 @@ Review these value groups before installing or upgrading:
 | Area | Values |
 | --- | --- |
 | Public hosts | `platform.publicUrl`, `platform.consoleUrl`, `exposure.ingress.apiHost`, `exposure.ingress.consoleHost` |
-| Auth | `auth.oidc.*`, `auth.password.*`, `auth.session.*` |
+| Workspace-user access | `userAccess.oidc.*`, `userAccess.password.*`, `userAccess.session.*` |
+| Platform-admin access | `platformAdminAccess.*` |
 | Workspace roles | `workspaceRoles.enabledBuiltIns`, `workspaceRoles.customTemplates` |
 | Run policy and target connectivity | `ai.*`, `assistantRuntime.*`, `agentGateway.*` |
 | Reasoning summaries | `ai.reasoningSummariesEnabled`, `ai.allowedReasoningSummaryModes`, `ai.allowedReasoningEfforts` |
@@ -159,11 +160,17 @@ If `enabledBuiltIns` is omitted, all built-ins are enabled. If it is provided, i
 Example install:
 
 ```bash
+export ACORNOPS_PLATFORM_VERSION="<version-from-stack-versions.yaml>"
+
 helm upgrade --install acornops-platform oci://ghcr.io/acornops/charts/acornops-platform \
+  --version "${ACORNOPS_PLATFORM_VERSION}" \
   --namespace acornops-platform \
   --create-namespace \
   --values values.prod.yaml
 ```
+
+Resolve the version from the `acornopsPlatform` entry in the
+[`stack-versions.yaml` release matrix](https://github.com/acornops/acornops-deployment/blob/main/release/stack-versions.yaml).
 
 ### Production exposure
 
@@ -210,7 +217,7 @@ Before starting the stack:
 - Keep `TRUST_PROXY=1` when the edge proxy owns TLS and forwarded host headers.
 - Point database and Redis settings at durable services.
 - Review JWKS readiness, request-size, rate-limit, and MCP egress variables.
-- Pin image tags instead of using mutable tags.
+- Pin all image references from the `vm-prod-v1` release matrix instead of using mutable or independently selected tags.
 - Confirm the reverse proxy terminates TLS for the console and API hosts.
 
 Database init jobs run before services start. Treat init failures as deployment blockers.
