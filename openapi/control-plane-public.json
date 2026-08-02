@@ -4344,12 +4344,6 @@
                     "type": "string",
                     "example": "UTC"
                   },
-                  "approvedContextGrants": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    }
-                  },
                   "principal": {
                     "type": "object",
                     "required": [
@@ -4641,12 +4635,6 @@
                   },
                   "enabled": {
                     "type": "boolean"
-                  },
-                  "approvedContextGrants": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    }
                   }
                 },
                 "additionalProperties": false
@@ -5194,20 +5182,13 @@
               "schema": {
                 "type": "object",
                 "required": [
-                  "workspaceId",
-                  "approvedContextGrants"
+                  "workspaceId"
                 ],
                 "properties": {
                   "workspaceId": {
                     "type": "string",
                     "format": "uuid",
                     "example": "4b930d98-add9-4924-ab26-3c16d96ec373"
-                  },
-                  "approvedContextGrants": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    }
                   }
                 },
                 "additionalProperties": false
@@ -5427,12 +5408,6 @@
                   "workspaceId": {
                     "type": "string",
                     "format": "uuid"
-                  },
-                  "approvedContextGrants": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    }
                   }
                 },
                 "additionalProperties": true
@@ -18817,12 +18792,6 @@
                     "type": "string",
                     "example": "UTC"
                   },
-                  "approvedContextGrants": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    }
-                  },
                   "principal": {
                     "type": "object",
                     "required": [
@@ -18889,7 +18858,7 @@
           "workflows"
         ],
         "summary": "Preview a workflow schedule",
-        "description": "Compiles the active saved workflow definition and validates context grants, cron, and timezone without creating or changing a schedule.",
+        "description": "Compiles the active saved workflow definition and validates cron and timezone without creating or changing a schedule.",
         "security": [
           {
             "userSession": []
@@ -18934,12 +18903,6 @@
                   "timezone": {
                     "type": "string",
                     "example": "UTC"
-                  },
-                  "approvedContextGrants": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    }
                   },
                   "principal": {
                     "type": "object",
@@ -19089,12 +19052,6 @@
                   },
                   "enabled": {
                     "type": "boolean"
-                  },
-                  "approvedContextGrants": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    }
                   }
                 },
                 "additionalProperties": false
@@ -19692,8 +19649,7 @@
             "enum": [
               "builtin_tool",
               "mcp_tool",
-              "skill",
-              "context"
+              "skill"
             ]
           },
           "providerAgentId": {
@@ -20104,12 +20060,6 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/AgentSkill"
-            }
-          },
-          "contextGrants": {
-            "type": "array",
-            "items": {
-              "type": "string"
             }
           },
           "approvalPolicy": {
@@ -20575,12 +20525,6 @@
           },
           "ownerUserId": {
             "type": "string"
-          },
-          "contextGrants": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
           },
           "approvalPolicy": {
             "type": "object",
@@ -26076,12 +26020,6 @@
           "timezone": {
             "type": "string"
           },
-          "approvedContextGrants": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
           "principal": {
             "type": "object",
             "required": [
@@ -26299,7 +26237,6 @@
           "workflowId",
           "name",
           "status",
-          "approvedContextGrants",
           "principal",
           "endpointUrl"
         ],
@@ -26327,12 +26264,6 @@
               "enabled",
               "paused"
             ]
-          },
-          "approvedContextGrants": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
           },
           "principal": {
             "type": "object",
@@ -27142,9 +27073,6 @@
               "read",
               "write"
             ]
-          },
-          "requiredContextGrant": {
-            "type": "string"
           },
           "configSchema": {
             "type": "object",
