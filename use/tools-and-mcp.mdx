@@ -21,7 +21,7 @@ AcornOps ships these code-owned semantic capabilities:
 - `infrastructure.diagnostics.read` routes to read-only built-in tools advertised by AgentK or AgentV for one exact target.
 - `prompt.resources.read` reads only exact prompt-resource binding IDs pinned to a Workflow run.
 - `http.fetch.get` reads configured public HTTPS text or JSON through the control plane.
-- `reports.pdf.generate` creates a bounded report artifact from approved Workflow evidence.
+- `documents.create` creates a bounded PDF or Markdown document from approved Workflow evidence.
 
 `scm.repository.read` is a supported semantic capability, but it is not built in. It needs a reviewed repository integration.
 
@@ -52,13 +52,16 @@ The native catalog currently contains:
 
 - `prompt.resources.read`, exposed to the model as `_acornops_read_prompt_resources`, dispatches bounded evidence loads through registered providers. It accepts binding IDs rather than arbitrary resource IDs and cannot expand the run's signed resource bindings.
 - `http.fetch.get`, exposed as `acornops_fetch`, performs an unauthenticated HTTPS `GET` through the control plane. Configure one to 20 complete URL patterns on the Agent's **Capabilities → Tools** page. A pattern may contain `*` only in its path or query, where it matches zero or more characters; scheme, hostname, and port always match exactly. Exact patterns do not authorize extra query values. Redirects, credentials, fragments, IP-literal and private-network destinations, binary media, responses over 256 KiB, and requests exceeding 15 seconds are rejected. Treat returned content as untrusted external data.
-- `reports.pdf.generate`, which creates a bounded, provenance-linked PDF report with authenticated download and idempotency per run and tool call.
+- `documents.create`, which creates a bounded, provenance-linked PDF or Markdown document with authenticated download and idempotency per run and tool call.
+
+`documents.create` defaults to PDF. Set its `format` argument to `markdown` to
+create a Markdown download instead.
 
 Native tools are code-owned, so granting or revoking one requires `manage_agents`, not `manage_mcp`. Assignment updates the mutable Agent definition, reviewed semantic mapping, and dependent Workflow readiness together. Internal coordinator runs cannot receive operational tools.
 
-`prompt.resources.read` and `http.fetch.get` have Workflow-only invocation scope. `reports.pdf.generate` is available to Workflows and target chat. Delegated specialist children cannot invoke workspace-native tools. Target adapters reject workspace tools; Kubernetes and VM native tools continue through AgentK and AgentV.
+`prompt.resources.read` and `http.fetch.get` have Workflow-only invocation scope. `documents.create` is available to Workflows and target chat. Delegated specialist children cannot invoke workspace-native tools. Target adapters reject workspace tools; Kubernetes and VM native tools continue through AgentK and AgentV.
 
-PDF generation has the `internal_artifact` authorization class. A read-only Workflow may create the artifact without write-run permission or per-call write approval, while persistence remains a write-audited event. AcornOps never logs chat bodies, report source, tool arguments, or PDF bytes.
+Document creation has the `internal_artifact` authorization class. A read-only Workflow may create the artifact without write-run permission or per-call write approval, while persistence remains a write-audited event. AcornOps never logs chat bodies, document source, tool arguments, or document bytes.
 
 ## Builtin Kubernetes tools
 

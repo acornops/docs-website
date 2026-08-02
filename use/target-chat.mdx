@@ -37,11 +37,11 @@ An unavailable complete artifact does not invalidate the compact evidence alread
 
 ## Export a completed answer
 
-After an assistant turn completes, choose **Generate PDF** to export the persisted answer. The browser sends the source run and optional title; it does not ask the model to recreate the response.
+After an assistant turn completes, choose **Create document** to export the persisted answer. The browser sends the source run and optional title; it does not ask the model to recreate the response.
 
-The resulting PDF is provenance-linked, authenticated, and retained for the deployment-configured report period. PDF generation is a platform-native artifact operation, not an AgentK or AgentV tool, and it does not require a write-capable target run.
+The resulting PDF or Markdown document is provenance-linked, authenticated, and retained for the deployment-configured document period. Document creation is a platform-native artifact operation, not an AgentK or AgentV tool, and it does not require a write-capable target run.
 
-A Workflow can also invoke the reviewed `reports.pdf.generate` capability to create a report from approved Workflow evidence.
+A Workflow can also invoke the reviewed `documents.create` capability to create a document from approved Workflow evidence.
 
 ## Collaborate without overwriting another investigation
 
@@ -51,6 +51,6 @@ When recent chat activity exists on the target, AcornOps warns before you start 
 
 ## Retention and deletion
 
-Conversation history, complete tool-result artifacts, and PDF reports have separate retention policies. Deleting a run removes its retained complete-result artifacts. Expiry of a complete artifact does not delete the conversation or its compact evidence.
+Conversation history, complete tool-result artifacts, and generated documents have separate retention policies. Deleting a run removes its retained complete-result artifacts. Expiry of a complete artifact does not delete the conversation or its compact evidence.
 
 Platform administrators configure these periods in the [configuration reference](/deploy/configuration-reference#workflow-and-evidence-retention).

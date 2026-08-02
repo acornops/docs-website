@@ -2868,6 +2868,138 @@
         }
       }
     },
+    "/api/v1/generated-documents/{documentId}": {
+      "get": {
+        "tags": [
+          "runs",
+          "workflows"
+        ],
+        "summary": "Get generated document metadata",
+        "security": [
+          {
+            "userSession": []
+          },
+          {
+            "externalIntegrationClientToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/HeaderXAcornopsExternalUserId"
+          },
+          {
+            "in": "path",
+            "name": "documentId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Document metadata without source or artifact bytes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GeneratedDocumentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error500"
+          }
+        }
+      }
+    },
+    "/api/v1/generated-documents/{documentId}/download": {
+      "get": {
+        "tags": [
+          "runs",
+          "workflows"
+        ],
+        "summary": "Render and stream a generated document",
+        "security": [
+          {
+            "userSession": []
+          },
+          {
+            "externalIntegrationClientToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/HeaderXAcornopsExternalUserId"
+          },
+          {
+            "in": "path",
+            "name": "documentId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "PDF or Markdown document stream.",
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "text/markdown": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error500"
+          }
+        }
+      }
+    },
     "/api/v1/mcp/oauth/callback": {
       "get": {
         "tags": [
@@ -3033,138 +3165,6 @@
                 }
               }
             }
-          },
-          "403": {
-            "$ref": "#/components/responses/Error403"
-          },
-          "404": {
-            "$ref": "#/components/responses/Error404"
-          },
-          "409": {
-            "$ref": "#/components/responses/Error409"
-          },
-          "429": {
-            "$ref": "#/components/responses/Error429"
-          },
-          "500": {
-            "$ref": "#/components/responses/Error500"
-          }
-        }
-      }
-    },
-    "/api/v1/report-artifacts/{reportId}": {
-      "get": {
-        "tags": [
-          "runs",
-          "workflows"
-        ],
-        "summary": "Get generated document metadata",
-        "security": [
-          {
-            "userSession": []
-          },
-          {
-            "externalIntegrationClientToken": []
-          }
-        ],
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/HeaderXAcornopsExternalUserId"
-          },
-          {
-            "in": "path",
-            "name": "reportId",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Document metadata without source or artifact bytes.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReportArtifactResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/Error400"
-          },
-          "401": {
-            "$ref": "#/components/responses/Error401"
-          },
-          "403": {
-            "$ref": "#/components/responses/Error403"
-          },
-          "404": {
-            "$ref": "#/components/responses/Error404"
-          },
-          "409": {
-            "$ref": "#/components/responses/Error409"
-          },
-          "429": {
-            "$ref": "#/components/responses/Error429"
-          },
-          "500": {
-            "$ref": "#/components/responses/Error500"
-          }
-        }
-      }
-    },
-    "/api/v1/report-artifacts/{reportId}/download": {
-      "get": {
-        "tags": [
-          "runs",
-          "workflows"
-        ],
-        "summary": "Render and stream a generated document",
-        "security": [
-          {
-            "userSession": []
-          },
-          {
-            "externalIntegrationClientToken": []
-          }
-        ],
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/HeaderXAcornopsExternalUserId"
-          },
-          {
-            "in": "path",
-            "name": "reportId",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "PDF or Markdown document stream.",
-            "content": {
-              "application/pdf": {
-                "schema": {
-                  "type": "string",
-                  "format": "binary"
-                }
-              },
-              "text/markdown": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/Error400"
-          },
-          "401": {
-            "$ref": "#/components/responses/Error401"
           },
           "403": {
             "$ref": "#/components/responses/Error403"
@@ -22325,6 +22325,80 @@
         },
         "additionalProperties": true
       },
+      "GeneratedDocument": {
+        "type": "object",
+        "required": [
+          "id",
+          "workspaceId",
+          "mediaType",
+          "title",
+          "sourceSizeBytes",
+          "retentionExpiresAt",
+          "createdAt",
+          "downloadUrl"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "workspaceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "workflowExecutionId": {
+            "type": "string"
+          },
+          "workflowRunId": {
+            "type": "string"
+          },
+          "conversationRunId": {
+            "type": "string"
+          },
+          "toolCallId": {
+            "type": "string"
+          },
+          "mediaType": {
+            "type": "string",
+            "enum": [
+              "application/pdf",
+              "text/markdown"
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "sourceSizeBytes": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "retentionExpiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "downloadUrl": {
+            "type": "string",
+            "pattern": "^/api/v1/generated-documents/.+/download$"
+          }
+        },
+        "additionalProperties": false
+      },
+      "GeneratedDocumentResponse": {
+        "type": "object",
+        "required": [
+          "document"
+        ],
+        "properties": {
+          "document": {
+            "$ref": "#/components/schemas/GeneratedDocument"
+          }
+        },
+        "additionalProperties": false
+      },
       "GenericAccepted": {
         "type": "object",
         "required": [
@@ -23206,80 +23280,6 @@
           }
         },
         "additionalProperties": true
-      },
-      "ReportArtifact": {
-        "type": "object",
-        "required": [
-          "id",
-          "workspaceId",
-          "mediaType",
-          "title",
-          "sourceSizeBytes",
-          "retentionExpiresAt",
-          "createdAt",
-          "downloadUrl"
-        ],
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "workspaceId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "workflowExecutionId": {
-            "type": "string"
-          },
-          "workflowRunId": {
-            "type": "string"
-          },
-          "conversationRunId": {
-            "type": "string"
-          },
-          "toolCallId": {
-            "type": "string"
-          },
-          "mediaType": {
-            "type": "string",
-            "enum": [
-              "application/pdf",
-              "text/markdown"
-            ]
-          },
-          "title": {
-            "type": "string"
-          },
-          "sourceSizeBytes": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "retentionExpiresAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "downloadUrl": {
-            "type": "string",
-            "pattern": "^/api/v1/report-artifacts/.+/download$"
-          }
-        },
-        "additionalProperties": false
-      },
-      "ReportArtifactResponse": {
-        "type": "object",
-        "required": [
-          "report"
-        ],
-        "properties": {
-          "report": {
-            "$ref": "#/components/schemas/ReportArtifact"
-          }
-        },
-        "additionalProperties": false
       },
       "ResolvedGitSkill": {
         "type": "object",
