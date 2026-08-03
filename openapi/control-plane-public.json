@@ -20237,6 +20237,22 @@
               "$ref": "#/components/schemas/AgentCapability"
             }
           },
+          "templateRef": {
+            "type": "object",
+            "required": [
+              "templateId",
+              "recordKey"
+            ],
+            "properties": {
+              "templateId": {
+                "type": "string"
+              },
+              "recordKey": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          },
           "readiness": {
             "type": "object",
             "required": [
