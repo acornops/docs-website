@@ -10703,7 +10703,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Cluster details with latestSnapshot timestamp and summary counts, without full snapshot data.",
+            "description": "Cluster details with latestSnapshot timestamp and summary counts, including pod phase counts, without full snapshot data.",
             "content": {
               "application/json": {
                 "schema": {
