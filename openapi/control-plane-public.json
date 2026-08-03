@@ -23331,6 +23331,9 @@
           },
           "lastDiscoveryError": {
             "type": "string"
+          },
+          "toolCounts": {
+            "$ref": "#/components/schemas/McpToolCounts"
           }
         },
         "additionalProperties": true
@@ -23381,6 +23384,49 @@
           }
         },
         "additionalProperties": true
+      },
+      "McpToolCounts": {
+        "type": "object",
+        "required": [
+          "total",
+          "readOnly",
+          "writeCapable",
+          "enabledConfigured",
+          "enabledEffective",
+          "writeConfigured",
+          "writeEffective"
+        ],
+        "properties": {
+          "total": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "readOnly": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "writeCapable": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "enabledConfigured": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "enabledEffective": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "writeConfigured": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "writeEffective": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "additionalProperties": false
       },
       "McpToolPage": {
         "type": "object",
