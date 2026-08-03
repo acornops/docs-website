@@ -10838,7 +10838,7 @@
         "tags": [
           "workspaces"
         ],
-        "summary": "Update cluster metadata, namespace scope, and write confirmation policy",
+        "summary": "Update cluster metadata, namespace scope, and run permission policy",
         "security": [
           {
             "userSession": []
@@ -10882,12 +10882,27 @@
                       "sandbox"
                     ]
                   },
+                  "permissionModeOverride": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "enum": [
+                      "read_only",
+                      "ask_before_changes",
+                      "auto_allowed_changes",
+                      null
+                    ],
+                    "description": "Per-cluster run permission override. Use null to inherit the deployment default.",
+                    "example": "ask_before_changes"
+                  },
                   "writeConfirmationRequiredOverride": {
                     "type": [
                       "boolean",
                       "null"
                     ],
-                    "description": "Per-cluster write confirmation override. Use null to inherit the deployment default.",
+                    "description": "Deprecated compatibility alias. true maps to ask_before_changes; false maps to auto_allowed_changes.",
+                    "deprecated": true,
                     "example": true
                   }
                 },
@@ -10900,7 +10915,7 @@
                   "namespaceExclude": [
                     "sandbox"
                   ],
-                  "writeConfirmationRequiredOverride": null
+                  "permissionModeOverride": null
                 }
               }
             }
@@ -23070,9 +23085,37 @@
               "type": "string"
             }
           },
+          "permissionMode": {
+            "type": "string",
+            "enum": [
+              "read_only",
+              "ask_before_changes",
+              "auto_allowed_changes"
+            ]
+          },
+          "permissionModeOverride": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "read_only",
+              "ask_before_changes",
+              "auto_allowed_changes",
+              null
+            ]
+          },
+          "permissionModeSource": {
+            "type": "string",
+            "enum": [
+              "cluster_override",
+              "deployment_default"
+            ]
+          },
           "writeConfirmationPolicy": {
             "type": "object",
-            "additionalProperties": true
+            "additionalProperties": true,
+            "deprecated": true
           }
         }
       },
