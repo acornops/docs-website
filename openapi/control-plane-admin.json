@@ -3462,9 +3462,18 @@
               }
             },
             "additionalProperties": true
+          },
+          {
+            "type": "object",
+            "properties": {
+              "lastLoginAt": {
+                "type": "string",
+                "format": "date-time"
+              }
+            }
           }
         ],
-        "description": "Support-safe user detail. Password hashes, reset tokens, and OIDC subjects are never returned."
+        "description": "Support-safe user. Collection responses may include the optional latest recorded login timestamp. Password hashes, reset tokens, and OIDC subjects are never returned."
       },
       "AdminUserPage": {
         "type": "object",
