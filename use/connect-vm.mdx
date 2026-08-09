@@ -3,20 +3,21 @@ title: "Connect a Linux VM"
 description: "Register a Linux target, install AgentV, and verify its diagnostics"
 ---
 
-Every Linux VM that AcornOps observes runs the unprivileged AgentV. The agent opens an outbound WebSocket, reports bounded host snapshots, and executes strict VM tools. The production onboarding path keeps writes and the privileged action socket disabled.
+Every supported VM that AcornOps observes runs the unprivileged AgentV. The agent opens an outbound WebSocket, reports bounded host snapshots, and executes strict VM tools. Production onboarding defaults to read-only. You can instead permit policy-governed restarts for an exact list of systemd services.
 
-The supported first-release host baseline is Ubuntu and Rocky Linux 9 with systemd, Bash, `curl`, `tar`, `sha256sum`, and Node.js 22 or newer at `/usr/bin/node`. You need root or `sudo` access and outbound HTTPS access to both the configured AgentV release host and the AcornOps API.
+The supported first-release host baseline is Ubuntu 24.04 LTS with systemd, Bash, `curl`, `tar`, `sha256sum`, and Node.js 22 or newer at `/usr/bin/node`. You need root or `sudo` access and outbound HTTPS access to both the configured AgentV release host and the AcornOps API. Other Linux distributions, including Rocky Linux, are not qualified for this release.
 
 ## Register a VM
 
 1. Open a workspace in the management console.
 2. Go to **Virtual Machines**.
-3. Register a VM with a name and optional hostname.
-4. Copy the single generated command before its 15-minute countdown expires.
-5. Run the command on the intended Linux host.
-6. Confirm the VM shows as connected.
+3. Enter a VM name.
+4. Keep **Read-only**, or select **Read-write** and add each exact restartable `.service` unit.
+5. Copy the single generated command before its 15-minute countdown expires.
+6. Run the command on the intended Linux host.
+7. Confirm the VM shows as connected.
 
-The registration response includes `{ virtualMachine, installInstructions }`. `installInstructions.command` contains a target-bound, one-use enrollment token; no durable AgentV credential is returned to the browser. The root installer exchanges the token only after host and release validation, stores the resulting credential in `/etc/acornops/agentv.env`, and commits it only after the candidate AgentV authenticates successfully.
+The registration response includes `{ virtualMachine, installInstructions }`. The VM record contains the normalized host access mode, restart-service scope, and run permission mode. `installInstructions.command` contains a target-bound, one-use enrollment token; it does not contain the durable AgentV credential or a user-editable privilege policy. The root installer exchanges the token only after host and release validation, installs the enrollment-bound policy, stores the resulting credential in `/etc/acornops/agentv.env`, and commits it only after the candidate AgentV authenticates successfully.
 
 Treat the command as sensitive until the token is exchanged or expires. The copied command can remain in shell history, but it contains only the 15-minute, single-use enrollment token—not the durable AgentV credential—and becomes unusable immediately after a successful exchange. Clear the history entry if your host policy requires it. If the token expires, use **Generate new command**. Issuing a new command invalidates older outstanding enrollment commands for that VM.
 
@@ -38,7 +39,25 @@ For the initial bootstrap, the host's `curl` and Node.js runtime must already tr
 
 Use **Upgrade or repair AgentV** for a healthy installation that needs the pinned release reapplied or upgraded. Its command contains no enrollment token and reuses the root-owned local credential. It fails before modification if the local target, platform URL, environment ownership, or credential is missing or mismatched.
 
-Use **Replace AgentV credential** after suspected exposure or when rebuilding the VM. The replacement command has a fresh one-use token. The current credential and connection remain valid while the candidate is checked; the installer promotes the replacement only after provisional authentication. A failed cutover restores the previous release, environment, credential, and service connection. The original installation command can also be rerun on the same correctly configured VM: its consumed token is ignored and the operation behaves like a repair.
+Use **Replace AgentV credential** after suspected exposure or when rebuilding the VM. The replacement command has a fresh one-use token and preserves the VM's registered access policy. The current credential and connection remain valid while the candidate is checked; the installer promotes the replacement only after provisional authentication. A failed cutover restores the previous release, environment, helper policy, socket state, credential, and service connection. The original installation command can also be rerun on the same correctly configured VM: its consumed token is ignored and the operation behaves like a repair.
+
+## Update host capabilities
+
+You can change approval behavior directly in **VM Settings** without running a host command. Changing the exact restart-service allowlist is different because the policy and privileged socket are root-owned on the VM.
+
+Edit **Host capabilities**, then select **Generate apply command**. AcornOps records the requested policy as pending and returns one 15-minute, one-use command. Run it on the existing VM with `sudo`. The command does not contain the service list; its token is bound to the target and immutable pending policy.
+
+The applied policy remains visible separately from the pending policy. AgentV write tools are paused for both new and already-running sessions until the command commits. The installer reuses the transactional credential-replacement path, so it stages the helper policy, verifies the candidate, and only then activates the new policy and credential. If the update fails, the previous policy, credential, installation, and connection remain active. If you lose or expire the command, select **Generate new apply command**; this cancels the older outstanding command without changing the applied policy.
+
+## Run permissions
+
+Open the VM's **Settings** page to choose the same run permission modes available for Kubernetes targets:
+
+- **Read only** removes write-capable tools from VM runs.
+- **Ask before changes** is the production default and pauses every permitted write for approval.
+- **Auto-run allowed changes** permits administrator-reviewed, non-destructive writes to run without a per-call approval.
+
+This setting never creates host capability. A service restart still requires read-write AgentV installation, an exact match in the root-owned local allowlist, a write-capable workspace role and run, and an enabled reviewed tool. High-risk or destructive tools remain approval-gated.
 
 ## Inventory and findings
 
@@ -72,7 +91,7 @@ VM targets also support target-scoped remote MCP servers. Add servers from the V
 
 ## Troubleshooting chat
 
-VM troubleshooting runs can only use tools enabled for that target and run mode. `restart_service` is excluded from read-only runs, requires human approval in read-write runs, and is still unavailable unless `ACORNOPS_AGENT_WRITE_ENABLED=true`, the helper socket is enabled, and `/etc/acornops/agentv-actions.json` contains the exact unit. Arbitrary commands, globs, AgentV's own units, and unrestricted `systemctl` are not supported.
+VM troubleshooting runs can only use tools enabled for that target and run mode. `restart_service` is excluded from read-only runs. Under **Ask before changes** it requires human approval; under **Auto-run allowed changes** the reviewed restart tool may run automatically, but only for a unit in the root-owned allowlist. For read-write onboarding, the root installer sets `ACORNOPS_AGENT_WRITE_ENABLED=true`, writes the selected exact units to `/etc/acornops/agentv-actions.json`, and enables the helper socket. The helper rejects every unit outside that list. Arbitrary commands, globs, AgentV's own units, and unrestricted `systemctl` are not supported.
 
 After installation, run `acornops-agentv-doctor`. It checks configuration,
 required binaries, journal access, helper policy, filesystem access, and TLS.

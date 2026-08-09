@@ -18088,6 +18088,26 @@
                       "app",
                       "security"
                     ]
+                  },
+                  "agentAccessMode": {
+                    "type": "string",
+                    "enum": [
+                      "read_only",
+                      "read_write"
+                    ],
+                    "default": "read_only"
+                  },
+                  "restartServices": {
+                    "type": "array",
+                    "maxItems": 32,
+                    "uniqueItems": true,
+                    "items": {
+                      "type": "string",
+                      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.@:-]{0,254}\\.service$"
+                    },
+                    "example": [
+                      "nginx.service"
+                    ]
                   }
                 }
               }
@@ -18200,7 +18220,7 @@
         "tags": [
           "workspaces"
         ],
-        "summary": "Update virtual machine metadata and allowed log sources",
+        "summary": "Update virtual machine metadata and run permission policy",
         "security": [
           {
             "userSession": []
@@ -18238,6 +18258,19 @@
                       "system",
                       "app"
                     ]
+                  },
+                  "permissionModeOverride": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "enum": [
+                      "read_only",
+                      "ask_before_changes",
+                      "auto_allowed_changes",
+                      null
+                    ],
+                    "description": "VM-specific assistant run policy. Null restores the deployment default."
                   }
                 }
               }
@@ -18246,7 +18279,7 @@
         },
         "responses": {
           "200": {
-            "description": "VM metadata updated.",
+            "description": "VM metadata and effective permission policy updated.",
             "content": {
               "application/json": {
                 "schema": {
@@ -18314,6 +18347,101 @@
           },
           "409": {
             "$ref": "#/components/responses/Error409"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error500"
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/virtual-machines/{vmId}/agent-access-policy-updates": {
+      "post": {
+        "tags": [
+          "workspaces"
+        ],
+        "summary": "Create a transactional AgentV host access policy update",
+        "description": "Returns a one-use root command. The applied host policy remains unchanged and VM writes remain disabled until the command commits successfully.",
+        "security": [
+          {
+            "userSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/PathWorkspaceId"
+          },
+          {
+            "$ref": "#/components/parameters/PathVmId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "agentAccessMode",
+                  "restartServices"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "agentAccessMode": {
+                    "type": "string",
+                    "enum": [
+                      "read_only",
+                      "read_write"
+                    ]
+                  },
+                  "restartServices": {
+                    "type": "array",
+                    "maxItems": 32,
+                    "uniqueItems": true,
+                    "items": {
+                      "type": "string",
+                      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.@:-]{0,254}\\.service$"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Pending host policy and one-use application command.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VirtualMachineAgentAccessPolicyUpdate"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "description": "AgentV is not enrolled, the policy is already applied, or credential state changed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           },
           "429": {
             "$ref": "#/components/responses/Error429"
@@ -21515,13 +21643,40 @@
         },
         "additionalProperties": false
       },
+      "AgentVAccessPolicy": {
+        "type": "object",
+        "required": [
+          "accessMode",
+          "restartServices"
+        ],
+        "properties": {
+          "accessMode": {
+            "type": "string",
+            "enum": [
+              "read_only",
+              "read_write"
+            ]
+          },
+          "restartServices": {
+            "type": "array",
+            "maxItems": 32,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.@:-]{0,254}\\.service$"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
       "AgentVEnrollmentExchange": {
         "type": "object",
         "required": [
           "transactionId",
           "transactionSecret",
           "agentKey",
-          "purpose"
+          "purpose",
+          "accessPolicy"
         ],
         "properties": {
           "transactionId": {
@@ -21542,6 +21697,9 @@
               "initial",
               "replace"
             ]
+          },
+          "accessPolicy": {
+            "$ref": "#/components/schemas/AgentVAccessPolicy"
           }
         },
         "additionalProperties": false
@@ -25727,6 +25885,14 @@
             "additionalProperties": true
           }
         ],
+        "required": [
+          "agentAccessMode",
+          "restartServices",
+          "pendingAgentAccessPolicy",
+          "permissionMode",
+          "permissionModeOverride",
+          "permissionModeSource"
+        ],
         "properties": {
           "hostname": {
             "type": "string"
@@ -25748,8 +25914,74 @@
             "items": {
               "type": "string"
             }
+          },
+          "agentAccessMode": {
+            "type": "string",
+            "enum": [
+              "read_only",
+              "read_write"
+            ]
+          },
+          "restartServices": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "pendingAgentAccessPolicy": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/AgentVAccessPolicy"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "permissionMode": {
+            "type": "string",
+            "enum": [
+              "read_only",
+              "ask_before_changes",
+              "auto_allowed_changes"
+            ]
+          },
+          "permissionModeOverride": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "read_only",
+              "ask_before_changes",
+              "auto_allowed_changes",
+              null
+            ]
+          },
+          "permissionModeSource": {
+            "type": "string",
+            "enum": [
+              "virtual_machine_override",
+              "deployment_default"
+            ]
           }
         }
+      },
+      "VirtualMachineAgentAccessPolicyUpdate": {
+        "type": "object",
+        "required": [
+          "virtualMachine",
+          "installInstructions"
+        ],
+        "properties": {
+          "virtualMachine": {
+            "$ref": "#/components/schemas/VirtualMachine"
+          },
+          "installInstructions": {
+            "$ref": "#/components/schemas/VirtualMachineInstallInstructions"
+          }
+        },
+        "additionalProperties": false
       },
       "VirtualMachineAgentEnrollment": {
         "type": "object",

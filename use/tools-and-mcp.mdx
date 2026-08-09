@@ -86,11 +86,12 @@ The current builtin VM tool set is:
 - `get_service`
 - `query_logs`
 - `list_listeners`
-- `restart_service` (write, disabled by default)
+- `restart_service` (write, enabled only for exact services selected during read-write VM onboarding)
 
 Read-only VM runs cannot execute `restart_service`. A read-write run still
-requires remote policy, local enablement, a reachable helper with an exact unit
-allowlist, and human approval.
+requires remote policy, a reachable helper, and a matching enrollment-installed
+exact unit allowlist. The VM's run permission mode determines whether the
+reviewed non-destructive restart pauses for approval or may run automatically.
 
 ## Remote MCP server setup
 

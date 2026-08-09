@@ -78,6 +78,8 @@ flowchart LR
 
 AgentK and AgentV authenticate with target-specific credentials and establish outbound WebSocket connections to the control plane. AgentK uses its existing cluster-key flow. AgentV onboarding exchanges a 15-minute one-use token for a durable credential that is returned only to the root installer. The connection carries heartbeats, capability metadata, snapshots, and bounded tool requests. Target access stays with the connector inside the environment.
 
+AgentV is read-only by default. Read-write onboarding binds one to 32 exact non-AgentV systemd services to the one-use enrollment. The root installer writes that policy and enables the privileged socket; the copied command cannot widen it. The local allowlist remains a capability ceiling. The VM run permission policy independently chooses read-only, approval-required, or reviewed non-destructive automatic changes. Updating the host allowlist requires another one-use root command, pauses writes until commit, and rolls back to the previous policy and credential on failure. No control-plane setting can authorize a service outside the applied local allowlist.
+
 Outbound connectivity describes the direction in which the session is established. Administrators must still restrict egress to the expected AcornOps endpoint, validate TLS, protect connector credentials, and apply least-privilege target policy.
 
 ## Credential boundaries
