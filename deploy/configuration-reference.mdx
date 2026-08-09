@@ -14,9 +14,12 @@ The platform chart keeps target connectivity, assistant behavior, and target-spe
 | `agentGateway` | Shared control-plane WebSocket routing and snapshot policy for AgentK and AgentV | Either target-side daemon |
 | `assistantRuntime` | AI assistant budgets, limits, timeouts, and write-approval defaults | AgentK or AgentV collection behavior |
 | `targetAgents.agentk.helm` | AgentK Helm install commands generated for Kubernetes targets | AgentV, which uses a systemd installation archive |
+| `targetAgents.agentv.systemd` | Exact AgentV systemd release version and immutable release base URL used by generated VM commands | Host package installation or Node.js installation |
 | `builtinTargetMcp` | The internal MCP identity used to expose both AgentK and AgentV tools | A standalone MCP deployment |
 
-There is intentionally no generic `agent` section and no empty AgentV Helm section. Each name identifies one responsibility and one target scope.
+There is intentionally no generic `agent` section and no AgentV Helm section. Each name identifies one responsibility and one target scope.
+
+Production must set `targetAgents.agentv.systemd.version` to an exact semantic version and `releaseBaseUrl` to HTTPS. The public default is `https://github.com/acornops/agentv/releases/download`. An internal mirror must expose the identical `v<version>/install-agentv.sh`, archive, and checksum layout; mutable labels such as `latest` are rejected.
 
 ## Public hosts
 

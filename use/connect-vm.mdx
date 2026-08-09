@@ -3,30 +3,42 @@ title: "Connect a Linux VM"
 description: "Register a Linux target, install AgentV, and verify its diagnostics"
 ---
 
-Every Linux VM that AcornOps observes runs the unprivileged AgentV. The agent opens an outbound WebSocket, reports bounded host snapshots, and executes strict VM tools. It remains read-only unless you separately enable the root-owned action helper for exact service units.
+Every Linux VM that AcornOps observes runs the unprivileged AgentV. The agent opens an outbound WebSocket, reports bounded host snapshots, and executes strict VM tools. The production onboarding path keeps writes and the privileged action socket disabled.
+
+The supported first-release host baseline is Ubuntu and Rocky Linux 9 with systemd, Bash, `curl`, `tar`, `sha256sum`, and Node.js 22 or newer at `/usr/bin/node`. You need root or `sudo` access and outbound HTTPS access to both the configured AgentV release host and the AcornOps API.
 
 ## Register a VM
 
 1. Open a workspace in the management console.
 2. Go to **Virtual Machines**.
 3. Register a VM with a name and optional hostname.
-4. Copy the generated systemd install instructions.
-5. Run the instructions on the Linux host.
+4. Copy the single generated command before its 15-minute countdown expires.
+5. Run the command on the intended Linux host.
 6. Confirm the VM shows as connected.
 
-The registration response includes `{ virtualMachine, agentKey, installInstructions }`. Treat `installInstructions.command` as authoritative.
+The registration response includes `{ virtualMachine, installInstructions }`. `installInstructions.command` contains a target-bound, one-use enrollment token; no durable AgentV credential is returned to the browser. The root installer exchanges the token only after host and release validation, stores the resulting credential in `/etc/acornops/agentv.env`, and commits it only after the candidate AgentV authenticates successfully.
+
+Treat the command as sensitive until the token is exchanged or expires. The copied command can remain in shell history, but it contains only the 15-minute, single-use enrollment token—not the durable AgentV credential—and becomes unusable immediately after a successful exchange. Clear the history entry if your host policy requires it. If the token expires, use **Generate new command**. Issuing a new command invalidates older outstanding enrollment commands for that VM.
+
+If you close onboarding before the VM connects, open that VM's settings and use **Finish AgentV setup** to generate a fresh initial-enrollment command. You do not need to delete and register the VM again.
 
 ## Agent behavior
 
-The AgentV authenticates with the issued agent key and connects to:
+The AgentV authenticates with the protected local credential and connects to:
 
 ```text
 wss://api.example.com/api/v1/agent/connect
 ```
 
-Replace `example.com` with your deployment domain. The public demo agent route is `wss://api.demo.acornops.dev/api/v1/agent/connect`. AgentV supports current Debian/Ubuntu and RHEL-family systemd hosts. Other distributions report degraded or unsupported collectors rather than claiming full support.
+Replace `example.com` with your deployment domain. The public demo agent route is `wss://api.demo.acornops.dev/api/v1/agent/connect`. Do not claim another distribution as supported until the same bootstrap and live-systemd canary passes there.
 
-When the platform certificate uses an organization-private CA, place the public PEM bundle in a root-managed readable path and set `ACORNOPS_AGENT_ADDITIONAL_CA_BUNDLE_FILE` in `/etc/acornops/agentv.env`. AgentV adds the bundle to normal public trust while preserving certificate and hostname verification.
+For the initial bootstrap, the host's `curl` and Node.js runtime must already trust the platform certificate. Install an organization-private root in the host trust store before running the generated command. After installation, `ACORNOPS_AGENT_ADDITIONAL_CA_BUNDLE_FILE` may point to an additional root-managed PEM bundle for the AgentV runtime; repair and replacement preserve that setting. Never disable certificate or hostname verification.
+
+## Repair and credential replacement
+
+Use **Upgrade or repair AgentV** for a healthy installation that needs the pinned release reapplied or upgraded. Its command contains no enrollment token and reuses the root-owned local credential. It fails before modification if the local target, platform URL, environment ownership, or credential is missing or mismatched.
+
+Use **Replace AgentV credential** after suspected exposure or when rebuilding the VM. The replacement command has a fresh one-use token. The current credential and connection remain valid while the candidate is checked; the installer promotes the replacement only after provisional authentication. A failed cutover restores the previous release, environment, credential, and service connection. The original installation command can also be rerun on the same correctly configured VM: its consumed token is ignored and the operation behaves like a repair.
 
 ## Inventory and findings
 
@@ -70,4 +82,4 @@ successful result.
 
 VM conversations follow the same collaboration rules as Kubernetes target conversations. The creator can send follow-ups. Other users with target read access can open the conversation and watch active runs live, but the composer stays view-only. Starting a new VM conversation after recent target chat activity shows an inline warning so operators can review or continue the relevant investigation before creating a separate thread.
 
-If the VM stays disconnected, verify the platform URL, WebSocket route, agent key, outbound network access, systemd service state, and agent logs.
+If the VM stays disconnected, verify `/usr/bin/node --version`, the platform and release URLs, host CA trust, outbound HTTPS and WebSocket access, `systemctl status acornops-agentv`, `journalctl -u acornops-agentv`, and `acornops-agentv-doctor`. If a never-enrolled VM has no local configuration, use **Finish AgentV setup**. If the control plane already has an active credential but the host was rebuilt or its local configuration is missing or mismatched, generate a replacement-credential command rather than editing the durable credential manually.

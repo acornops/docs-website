@@ -59,7 +59,7 @@ Password auth uses enumeration-safe response patterns for verification resend an
 
 Workspace role responses include server-owned permission fields. Clients should use those fields rather than copying role or capability logic.
 
-Registration endpoints return the target record, a one-time agent key, and install instructions. Agent-key rotation returns a replacement key and updated install instructions.
+Kubernetes registration returns the cluster record, its one-time AgentK key, and install instructions; AgentK key rotation returns a replacement key. Virtual-machine registration instead returns the VM record and a 15-minute, single-use AgentV enrollment command. AgentV's durable credential is exchanged directly with the root installer and is never returned to the browser. VM repair commands reuse the credential already on the host, while credential replacement returns another short-lived enrollment command and leaves the active credential unchanged until cutover succeeds.
 
 Run events are replayable through the events endpoint and streamable through server-sent events. Current event types include run lifecycle, assistant message, token delta, provider reasoning summary, tool call, write approval, failure, cancellation, and completion events. Reasoning summary events contain provider-generated summaries only, not raw chain-of-thought.
 

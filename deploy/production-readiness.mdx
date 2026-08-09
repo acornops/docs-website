@@ -46,8 +46,10 @@ Complete this checklist after installation and after material platform configura
 
 - A workspace can be created and listed.
 - A registered AgentK can connect and report cluster inventory.
-- A registered AgentV can connect and report host inventory.
-- Agent keys can be rotated through the supported flow.
+- A clean supported VM can install AgentV using only the one copied enrollment command and report host inventory.
+- The AgentV release matrix references a published bootstrap, archive, and checksum for the exact pinned version.
+- AgentV same-command rerun, credential-free repair, failed-cutover rollback, reboot recovery, and credential replacement have been exercised on Ubuntu and Rocky Linux 9 canaries.
+- AgentK keys and AgentV credentials can be replaced through their distinct supported flows.
 - Connected targets require no public inbound route.
 - Private-CA bundles are mounted where required without disabling certificate or hostname verification.
 

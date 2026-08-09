@@ -64,7 +64,7 @@ For production, keep component API docs disabled unless you intentionally expose
 | --- | --- |
 | Sign-in fails | Control-plane logs and OIDC provider redirect URI/client settings |
 | Console cannot call API | Management console runtime config, CORS, ingress, and cookie settings |
-| Target disconnected | target connector logs, control-plane WebSocket logs, agent key, outbound network policy |
+| Target disconnected | target connector logs, control-plane WebSocket logs, credential state, host CA trust, and outbound network policy |
 | Runs stuck pending | Control-plane dispatch logs, execution-engine logs, Redis connectivity |
 | Agent or Workflow dispatch delayed | Workspace automation diagnostics, `control_plane_automation_runtime` gauges, control-plane outbox worker logs, execution-engine readiness |
 | Run needs review | Approval and terminal audit records; confirm whether a write result was uncertain before authorizing resume |
@@ -96,7 +96,8 @@ Rotate secrets with service-specific rollout plans:
 | --- | --- |
 | OIDC client secret | Browser sign-in can fail until control-plane pods reload the new value |
 | Internal service tokens | Rotate paired services together or support overlap during rollout |
-| Agent keys | Use the control-plane agent-key rotation flow per target |
+| AgentK key | Use the Kubernetes agent-key rotation flow |
+| AgentV credential | Generate a replacement enrollment command; the previous credential remains usable until the candidate connects and commits |
 | Provider API keys | Replace the write-only credential in workspace AI settings or platform AI settings, then verify a read-only run |
 | MCP credential | Revoke or rotate the least-privilege credential on the exact installation, then Verify; service identities require workspace-managed mode |
 | Webhook signing secrets | Create or rotate the subscription secret and update the consumer |

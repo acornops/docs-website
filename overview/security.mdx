@@ -76,16 +76,16 @@ flowchart LR
   linkStyle 2,3 stroke:#7A1F08,stroke-width:2px;
 ```
 
-AgentK and AgentV authenticate with target-specific agent keys and establish outbound WebSocket connections to the control plane. The connection carries heartbeats, capability metadata, snapshots, and bounded tool requests. Target access stays with the connector inside the environment.
+AgentK and AgentV authenticate with target-specific credentials and establish outbound WebSocket connections to the control plane. AgentK uses its existing cluster-key flow. AgentV onboarding exchanges a 15-minute one-use token for a durable credential that is returned only to the root installer. The connection carries heartbeats, capability metadata, snapshots, and bounded tool requests. Target access stays with the connector inside the environment.
 
-Outbound connectivity describes the direction in which the session is established. Administrators must still restrict egress to the expected AcornOps endpoint, validate TLS, protect agent keys, and apply least-privilege target policy.
+Outbound connectivity describes the direction in which the session is established. Administrators must still restrict egress to the expected AcornOps endpoint, validate TLS, protect connector credentials, and apply least-privilege target policy.
 
 ## Credential boundaries
 
 AcornOps uses different credentials at different boundaries:
 
 - Browser users authenticate through the configured identity provider and use a cookie-backed control-plane session.
-- Target connectors use target-specific agent keys.
+- Target connectors use target-specific credentials; AgentV durable credentials are stored only on the VM and hash-only in the control plane.
 - Internal services use dedicated service credentials.
 - Model and tool calls use run-scoped tokens that bind the workspace, target, run, provider, model, tools, and output budget.
 

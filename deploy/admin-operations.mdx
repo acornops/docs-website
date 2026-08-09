@@ -91,7 +91,8 @@ workspace audit events with `actor.type=admin_token` and the admin token id.
 Audit metadata is sanitized and must not contain raw tokens, prompts, message
 bodies, authorization headers, full tool arguments, or agent keys.
 
-Agent-key rotation is the only admin response that returns a secret:
+The target credential endpoint is the only admin response that returns target
+bootstrap secret material:
 
 ```bash
 curl -X POST \
@@ -101,7 +102,10 @@ curl -X POST \
   https://api.example.com/admin/v1/targets/<target-id>/agent-key/rotate
 ```
 
-The replacement key is returned once with `Cache-Control: no-store`.
+For Kubernetes targets, the replacement AgentK key is returned once. For VM
+targets, the same administrative action returns a 15-minute one-use AgentV
+replacement enrollment command and never returns the durable AgentV
+credential. Both responses use `Cache-Control: no-store`.
 
 ## Workspace plans and quotas
 

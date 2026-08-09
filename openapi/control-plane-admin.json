@@ -1800,7 +1800,7 @@
         "tags": [
           "admin"
         ],
-        "summary": "Emergency rotate a target agent key",
+        "summary": "Replace a target agent credential",
         "security": [
           {
             "adminBearer": []
@@ -1831,7 +1831,7 @@
         },
         "responses": {
           "200": {
-            "description": "One-time agent key and install instructions.",
+            "description": "AgentV receives one-use enrollment instructions; AgentK retains the existing key-rotation response.",
             "content": {
               "application/json": {
                 "schema": {
@@ -3227,7 +3227,7 @@
           },
           "agentKey": {
             "type": "string",
-            "description": "Returned only by emergency agent-key rotation."
+            "description": "Returned only for AgentK key rotation; AgentV uses enrollment instructions."
           },
           "installInstructions": {
             "$ref": "#/components/schemas/InstallInstructions"
@@ -3597,6 +3597,9 @@
       },
       "InstallInstructions": {
         "type": "object",
+        "required": [
+          "command"
+        ],
         "properties": {
           "command": {
             "type": "string"
@@ -3676,6 +3679,7 @@
               "member_discovery",
               "ai_policy",
               "user_sign_in_methods",
+              "help_links",
               "kubernetes_rbac_additions"
             ]
           },

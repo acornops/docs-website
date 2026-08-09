@@ -326,7 +326,8 @@
                   "GET /api/v1/workspaces/{workspaceId}/virtual-machines/{vmId}",
                   "PATCH /api/v1/workspaces/{workspaceId}/virtual-machines/{vmId}",
                   "DELETE /api/v1/workspaces/{workspaceId}/virtual-machines/{vmId}",
-                  "POST /api/v1/workspaces/{workspaceId}/virtual-machines/{vmId}/rotate-agent-key",
+                  "POST /api/v1/workspaces/{workspaceId}/virtual-machines/{vmId}/agent-enrollments",
+                  "POST /api/v1/workspaces/{workspaceId}/virtual-machines/{vmId}/install-instructions",
                   "GET /api/v1/workspaces/{workspaceId}/virtual-machines/{vmId}/resources",
                   "GET /api/v1/workspaces/{workspaceId}/virtual-machines/{vmId}/metrics/history",
                   "GET /api/v1/workspaces/{workspaceId}/virtual-machines/{vmId}/logs"

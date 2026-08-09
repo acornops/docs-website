@@ -9,7 +9,10 @@ This quick start assumes AcornOps is deployed and you are connecting your first 
 
 You need:
 
-- root or `sudo` access to a supported systemd-based Linux VM.
+- root or `sudo` access to a supported Ubuntu or Rocky Linux 9 VM booted with systemd;
+- Bash, `curl`, `tar`, and `sha256sum`;
+- Node.js 22 or newer at `/usr/bin/node`;
+- outbound HTTPS access to the configured AgentV release host and AcornOps API.
 
 ## 1. Create a workspace
 
@@ -25,7 +28,7 @@ Open **Virtual Machines**, select **Connect VM**, and enter a recognizable VM na
 
 ## 3. Install AgentV
 
-Copy the complete generated install instructions and run them on the intended Linux host with root or `sudo` access.
+Copy the single generated command and run it on the intended Linux host before the 15-minute enrollment countdown expires. The command is sensitive until its one-use token is exchanged; do not save or share it.
 
 Return to the management console and wait for **Agent connected**, then select **Done**.
 
