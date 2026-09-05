@@ -360,7 +360,6 @@
                   "PATCH /api/v1/workspaces/{workspaceId}/targets/{targetId}/tools/{toolId}",
                   "GET /api/v1/workspaces/{workspaceId}/agents/{agentId}/mcp/servers",
                   "POST /api/v1/workspaces/{workspaceId}/agents/{agentId}/mcp/servers",
-                  "POST /api/v1/workspaces/{workspaceId}/agents/{agentId}/mcp/servers/import",
                   "PATCH /api/v1/workspaces/{workspaceId}/agents/{agentId}/mcp/servers/{serverId}",
                   "DELETE /api/v1/workspaces/{workspaceId}/agents/{agentId}/mcp/servers/{serverId}",
                   "POST /api/v1/workspaces/{workspaceId}/agents/{agentId}/mcp/servers/{serverId}/test-connection",

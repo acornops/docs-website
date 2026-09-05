@@ -37,7 +37,7 @@ If you are building a bot or workflow adapter that reacts to AcornOps events, st
 | AcornOps workspace-native tools | Control plane | The Agent's **Capabilities → Tools** page lists code-owned tools separately. An owner or admin grants them to any specialist Agent. |
 | Builtin Kubernetes tools | AgentK | The connected agent advertises tools and AcornOps shows them in the target tool catalog. |
 | Builtin VM tools | AgentV | The agent advertises strict, read-only Linux/systemd tools over `tools/list`; the control plane synchronizes complete input, output, artifact, timeout, and capability contracts into the gateway for the VM target. |
-| Remote MCP servers | Workspace Agent or target | Owners or admins choose **Add MCP server**, then connect the endpoint by URL or browse configured registries from the Agent's **Capabilities** page or target **MCP servers** page. |
+| Remote MCP servers | Workspace Agent or target | Owners or admins connect an endpoint by URL, or enable a starter seeded from platform **Workspace Defaults**, then configure authentication through the same credential flow. Registry installation remains a disabled **Coming soon** placeholder. |
 
 Newly discovered remote MCP tools stay disabled until an owner or admin reviews
 them. AcornOps suggests `read` only when the server provides an explicit,
@@ -70,7 +70,9 @@ The current builtin tool set is:
 - `get_resource_logs`
 - `restart_workload`
 - `scale_workload`
+- `patch_workload`
 - `patch_resource`
+- `patch_configmap`
 
 Read-only runs cannot execute write-capable tools. Write-capable tools also require mutation RBAC in the Kubernetes cluster and an agent that advertises write support.
 
@@ -95,13 +97,11 @@ reviewed non-destructive restart pauses for approval or may run automatically.
 
 ## Remote MCP server setup
 
-Under **Agents → Agent detail → Capabilities** or a target's **MCP servers** page, choose **Add MCP server**. **Browse registries** opens destination-bound discovery; **Connect by URL** opens the existing form for that Agent or target. Every installation belongs to exactly one destination. Unauthenticated installations can discover during an administrator connection test. Authenticated installations discover through the exact workspace or individual connection selected for that installation.
+Under **Agents → Agent detail → Capabilities** or a target's **MCP servers** page, choose **Add MCP server**. **Add from registry** is visible but disabled as a **Coming soon** placeholder. **Connect by URL** opens the supported form for that Agent or target. Every installation belongs to exactly one destination. Unauthenticated installations can discover during an administrator connection test. Authenticated installations discover through the exact workspace or individual connection selected for that installation.
 
 For **Connect by URL**, enter the actual remote Streamable HTTP endpoint, for example `https://mcp.internal.example/mcp`. The URL must be absolute HTTPS and cannot contain a username, password, or fragment. Non-secret query parameters are supported; credentials must use the authentication fields. Registry roots, `/v0.1` API URLs, `server.json`, GitHub repositories, npm or PyPI packages, containers, and stdio commands are not accepted.
 
-Internal endpoint hostnames still require the gateway egress allow-list and configured CA trust. [MCP registries](/use/mcp-registries) use a separate base-URL contract.
-
-Catalog imports store the source ID, artifact name, pinned version, digest, and import time. Runtime calls use the installed server record and do not look up the registry.
+Internal endpoint hostnames still require the gateway egress allow-list and configured CA trust. Platform-provided defaults use the same installation and credential flow as directly connected servers; they never carry credentials into a workspace. [MCP registries](/use/mcp-registries) describes the disabled placeholder and current server sources.
 
 Tools are authorized by server ID plus tool name. Two installed servers can therefore expose the same tool name without sharing grants or runtime authorization.
 
@@ -155,7 +155,7 @@ Use these controls together:
 
 Use allow-lists for trusted internal MCP endpoints instead of enabling broad private-network access.
 
-Registry synchronization uses the same hostname, DNS, TLS, private-network, and CA controls. An air-gapped deployment can disable the official registry and use only an internal v0.1-compatible registry.
+The same hostname, DNS, TLS, private-network, and CA controls apply to directly connected and platform-provided remote MCP endpoints.
 
 ## Credential connections
 
@@ -200,6 +200,11 @@ progress and never falls back to the previous owner type. Connect and verify a
 new workspace credential before resuming unattended work. Use a dedicated,
 least-privilege service or bot identity rather than an employee credential.
 
+An installed server's direct URL cannot be edited; replace the installation to
+change its endpoint. Changes to authentication type, public headers, credential
+header name, or header prefix also invalidate its existing connections. Reconnect
+and verify the affected credentials after changing authentication configuration.
+
 Administrators can see workspace connection status and can manage that
 installation-owned credential. They cannot list, read, export, replace, or
 disconnect another user's individual credential.
@@ -220,7 +225,7 @@ current work. Replace and verify after provider-side rotation or revocation.
 Remote MCP credentials are separate from platform OIDC: OIDC signs users into
 AcornOps and does not authorize a remote MCP server.
 
-For source control or any other external system, create your own specialist Agent and connect the compatible MCP server by registry or URL. AcornOps discovers tools as untrusted and disabled; an administrator reviews their read/write classification and enables only the exact tools the Agent should use. AcornOps does not ship provider-specific source-control profiles, Agents, or workflows.
+For source control or any other external system, create your own specialist Agent and connect the compatible MCP server by URL. AcornOps discovers tools as untrusted and disabled; an administrator reviews their read/write classification and enables only the exact tools the Agent should use. AcornOps does not ship provider-specific source-control profiles, Agents, or workflows.
 
 Operators can set `REMOTE_MCP_ENABLED=false` to stop all external discovery and execution while leaving built-in tools operational. External MCP availability does not affect platform readiness.
 

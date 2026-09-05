@@ -1,126 +1,39 @@
 ---
 title: "MCP registries"
-description: "Discover MCP servers from configured private, public, or air-gapped registries"
+description: "Understand the registry placeholder and the currently supported MCP server sources"
 ---
 
-AcornOps provides installation UX over registries that you configure; it does not operate its own catalog. No public registry is enabled by default. Self-hosted operators can bootstrap internal registries, and workspace admins can add registries when deployment policy permits.
+MCP registry installation is not currently available in the workspace management console. The **Add MCP server** menu keeps **Add from registry** visible as a disabled **Coming soon** action so the future discovery path has a clear home, but it does not open a browser, navigate to another page, or call a registry API.
 
-Registries let administrators discover MCP servers without coupling a run to a live registry. AcornOps resolves and imports a pinned artifact onto one Agent or target installation. Runs use that stored snapshot even if the registry is later unavailable.
+<Note>
+  Do not configure a workspace registry or send users to a workspace catalog. The former workspace catalog route and registry-source settings have been removed from the management console.
+</Note>
 
-AcornOps supports the official MCP Registry v0.1 wire format at `/v0.1`. A private registry can expose the same format. Other formats require a compiled, allow-listed adapter; AcornOps does not execute uploaded adapter code or arbitrary JSON mappings.
+## Current MCP server sources
 
-## Discovery and installation
+MCP servers currently enter a workspace in two ways:
 
-MCP registries and MCP installations have separate lifecycles:
+1. A workspace owner or administrator chooses **Add MCP server → Connect by URL** on an Agent or target and registers the remote Streamable HTTP endpoint directly.
+2. A platform administrator adds an MCP server under **Workspace Defaults** in the platform admin console. AcornOps materializes the default for eligible new workspaces; a workspace administrator then explicitly enables it and configures its authentication through the normal MCP setup.
 
-1. An administrator adds or bootstraps a catalog source.
-2. AcornOps synchronizes normalized artifacts, versions, digests, and compatible remote endpoints.
-3. An administrator chooses an Agent or target destination and imports a pinned version onto that installation.
-4. AcornOps discovers tools and leaves them disabled for review.
-5. An administrator reviews each exact server/tool pair.
+Both paths create ordinary destination-owned MCP server installations. They use the same authentication, credential ownership, discovery, review, enablement, egress, and runtime rules. Platform defaults do not carry credentials into a workspace, and credentials are never copied between Agent and target installations.
 
-Package-only and stdio-only registry entries remain visible as incompatible. AcornOps v1 imports only remote Streamable HTTP endpoints.
+## Direct connection
 
-| Destination | Entry point | Stored scope | Available to |
-| --- | --- | --- | --- |
-| One Agent | **Agents → Agent detail → Capabilities → MCP servers → Add MCP server → Browse registries** | Exact workspace and Agent ID, with optional authoritative target type/ID constraints | New runs using a pinned capability snapshot |
-| One target | **Target → MCP servers → Add MCP server → Browse registries** | Exact workspace and target ID | Runs through that target's default Agent |
+Choose **Connect by URL** and enter the actual remote MCP Streamable HTTP endpoint, for example `https://mcp.internal.example/mcp`. The URL must be absolute HTTPS in production and cannot contain credentials or a fragment.
 
-Installing the same artifact on another Agent creates an independent installation. Each installation has its own server ID, endpoint configuration, enabled state, reviewed tools, provenance, pinned digest, connections, version history, and lifecycle. An installation never leaks to another Agent or target.
+The form does not accept a registry root, a `/v0.1` registry API, `server.json`, a Git repository, a package, a container, or a stdio command. Configure private endpoint allow-lists and CA trust at deployment level before connecting an internal server.
 
-Browsing keeps the destination fixed and provides a canonical **Back to destination** link. Existing `/workspaces/:workspaceId/catalog` links remain valid, but destination-less visits require selecting an Agent or target before installation.
+Newly discovered tools remain disabled until an owner or administrator reviews their capability and enables each exact server/tool pair. See [MCP and tools](/use/tools-and-mcp#remote-mcp-server-setup) for authentication, public-header, credential-ownership, review, and runtime behavior.
 
-The same **Add MCP server** menu also provides **Connect by URL**. This accepts only the actual remote MCP Streamable HTTP endpoint, such as `https://mcp.internal.example/mcp`. It does not accept a registry URL, `server.json`, a GitHub repository, a package, a container, or a stdio command.
+## Platform-provided defaults
 
-Workspace settings contain **MCP registries** administration. Authorized admins can also open it from **Manage registries** while browsing. Target installations and Agent installations remain independent even when they point to the same upstream URL.
+Platform administrators manage default MCP endpoint metadata in **Platform admin console → Workspace Defaults → MCP servers**. A default defines the display name, HTTPS endpoint, and where it is available. It does not contain a workspace credential.
 
-## Managing registries
+Workspace initialization snapshots the default definitions. Workspace administrators explicitly enable a starter to create an installation, then complete its normal authentication setup. That installation is workspace-owned and uses the same management and credential controls as a directly registered server. Later platform-default changes do not update the workspace's saved starters or its installations.
 
-Admins with `manage_catalog_sources` can add, probe, edit, enable or disable, synchronize, and delete workspace-managed registries when deployment policy permits. Deployment-managed registries are configuration-read-only in the console, but authorized admins may synchronize them.
+## Future registry experience
 
-Enter an HTTPS registry root or path prefix, such as `https://registry.internal.example` or `https://platform.internal.example/mcp-registry`. Do not include `/v0.1`, query parameters, fragments, or credentials; AcornOps appends `/v0.1`. Credentials belong in the authentication fields. Only direct routing is currently available.
+Registry discovery will move to a platform-administered experience in a future release. Until that experience is implemented and documented, the disabled workspace action is only a placeholder and registry import should not be treated as a supported production workflow.
 
-Disabling a registry immediately removes its artifacts from browsing but retains the cached snapshot for later re-enablement. Deleting a workspace registry removes its cache and registry credential. Neither operation uninstalls existing servers: installations retain pinned provenance and keep running, but cannot update until their source returns.
-
-When no registry is configured, the browser offers **Connect by URL** and, for authorized admins, **Add a registry**. Other users are told to contact a workspace administrator.
-
-## Agent and workflow permissions
-
-Every workflow step selects exactly one Agent. The workflow inherits that Agent's MCP, skill, and tool grants unless its capability policy narrows them; it cannot add a capability the Agent does not already grant. Target-owned tools remain target-scoped routes available through eligible Agent mappings and do not become workflow-owned credentials.
-
-In `restrict` mode, an empty workflow restriction grants no capability. In `inherit` mode, the workflow receives the assigned Agent's eligible tools subject to the workflow's read/write mode.
-
-Runtime tool identity includes both the stable server ID and tool name. This keeps tools with the same name on different servers independently selectable and prevents name-only authorization.
-
-## Credential ownership
-
-Authenticated MCP installations explicitly select `workspace` or `individual`
-credential ownership. Importing or enabling a server does not authorize it by
-itself.
-
-Workspace-managed credentials are installation-owned and can be used by user or
-service principals. Individual credentials are scoped to one user and one
-installation and require a user principal. Select the matching **Connect
-credential** action, enter the write-only credential, and grant storage consent.
-AcornOps stores it encrypted in the LLM gateway and immediately performs
-authenticated tool discovery. Responses never return the secret or its name.
-
-A target and an Agent always have separate connections, even for the same
-upstream server. AcornOps never deduplicates connections by URL or copies
-credentials between installations. Failed verification retains an encrypted
-error-state credential so an authorized owner can verify, replace, or disconnect
-it. An upstream `401` or `403` marks that exact connection erroneous.
-
-## Kubernetes configuration
-
-Configure registry policy under `components.llmGateway.catalog`:
-
-```yaml
-components:
-  llmGateway:
-    catalog:
-      officialRegistryEnabled: false
-      # Set this only when deployment policy explicitly permits the public registry.
-      officialRegistryUrl: https://registry.modelcontextprotocol.io
-      allowWorkspaceManagedSources: true
-      bootstrapSources:
-        - workspaceId: "*"
-          displayName: Internal MCP Registry
-          baseUrl: https://registry.internal.example
-          adapterBasePath: /v0.1
-          networkRoute: direct
-          enabled: true
-          auth:
-            type: bearer_token
-            secretKeyRef:
-              name: internal-registry-credential
-              key: token
-    mcpEgress:
-      allowedHosts: registry.internal.example,mcp.internal.example
-      allowPrivateNetworks: true
-```
-
-The chart renders a secret-free bootstrap JSON document. Each registry
-`secretKeyRef` is injected into a separate environment variable and copied into
-the configured gateway secret backend. Runtime MCP credentials are entered
-through the console and have no Helm client or callback configuration.
-
-## Air-gapped self-hosting
-
-For a fully air-gapped deployment:
-
-- set `officialRegistryEnabled: false`,
-- bootstrap an internal v0.1-compatible registry,
-- allow-list only internal registry and MCP server hostnames,
-- mount your private CA through `components.llmGateway.mcpEgress.caBundle`, and
-- keep all registry synchronization, artifact import, tool discovery, and runtime MCP traffic on the internal network.
-
-No public internet access is required when the gateway, registry, and MCP servers share the private network.
-
-Registry availability stays outside global platform readiness. Synchronization failures appear through each registry's status, bounded metrics, and structured logs.
-
-## Agent-owned skills
-
-Install manual or Git-backed skills from the same Agent **Capabilities** page. Git imports resolve to a pinned commit and content digest; upgrades require an explicit reimport. Skill installation state is independent on every Agent. The catalog layer reserves `agent_skill` as a later artifact handler, but MCP import never executes or installs skill content.
-
-See [MCP and tools](/use/tools-and-mcp) for direct endpoint rules, tool review, and runtime behavior, and [Configuration reference](/deploy/configuration-reference#mcp-egress-policy) for egress controls.
+See [Platform admin console](/deploy/platform-admin-console#workspace-defaults) for deployment-wide defaults and [Configuration reference](/deploy/configuration-reference#mcp-egress-policy) for remote MCP egress controls.

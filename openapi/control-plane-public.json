@@ -582,6 +582,9 @@
           },
           "500": {
             "$ref": "#/components/responses/Error500"
+          },
+          "503": {
+            "description": "Gateway lifecycle teardown is incomplete; the Agent remains locally present and deletion can be retried."
           }
         }
       }
@@ -3241,7 +3244,7 @@
           "auth"
         ],
         "summary": "Complete an MCP OAuth authorization-code flow",
-        "description": "Requires the initiating AcornOps user session and browser binding. Provider parameters are exchanged server-side and the browser is redirected to a safe console path.",
+        "description": "Requires the initiating AcornOps user session and browser binding. Provider parameters are exchanged server-side and the browser is redirected to a safe console path with bounded mcpOAuthResult and mcpOAuthServerId correlation parameters.",
         "security": [
           {
             "userSession": []
@@ -3284,7 +3287,7 @@
         ],
         "responses": {
           "303": {
-            "description": "Redirects to the canonical console with a stable OAuth result."
+            "description": "Redirects to the canonical console with a stable OAuth result and, when known, the validated MCP server ID."
           },
           "400": {
             "$ref": "#/components/responses/Error400"
@@ -6087,6 +6090,9 @@
           },
           "500": {
             "$ref": "#/components/responses/Error500"
+          },
+          "503": {
+            "description": "Gateway lifecycle teardown or credential cleanup is incomplete; the workspace remains locally present and deletion can be retried."
           }
         }
       }
@@ -6555,7 +6561,7 @@
                     "type": "string",
                     "format": "uri",
                     "pattern": "^https://",
-                    "description": "Actual remote Streamable HTTP MCP endpoint. Registry, server.json, package, container, and stdio locations are rejected."
+                    "description": "Absolute HTTPS remote Streamable HTTP MCP endpoint. User info, URL fragments, credential-like query keys, registry, server.json, package, container, and stdio locations are rejected."
                   },
                   "enabled": {
                     "type": "boolean"
@@ -6579,10 +6585,16 @@
                     "description": "Required for authenticated installations. Defaults to individual."
                   },
                   "authHeaderName": {
-                    "type": "string"
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "pattern": "^[!#$%&'*+\\-.^_`|~0-9A-Za-z]+$",
+                    "description": "HTTP header token. Platform routing, hop-by-hop, and MCP transport header names are reserved."
                   },
                   "authHeaderPrefix": {
-                    "type": "string"
+                    "type": "string",
+                    "maxLength": 4096,
+                    "description": "Optional credential prefix. CR and LF characters are rejected."
                   },
                   "publicHeaders": {
                     "type": "object",
@@ -6692,10 +6704,21 @@
                   },
                   "authHeaderName": {
                     "type": "string",
-                    "minLength": 1
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "pattern": "^[!#$%&'*+\\-.^_`|~0-9A-Za-z]+$",
+                    "description": "HTTP header token. Platform routing, hop-by-hop, and MCP transport header names are reserved."
                   },
                   "authHeaderPrefix": {
-                    "type": "string"
+                    "type": "string",
+                    "maxLength": 4096,
+                    "description": "Optional credential prefix. CR and LF characters are rejected."
+                  },
+                  "publicHeaders": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string"
+                    }
                   }
                 },
                 "additionalProperties": false
@@ -7501,144 +7524,6 @@
         }
       }
     },
-    "/api/v1/workspaces/{workspaceId}/agents/{agentId}/mcp/servers/{serverId}/reimport": {
-      "post": {
-        "tags": [
-          "catalog"
-        ],
-        "summary": "Explicitly reimport a pinned catalog MCP server",
-        "description": "Requires manage_agents and manage_mcp. The existing installation ID is retained and its immutable provenance and discovered tool review state are updated transactionally.",
-        "security": [
-          {
-            "userSession": []
-          }
-        ],
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/PathWorkspaceId"
-          },
-          {
-            "$ref": "#/components/parameters/PathAgentId2"
-          },
-          {
-            "$ref": "#/components/parameters/PathServerId2"
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "artifact",
-                  "version",
-                  "remoteEndpoint"
-                ],
-                "properties": {
-                  "artifact": {
-                    "type": "object",
-                    "properties": {
-                      "artifactId": {
-                        "type": "string",
-                        "format": "uuid"
-                      },
-                      "sourceId": {
-                        "type": "string",
-                        "format": "uuid"
-                      },
-                      "artifactName": {
-                        "type": "string"
-                      }
-                    },
-                    "additionalProperties": false
-                  },
-                  "version": {
-                    "type": "string"
-                  },
-                  "remoteEndpoint": {
-                    "type": "string",
-                    "description": "Selected Streamable HTTP endpoint URL or registry URL template."
-                  },
-                  "serverName": {
-                    "type": "string"
-                  },
-                  "enabled": {
-                    "type": "boolean"
-                  },
-                  "credentialMode": {
-                    "type": "string",
-                    "enum": [
-                      "none",
-                      "workspace",
-                      "individual"
-                    ]
-                  },
-                  "publicHeaders": {
-                    "type": "object",
-                    "additionalProperties": {
-                      "type": "string"
-                    }
-                  },
-                  "endpointConfiguration": {
-                    "type": "object",
-                    "additionalProperties": {
-                      "type": "string"
-                    }
-                  },
-                  "expectedRevision": {
-                    "type": "integer",
-                    "minimum": 1,
-                    "description": "Required only for explicit reimport."
-                  }
-                },
-                "additionalProperties": false
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Agent MCP installation reimported.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AgentMcpServerResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/Error400"
-          },
-          "401": {
-            "$ref": "#/components/responses/Error401"
-          },
-          "403": {
-            "$ref": "#/components/responses/Error403"
-          },
-          "404": {
-            "$ref": "#/components/responses/Error404"
-          },
-          "409": {
-            "description": "Revision or provenance conflict.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "429": {
-            "$ref": "#/components/responses/Error429"
-          },
-          "500": {
-            "$ref": "#/components/responses/Error500"
-          }
-        }
-      }
-    },
     "/api/v1/workspaces/{workspaceId}/agents/{agentId}/mcp/servers/{serverId}/target-access": {
       "get": {
         "tags": [
@@ -8005,141 +7890,6 @@
           },
           "409": {
             "$ref": "#/components/responses/Error409"
-          },
-          "429": {
-            "$ref": "#/components/responses/Error429"
-          },
-          "500": {
-            "$ref": "#/components/responses/Error500"
-          }
-        }
-      }
-    },
-    "/api/v1/workspaces/{workspaceId}/agents/{agentId}/mcp/servers/import": {
-      "post": {
-        "tags": [
-          "catalog"
-        ],
-        "summary": "Install a pinned catalog MCP server on one Agent",
-        "description": "Requires both manage_agents and manage_mcp. Repeating an identical import is idempotent; upgrades require explicit reimport.",
-        "security": [
-          {
-            "userSession": []
-          }
-        ],
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/PathWorkspaceId"
-          },
-          {
-            "$ref": "#/components/parameters/PathAgentId2"
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "artifact",
-                  "version",
-                  "remoteEndpoint"
-                ],
-                "properties": {
-                  "artifact": {
-                    "type": "object",
-                    "properties": {
-                      "artifactId": {
-                        "type": "string",
-                        "format": "uuid"
-                      },
-                      "sourceId": {
-                        "type": "string",
-                        "format": "uuid"
-                      },
-                      "artifactName": {
-                        "type": "string"
-                      }
-                    },
-                    "additionalProperties": false
-                  },
-                  "version": {
-                    "type": "string"
-                  },
-                  "remoteEndpoint": {
-                    "type": "string",
-                    "description": "Selected Streamable HTTP endpoint URL or registry URL template."
-                  },
-                  "serverName": {
-                    "type": "string"
-                  },
-                  "enabled": {
-                    "type": "boolean"
-                  },
-                  "credentialMode": {
-                    "type": "string",
-                    "enum": [
-                      "none",
-                      "workspace",
-                      "individual"
-                    ]
-                  },
-                  "publicHeaders": {
-                    "type": "object",
-                    "additionalProperties": {
-                      "type": "string"
-                    }
-                  },
-                  "endpointConfiguration": {
-                    "type": "object",
-                    "additionalProperties": {
-                      "type": "string"
-                    }
-                  },
-                  "expectedRevision": {
-                    "type": "integer",
-                    "minimum": 1,
-                    "description": "Required only for explicit reimport."
-                  }
-                },
-                "additionalProperties": false
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Agent MCP installation created.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AgentMcpServerResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/Error400"
-          },
-          "401": {
-            "$ref": "#/components/responses/Error401"
-          },
-          "403": {
-            "$ref": "#/components/responses/Error403"
-          },
-          "404": {
-            "$ref": "#/components/responses/Error404"
-          },
-          "409": {
-            "description": "Explicit reimport is required for a changed version, digest, or endpoint.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
           },
           "429": {
             "$ref": "#/components/responses/Error429"
@@ -11243,6 +10993,9 @@
           },
           "500": {
             "$ref": "#/components/responses/Error500"
+          },
+          "503": {
+            "description": "Gateway lifecycle teardown is incomplete; the cluster remains locally present and deletion can be retried."
           }
         }
       }
@@ -13677,6 +13430,8 @@
                   "url": {
                     "type": "string",
                     "format": "uri",
+                    "pattern": "^https://",
+                    "description": "Absolute HTTPS remote MCP endpoint. User info, URL fragments, and credential-like query keys are rejected.",
                     "example": "https://mcp.example.com/"
                   },
                   "enabled": {
@@ -13713,10 +13468,16 @@
                       },
                       "headerName": {
                         "type": "string",
+                        "minLength": 1,
+                        "maxLength": 128,
+                        "pattern": "^[!#$%&'*+\\-.^_`|~0-9A-Za-z]+$",
+                        "description": "HTTP header token. Platform routing, hop-by-hop, and MCP transport header names are reserved.",
                         "example": "Authorization"
                       },
                       "headerPrefix": {
                         "type": "string",
+                        "maxLength": 4096,
+                        "description": "Optional credential prefix. CR and LF characters are rejected.",
                         "example": "Bearer "
                       }
                     },
@@ -13766,7 +13527,14 @@
             "$ref": "#/components/responses/Error404"
           },
           "409": {
-            "$ref": "#/components/responses/Error409"
+            "description": "The target MCP lifecycle is fenced because target deletion is in progress.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           },
           "429": {
             "$ref": "#/components/responses/Error429"
@@ -13782,7 +13550,7 @@
         "tags": [
           "workspaces"
         ],
-        "summary": "Update target MCP server settings and tool mappings",
+        "summary": "Update target MCP server settings",
         "security": [
           {
             "userSession": []
@@ -13842,49 +13610,20 @@
                       },
                       "headerName": {
                         "type": "string",
+                        "minLength": 1,
+                        "maxLength": 128,
+                        "pattern": "^[!#$%&'*+\\-.^_`|~0-9A-Za-z]+$",
+                        "description": "HTTP header token. Platform routing, hop-by-hop, and MCP transport header names are reserved.",
                         "example": "Authorization"
                       },
                       "headerPrefix": {
                         "type": "string",
+                        "maxLength": 4096,
+                        "description": "Optional credential prefix. CR and LF characters are rejected.",
                         "example": "Bearer "
                       }
                     },
                     "additionalProperties": false
-                  },
-                  "tools": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "required": [
-                        "name"
-                      ],
-                      "properties": {
-                        "name": {
-                          "type": "string",
-                          "example": "github.search_repositories"
-                        },
-                        "timeoutMs": {
-                          "type": "integer",
-                          "minimum": 100,
-                          "maximum": 120000
-                        },
-                        "inputSchema": {
-                          "type": "object",
-                          "additionalProperties": true
-                        },
-                        "enabled": {
-                          "type": "boolean"
-                        }
-                      },
-                      "additionalProperties": false
-                    }
-                  },
-                  "removeTools": {
-                    "type": "array",
-                    "items": {
-                      "type": "string",
-                      "example": "github.search_repositories"
-                    }
                   },
                   "expectedRevision": {
                     "type": "integer",
@@ -13903,17 +13642,7 @@
                     "type": "bearer_token",
                     "headerName": "Authorization",
                     "headerPrefix": "Bearer "
-                  },
-                  "tools": [
-                    {
-                      "name": "github.search_repositories",
-                      "timeoutMs": 10000,
-                      "enabled": true
-                    }
-                  ],
-                  "removeTools": [
-                    "github.old_tool"
-                  ]
+                  }
                 }
               }
             }
@@ -13943,7 +13672,14 @@
             "$ref": "#/components/responses/Error404"
           },
           "409": {
-            "$ref": "#/components/responses/Error409"
+            "description": "Built-in definition is managed by AcornOps, the revision conflicts, or target deletion is in progress.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           },
           "429": {
             "$ref": "#/components/responses/Error429"
@@ -13991,7 +13727,14 @@
             "$ref": "#/components/responses/Error404"
           },
           "409": {
-            "$ref": "#/components/responses/Error409"
+            "description": "Built-in definitions cannot be deleted through this route, or target deletion is in progress.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           },
           "429": {
             "$ref": "#/components/responses/Error429"
@@ -14709,144 +14452,6 @@
         }
       }
     },
-    "/api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}/reimport": {
-      "post": {
-        "tags": [
-          "catalog"
-        ],
-        "summary": "Explicitly reimport a pinned catalog MCP server on one target",
-        "description": "Requires manage_mcp. The existing target installation ID is retained and expectedRevision protects against stale updates.",
-        "security": [
-          {
-            "userSession": []
-          }
-        ],
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/PathWorkspaceId"
-          },
-          {
-            "$ref": "#/components/parameters/PathTargetId2"
-          },
-          {
-            "$ref": "#/components/parameters/PathServerId2"
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "artifact",
-                  "version",
-                  "remoteEndpoint"
-                ],
-                "properties": {
-                  "artifact": {
-                    "type": "object",
-                    "properties": {
-                      "artifactId": {
-                        "type": "string",
-                        "format": "uuid"
-                      },
-                      "sourceId": {
-                        "type": "string",
-                        "format": "uuid"
-                      },
-                      "artifactName": {
-                        "type": "string"
-                      }
-                    },
-                    "additionalProperties": false
-                  },
-                  "version": {
-                    "type": "string"
-                  },
-                  "remoteEndpoint": {
-                    "type": "string",
-                    "description": "Selected Streamable HTTP endpoint URL or registry URL template."
-                  },
-                  "serverName": {
-                    "type": "string"
-                  },
-                  "enabled": {
-                    "type": "boolean"
-                  },
-                  "credentialMode": {
-                    "type": "string",
-                    "enum": [
-                      "none",
-                      "workspace",
-                      "individual"
-                    ]
-                  },
-                  "publicHeaders": {
-                    "type": "object",
-                    "additionalProperties": {
-                      "type": "string"
-                    }
-                  },
-                  "endpointConfiguration": {
-                    "type": "object",
-                    "additionalProperties": {
-                      "type": "string"
-                    }
-                  },
-                  "expectedRevision": {
-                    "type": "integer",
-                    "minimum": 1,
-                    "description": "Required only for explicit reimport."
-                  }
-                },
-                "additionalProperties": false
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Target MCP installation reimported.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AgentMcpServerResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/Error400"
-          },
-          "401": {
-            "$ref": "#/components/responses/Error401"
-          },
-          "403": {
-            "$ref": "#/components/responses/Error403"
-          },
-          "404": {
-            "$ref": "#/components/responses/Error404"
-          },
-          "409": {
-            "description": "Revision or provenance conflict.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "429": {
-            "$ref": "#/components/responses/Error429"
-          },
-          "500": {
-            "$ref": "#/components/responses/Error500"
-          }
-        }
-      }
-    },
     "/api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/{serverId}/test-connection": {
       "post": {
         "tags": [
@@ -15093,141 +14698,6 @@
           },
           "409": {
             "$ref": "#/components/responses/Error409"
-          },
-          "429": {
-            "$ref": "#/components/responses/Error429"
-          },
-          "500": {
-            "$ref": "#/components/responses/Error500"
-          }
-        }
-      }
-    },
-    "/api/v1/workspaces/{workspaceId}/targets/{targetId}/mcp/servers/import": {
-      "post": {
-        "tags": [
-          "catalog"
-        ],
-        "summary": "Install a pinned catalog MCP server on one target",
-        "description": "Requires manage_mcp. The server resolves workspace ownership and target type; browser-supplied routing fields are rejected. Credential ownership must be supported by the selected endpoint.",
-        "security": [
-          {
-            "userSession": []
-          }
-        ],
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/PathWorkspaceId"
-          },
-          {
-            "$ref": "#/components/parameters/PathTargetId2"
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "artifact",
-                  "version",
-                  "remoteEndpoint"
-                ],
-                "properties": {
-                  "artifact": {
-                    "type": "object",
-                    "properties": {
-                      "artifactId": {
-                        "type": "string",
-                        "format": "uuid"
-                      },
-                      "sourceId": {
-                        "type": "string",
-                        "format": "uuid"
-                      },
-                      "artifactName": {
-                        "type": "string"
-                      }
-                    },
-                    "additionalProperties": false
-                  },
-                  "version": {
-                    "type": "string"
-                  },
-                  "remoteEndpoint": {
-                    "type": "string",
-                    "description": "Selected Streamable HTTP endpoint URL or registry URL template."
-                  },
-                  "serverName": {
-                    "type": "string"
-                  },
-                  "enabled": {
-                    "type": "boolean"
-                  },
-                  "credentialMode": {
-                    "type": "string",
-                    "enum": [
-                      "none",
-                      "workspace",
-                      "individual"
-                    ]
-                  },
-                  "publicHeaders": {
-                    "type": "object",
-                    "additionalProperties": {
-                      "type": "string"
-                    }
-                  },
-                  "endpointConfiguration": {
-                    "type": "object",
-                    "additionalProperties": {
-                      "type": "string"
-                    }
-                  },
-                  "expectedRevision": {
-                    "type": "integer",
-                    "minimum": 1,
-                    "description": "Required only for explicit reimport."
-                  }
-                },
-                "additionalProperties": false
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Target MCP installation created.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AgentMcpServerResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/Error400"
-          },
-          "401": {
-            "$ref": "#/components/responses/Error401"
-          },
-          "403": {
-            "$ref": "#/components/responses/Error403"
-          },
-          "404": {
-            "$ref": "#/components/responses/Error404"
-          },
-          "409": {
-            "description": "Explicit reimport is required for a changed version, digest, or endpoint.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
           },
           "429": {
             "$ref": "#/components/responses/Error429"
@@ -18353,6 +17823,9 @@
           },
           "500": {
             "$ref": "#/components/responses/Error500"
+          },
+          "503": {
+            "description": "Gateway lifecycle teardown is incomplete; the VM remains locally present and deletion can be retried."
           }
         }
       }
@@ -21157,7 +20630,8 @@
                 }
               },
               "error": {
-                "type": "string"
+                "type": "string",
+                "nullable": true
               }
             },
             "additionalProperties": false
@@ -21182,6 +20656,7 @@
           "credentialMode",
           "revision",
           "publicHeaders",
+          "credentialTransitioning",
           "connectionStatus",
           "tools"
         ],
@@ -21271,6 +20746,9 @@
               "type": "string"
             }
           },
+          "credentialTransitioning": {
+            "type": "boolean"
+          },
           "connectionStatus": {
             "type": "string",
             "enum": [
@@ -21281,7 +20759,8 @@
           },
           "lastDiscoveryAt": {
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "nullable": true
           },
           "lastDiscoveryError": {
             "type": "string",
@@ -21348,6 +20827,14 @@
           },
           "description": {
             "type": "string"
+          },
+          "inputSchema": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "outputSchema": {
+            "type": "object",
+            "additionalProperties": true
           },
           "capability": {
             "type": "string",
@@ -23781,8 +23268,8 @@
               "$ref": "#/components/schemas/McpServer"
             }
           },
-          "serverTools": {
-            "$ref": "#/components/schemas/McpToolPage"
+          "nextCursor": {
+            "type": "string"
           }
         },
         "additionalProperties": true
@@ -24237,15 +23724,25 @@
               "type": "string"
             }
           },
+          "credentialTransitioning": {
+            "type": "boolean"
+          },
           "connectionStatus": {
-            "type": "string"
+            "type": "string",
+            "enum": [
+              "unknown",
+              "ok",
+              "error"
+            ]
           },
           "lastDiscoveryAt": {
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "nullable": true
           },
           "lastDiscoveryError": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "toolCounts": {
             "$ref": "#/components/schemas/McpToolCounts"
@@ -24293,6 +23790,7 @@
             "type": "string",
             "enum": [
               "server_disabled",
+              "agent_disconnected",
               "agent_write_disabled"
             ],
             "nullable": true
@@ -25391,6 +24889,9 @@
         "required": [
           "id",
           "workspace_id",
+          "scope_type",
+          "target_id",
+          "target_type",
           "server_name",
           "server_url",
           "enabled",
@@ -25406,6 +24907,12 @@
           "workspace_id": {
             "type": "string",
             "format": "uuid"
+          },
+          "scope_type": {
+            "type": "string",
+            "enum": [
+              "target"
+            ]
           },
           "target_id": {
             "type": "string",
@@ -25460,6 +24967,9 @@
               "type": "string"
             }
           },
+          "credential_transitioning": {
+            "type": "boolean"
+          },
           "connection_status": {
             "type": "string",
             "enum": [
@@ -25470,11 +24980,58 @@
           },
           "last_discovery_at": {
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "nullable": true
           },
           "last_discovery_error": {
             "type": "string",
             "nullable": true
+          },
+          "catalog_source_id": {
+            "type": "string",
+            "nullable": true
+          },
+          "catalog_artifact_name": {
+            "type": "string",
+            "nullable": true
+          },
+          "catalog_version": {
+            "type": "string",
+            "nullable": true
+          },
+          "catalog_digest": {
+            "type": "string",
+            "nullable": true
+          },
+          "catalog_imported_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "provenance_type": {
+            "type": "string",
+            "enum": [
+              "manual",
+              "catalog",
+              "builtin"
+            ]
+          },
+          "endpoint_configuration": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "integration_profile_id": {
+            "type": "string",
+            "nullable": true
+          },
+          "integration_profile_version": {
+            "type": "integer",
+            "minimum": 1,
+            "nullable": true
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 1
           },
           "tools": {
             "type": "array",
@@ -25483,7 +25040,7 @@
             }
           }
         },
-        "additionalProperties": true
+        "additionalProperties": false
       },
       "TargetMcpServerList": {
         "type": "array",
@@ -25536,7 +25093,8 @@
             }
           },
           "error": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": true

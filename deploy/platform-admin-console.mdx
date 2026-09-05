@@ -6,7 +6,7 @@ description: "Use the governance-only console to administer AcornOps accounts, w
 The platform admin console is a separate browser application for AcornOps platform administrators. Use it for deployment-wide governance and recovery tasks. Workspace members continue to use the [management console](/use) for targets, investigations, Agents, Workflows, tools, and approvals.
 
 <Warning>
-  The platform admin console intentionally cannot access tenant logs, workspace audit events, target identities, Agents, sessions, runs, prompts, commands, tools, credentials, or workload controls. It does not support impersonation.
+  The platform admin console intentionally cannot access tenant logs, workspace audit events, target identities, Agents, sessions, runs, prompts, commands, workspace credentials, or workload controls. Workspace defaults contain only administrator-approved definitions and endpoint metadata; they do not expose or distribute credentials. The console does not support impersonation.
 </Warning>
 
 ## What administrators can manage
@@ -55,6 +55,12 @@ Platform Settings separates two categories:
 - **AI:** AI policy and write-only default keys for OpenAI, Anthropic, and Gemini.
 
 The page shows each setting's effective value, deployment boundary, source, and policy blockers. Full platform administrators can save or reset supported runtime overrides. Provider keys can be replaced or explicitly deleted, but key values are never returned after submission.
+
+### Workspace defaults
+
+Workspace Defaults lets a full platform administrator maintain the MCP server and skill definitions offered when eligible new workspaces are initialized. For MCP servers, the administrator supplies a display name, an HTTPS endpoint, and the supported destinations. The default contains no credential: workspace administrators must explicitly enable the starter to create an installation and configure authentication through the ordinary MCP setup.
+
+Workspace initialization stores a snapshot of the defaults. Later changes to the platform list apply to future workspace initialization, not to existing workspace snapshots or installations. Enabling a starter creates a normal workspace-owned installation that workspace administrators can manage through the same controls as a directly registered server. It is not kept synchronized with the platform list and carries no platform-managed credentials. Registry browsing is not currently available in the workspace management console; its **Add from registry** action is a disabled **Coming soon** placeholder.
 
 ### Admin audit
 

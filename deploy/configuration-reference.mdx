@@ -412,7 +412,7 @@ The selected Kubernetes resource must exist in the release namespace. Restart af
 
 ## MCP egress policy
 
-Remote MCP servers can be installed at workspace scope for Agent and Workflow use, or at exact target scope for one Kubernetes cluster or VM. In production, the gateway should require HTTPS and block private, local, and reserved network targets unless you intentionally allow specific hosts.
+Each remote MCP installation belongs to one workspace Agent or one Kubernetes cluster or VM target. Workflows reuse their selected Agent's installation; they do not own a separate MCP installation or credential. In production, the gateway should require HTTPS and block private, local, and reserved network targets unless you intentionally allow specific hosts.
 
 Use allow-lists for trusted internal MCP endpoints instead of broad private-network access.
 
@@ -426,7 +426,9 @@ Use allow-lists for trusted internal MCP endpoints instead of broad private-netw
 
 Remote MCP server `publicHeaders` are for non-secret metadata only. Credentials belong in secret-backed auth fields, and platform scope headers are reserved.
 
-MCP registry policy uses `components.llmGateway.catalog`. The Official MCP Registry is disabled by default and must be enabled explicitly. Configure internal registries through `bootstrapSources`, use `secretKeyRef` for registry credentials, and keep bootstrap routing set to `direct`. MCP installations select workspace-managed or individual credential ownership and require no deployment-level callback configuration. See [MCP registries](/use/mcp-registries) for complete examples and lifecycle behavior.
+Workspace administrators connect MCP endpoints by URL or enable starters seeded from platform **Workspace Defaults**. Both use the same workspace-managed or individual credential flow. Defaults carry endpoint metadata, not credentials, and later platform-default edits do not update existing workspace snapshots or installations.
+
+The Management Console does not support registry browsing, source management, import, or reimport. Its **Add from registry** action is a disabled **Coming soon** placeholder. The gateway's `components.llmGateway.catalog` configuration and backend registry endpoints remain for future work; configuring them does not enable registry installation in the console. See [MCP registries](/use/mcp-registries) for the supported server sources and [MCP and tools](/use/tools-and-mcp#credential-connections) for credential ownership and OAuth setup.
 
 ## Webhooks
 
