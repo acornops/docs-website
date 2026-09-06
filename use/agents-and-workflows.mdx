@@ -92,22 +92,43 @@ Template manifests contain prose, safe policy defaults, semantic requirements, a
 
 Schedules store cadence and principal—not launch inputs or access grants. Every occurrence compiles the current active saved prompt and execution scope from the assigned Agent capabilities. An invalid definition, deletion, integration outage, membership change, or authorization failure auto-pauses the schedule with a bounded actionable reason; repair the cause and resume it manually.
 
+Choose a timezone and review **Upcoming runs** before saving a schedule. The
+control plane validates the cadence; a failed preview keeps your draft and
+provides a retry. Credential readiness is checked separately and again when
+the schedule is saved or dispatched.
+
+Custom schedules use numeric five-field cron: minute, hour, day of month,
+month, and day of week. Lists, ascending ranges, and positive steps are
+supported; seconds and named aliases are not. When both day fields are
+restricted, either can match. When either day field starts with `*`, including
+`*/2`, both must match. For daylight saving, a missing wall time moves forward
+through the gap and a repeated wall time runs once, at its first occurrence.
+Review the preview in your chosen timezone, especially around clock changes.
+
 ## Organize workflows and Activity
 
 Open **Workflows** in the management console to use three views:
 
-- **All Workflows** contains installed Workflow definitions and manual launch.
+- **Workflows** contains installed Workflow definitions and manual launch.
 - **Schedules** contains recurring Workflow dispatches.
-- **Incoming Webhooks** contains signed endpoints that start Workflows from
-  external systems.
+- **Runs** contains open and historical Workflow executions.
 
-Open **Activity** from Automation to see open and historical executions across
-the workspace. Its navigation badge shows the number of open executions. The
-Activity ledger defaults to open work. You can search it or filter by state,
-origin, Workflow, and issue. Each row identifies the Workflow, the schedule or
+Open a Workflow's **Webhooks** tab to manage signed endpoints that start it
+from external systems.
+
+The workspace **Runs** ledger defaults to all executions. You can search it or
+filter by state, origin, and Workflow. Each row identifies the Workflow, the schedule or
 webhook that started it, its current state, start or completion time, and an
 exact execution link. A target appears only on a recorded target tool call or
 approval.
+
+Use **Load more** to read older executions. Incoming activity shows a refresh
+notice without replacing the history you have loaded. **Refresh** reloads only
+the pages you have opened; if it fails, the current rows remain available.
+
+Kubernetes and VM issue panels show loaded counts and a total when available. Use **Load more
+issues** to fetch the next page without opening a separate scrolling container.
+If loading fails, retry from the same panel without losing existing rows.
 
 Issue rows show related automation directly on the workspace, Kubernetes, and
 virtual-machine issue surfaces. Use **Review run** for approval or review

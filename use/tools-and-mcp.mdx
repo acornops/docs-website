@@ -187,9 +187,10 @@ Readiness fails when an exact approved tool is absent from the resolved
 workspace or individual connection snapshot.
 
 Workflows own no credentials; a workflow reuses its selected Agent installation.
-Workspace mode supports scheduled service principals, while individual mode
-requires a user and otherwise fails with
-`MCP_INDIVIDUAL_USER_PRINCIPAL_REQUIRED`. Missing or erroneous connections fail
+Workflow schedules run as their authenticated creator in both workspace and
+individual credential modes; schedules do not accept service principals.
+Individual mode uses that user's connection; callers without a user principal
+fail with `MCP_INDIVIDUAL_USER_PRINCIPAL_REQUIRED`. Missing or erroneous connections fail
 closed. A remote `401` or `403` clears the exact owner's snapshot and marks that
 connection erroneous until it is verified, replaced, or disconnected.
 
