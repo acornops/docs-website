@@ -1,0 +1,79 @@
+---
+title: "Workspace execution capacity"
+description: "Configure independent run pools and prepare an optional hosted deployment"
+---
+
+AcornOps remains independently self-hostable. You can connect a separate hosted controller through scoped admin APIs without adding a billing dependency to the platform.
+
+## Five independent pools
+
+Each plan can limit Chat, Agent, Workflow, automatic investigations and Insights separately. Each pool has a concurrent limit and an outstanding limit. Outstanding includes accepted work that is queued, executing or waiting for approval or delegated children. Bounded operations still finishing retain their concurrent slot.
+
+Workflow children use the Workflow pool. Automatic investigations use `autoTriage`, including their initial run; they do not consume Chat capacity. Future schedules and coalesced Insights activity are not admitted runs. Pools never borrow capacity from each other.
+
+```yaml
+workspacePlans:
+  defaultPlanKey: hosted-v1
+  plans:
+    - key: hosted-v1
+      name: Hosted
+      quotas:
+        members: 100
+        kubernetesClusters: 30
+        virtualMachines: 30
+      executionLimits:
+        chat: { maxConcurrentRuns: 4, maxOutstandingRuns: 20 }
+        agent: { maxConcurrentRuns: 4, maxOutstandingRuns: 20 }
+        workflow: { maxConcurrentRuns: 8, maxOutstandingRuns: 40 }
+        autoTriage: { maxConcurrentRuns: 2, maxOutstandingRuns: 10 }
+        insights: { maxConcurrentRuns: 2, maxOutstandingRuns: 10 }
+```
+
+These example values are not a service-tier recommendation. Select limits for your workload and infrastructure. Both values must be positive integers, with outstanding at least concurrent, or both null. An omitted pool is unlimited. Hosted configurations should make all five pairs finite.
+
+For Compose, supply the equivalent JSON through `WORKSPACE_PLANS_CONFIG_JSON`. Plan limit definitions are immutable under a key. Use a new key for changed limits, then reassign workspaces. Renaming a plan does not change its limits. Workspace resource overrides survive plan reassignment.
+
+## Admission and waiting
+
+When the outstanding limit is reached, interactive submission returns `WORKSPACE_OUTSTANDING_RUN_LIMIT` without creating a run. Automatic launches record a skipped occurrence. Accepted work waits for a concurrent slot, subject to its eligible queue deadline. Approval waits retain their normal expiry. A coordinator can release its concurrent slot while waiting for a child, including when the Workflow concurrency limit is one.
+
+A plan downgrade rejects excess usage by default. An administrator can explicitly choose `retain_existing` to preserve resources and admitted work while usage drains. This does not delete data or authorize new work above the new limits.
+
+## Enable capacity limits
+
+Capacity limits default to disabled. Workspace suspension remains enforced in either mode. Enable only after deploying compatible control planes, execution engines and gateways.
+
+If capacity is already enabled and you are changing the catalogue, first close both control-plane gates using the current mode and catalogue, then drain active work and bounded operations. Keep the gates closed throughout the procedure below. An activated control plane rejects a changed mode or catalogue while either gate is open.
+
+1. Apply the control-plane migrations using your normal migration job.
+2. Deploy compatible builds with `WORKSPACE_CAPACITY_ENABLED=false` on all three services.
+3. Close admission and dispatch on every control plane: set `WORKSPACE_ADMISSION_ENABLED=false` and `WORKSPACE_DISPATCH_ENABLED=false`. In Helm, use `workspaceCapacity.admissionEnabled` and `workspaceCapacity.dispatchEnabled`. Drain active runs and bounded operations.
+4. List every service replica in a trusted local peer file. Use direct replica addresses, not a load balancer, and include all three service types.
+
+```json
+[
+  { "service": "control-plane", "url": "http://control-plane:8081" },
+  { "service": "execution-engine", "url": "http://execution-engine:8080" },
+  { "service": "llm-gateway", "url": "http://llm-gateway:8001" }
+]
+```
+
+5. From the control-plane runtime with the same database and catalogue, and both gates closed, run `npm run capacity:rollout -- prepare peers.json --require-finite`.
+6. Enable `WORKSPACE_CAPACITY_ENABLED=true` on all three services, keeping admission and dispatch closed. Run `npm run capacity:rollout -- verify peers.json --require-finite`.
+7. Open both gates. In Helm, the shared capacity mode is `workspaceCapacity.enabled`.
+
+The checks verify service capability, mode agreement, the catalogue and unsettled execution. The peer file must include every replica; the command cannot discover omitted replicas. For self-hosted installations intentionally using unlimited pools, omit `--require-finite`. Use builds containing these contracts; existing release tags do not automatically acquire unreleased source changes.
+
+To disable limits, close both gates and drain work first. Restart compatible services with limits disabled and gates still closed, run `npm run capacity:rollout -- deactivate peers.json`, then reopen gates. Preserve execution ledgers and suspension state. Do not roll back to components that lack the lifecycle and ownership contract.
+
+## Optional hosted controller
+
+Give a named machine token only the required scopes: `admin:workspace:policy:read`, `admin:workspace:plan:write` and, when needed, `admin:workspace:external-hold:write`. Read the plan catalogue at `GET /admin/v1/workspace-plans` and the current policy at `GET /admin/v1/workspaces/{workspaceId}/policy`.
+
+Use `requestId` and `expectedPolicyVersion` for mutations. Retry the same request with the same ID and payload. Receipts last 30 days; expected versions prevent an old request from overwriting newer policy after expiry. A version conflict requires reading current policy and making a new deliberate request.
+
+The controller can set or clear only its external hold when using the narrow hold scope. It cannot clear an administrative hold. Billing, invoices, commercial plans and customer spend remain outside AcornOps.
+
+## Provider credentials
+
+Workspace credentials take precedence over the existing self-hosted platform fallback. A hosted operator requiring workspace BYOK should omit shared fallback credentials. The gateway checks lifecycle at provider and tool dispatch, even when capacity limits are disabled. A valid run token alone does not permit execution after suspension or loss of ownership.

@@ -5848,6 +5848,18 @@
             "$ref": "#/components/parameters/HeaderXAcornopsExternalUserId"
           },
           {
+            "in": "query",
+            "name": "view",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "access-state"
+              ]
+            },
+            "description": "Session users only: return minimal membership identities including suspended workspaces as {items:[{id,name,accessState,publicReason?,suspendedAt?}]}; no workload permissions or quota data."
+          },
+          {
             "$ref": "#/components/parameters/QueryLimit"
           },
           {
@@ -6093,6 +6105,105 @@
           },
           "503": {
             "description": "Gateway lifecycle teardown or credential cleanup is incomplete; the workspace remains locally present and deletion can be retried."
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/access-state": {
+      "get": {
+        "tags": [
+          "workspaces"
+        ],
+        "summary": "Read minimal workspace access state for a current member",
+        "security": [
+          {
+            "userSession": []
+          }
+        ],
+        "description": "Includes suspended memberships without granting workload access. Public reason excludes private administrative reasons. Returns Cache-Control: no-store.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspaceId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Safe workspace identity and access state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "id",
+                    "name",
+                    "accessState"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "accessState": {
+                      "type": "string",
+                      "enum": [
+                        "active",
+                        "suspended"
+                      ]
+                    },
+                    "publicReason": {
+                      "type": "string"
+                    },
+                    "suspendedAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "description": "User session required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "description": "Missing workspace or not a member",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error500"
           }
         }
       }

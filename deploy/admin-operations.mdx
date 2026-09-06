@@ -12,7 +12,7 @@ https://api.example.com/admin/v1
 
 Replace `example.com` with your deployment domain. Only enable it when you have a process for storing admin tokens and auditing
 their use. Only the API host routes `/admin`. The management console host must
-not proxy admin endpoints, and browser sessions are not valid admin credentials.
+not proxy admin endpoints, and ordinary workspace sessions are not admin credentials. The platform admin console uses its internal BFF credential together with a separately authenticated platform-admin session.
 
 ## Enablement
 
@@ -52,8 +52,7 @@ curl -H "Authorization: Bearer $ACORNOPS_ADMIN_TOKEN" \
   https://api.example.com/admin/v1/me
 ```
 
-Admin endpoints reject browser cookies, CSRF tokens, internal service tokens,
-run-scoped JWTs, and agent keys. Scopes are separate from workspace roles.
+Machine requests use named admin bearer tokens. Ordinary workspace cookies, internal service tokens, run-scoped JWTs and agent keys do not grant admin access. Human platform-admin requests retain their role, CSRF and recent-authentication checks through the admin console BFF. Scopes are separate from workspace roles.
 Use the narrowest descriptor scopes possible:
 
 ```text
@@ -62,6 +61,9 @@ admin:system:read
 admin:audit:read
 admin:workspace:read
 admin:workspace:write
+admin:workspace:policy:read
+admin:workspace:plan:write
+admin:workspace:external-hold:write
 admin:user:read
 admin:user:write
 admin:member:write
@@ -129,4 +131,13 @@ Admins can change a workspace plan or set nullable quota overrides through
 `PATCH /admin/v1/workspaces/{workspaceId}/plan` and
 `PATCH /admin/v1/workspaces/{workspaceId}/quotas`. The control plane rejects
 changes that would place current workspace usage over the resulting effective
-limit.
+limit unless you explicitly select `overLimitBehavior: "retain_existing"`. Plan changes preserve explicit resource overrides. Execution limits are configured per plan, with five independent pools; see [Workspace execution capacity](/deploy/workspace-capacity).
+
+
+## Workspace suspension holds
+
+A workspace can have one administrative hold and one external hold. Either hold suspends access. Clearing your hold does not clear the other, and the original suspension time remains while access stays blocked. Suspension cancels queued work and requests cancellation of executing work; restore never replays cancelled attempts.
+
+Private administrative reasons remain in administrative records. Members receive only the public suspension message and minimal workspace identity. Narrow external controllers must explicitly use `source: "external"`; the admin console manages `source: "admin"`.
+
+Machine policy changes require `requestId` and `expectedPolicyVersion`. Any caller supplying a request ID must also supply a version. Legacy broad callers may omit both. Retrying an unchanged request returns its original outcome for 30 days. After a version conflict, read current policy before submitting a new request.

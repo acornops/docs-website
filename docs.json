@@ -224,7 +224,8 @@
             "group": "Govern",
             "pages": [
               "deploy/platform-admin-console",
-              "deploy/admin-operations"
+              "deploy/admin-operations",
+              "deploy/workspace-capacity"
             ]
           },
           {
