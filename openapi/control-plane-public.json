@@ -11113,6 +11113,94 @@
         }
       }
     },
+    "/api/v1/workspaces/{workspaceId}/kubernetes-clusters/{clusterId}/install-instructions": {
+      "get": {
+        "tags": [
+          "workspaces"
+        ],
+        "summary": "Get credential-preserving AgentK upgrade or repair instructions",
+        "description": "Requires manage_targets. Returns an upgrade-only Helm command that reuses installed values and restarts AgentK. Does not rotate keys or disconnect agents. Verify the Kubernetes context, release, and namespace before execution; image pins are preserved.",
+        "security": [
+          {
+            "userSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspaceId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "in": "path",
+            "name": "clusterId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Credential-free command and operator warnings.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClusterAgentMaintenance"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "description": "Requires target access and manage_targets.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Cluster not found in this workspace.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "No active agent registration to reuse.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error500"
+          }
+        }
+      }
+    },
     "/api/v1/workspaces/{workspaceId}/kubernetes-clusters/{clusterId}/metrics/history": {
       "get": {
         "tags": [
@@ -11466,6 +11554,7 @@
           "workspaces"
         ],
         "summary": "Rotate cluster agent key",
+        "description": "Requires manage_agent_keys. Immediately invalidates the old credential and disconnects AgentK when the command is generated. Use GET install-instructions for routine maintenance instead.",
         "security": [
           {
             "userSession": []
@@ -22480,6 +22569,39 @@
             "type": "string"
           }
         }
+      },
+      "ClusterAgentMaintenance": {
+        "type": "object",
+        "required": [
+          "clusterId",
+          "installInstructions"
+        ],
+        "properties": {
+          "clusterId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "installInstructions": {
+            "type": "object",
+            "required": [
+              "command",
+              "warnings"
+            ],
+            "properties": {
+              "command": {
+                "type": "string"
+              },
+              "warnings": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
       },
       "ClusterRegistration": {
         "type": "object",

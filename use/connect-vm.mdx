@@ -37,6 +37,11 @@ For the initial bootstrap, the host's `curl` and Node.js runtime must already tr
 
 ## Repair and credential replacement
 
+Open **VM Settings → Agent maintenance**. Repair and replacement remain available
+for installed agents whether connected or disconnected. Repair requires
+`manage_targets`; replacement requires `manage_agent_keys`. Unlike Kubernetes key
+replacement, generating a VM replacement command does not revoke the active key.
+
 Use **Upgrade or repair AgentV** for a healthy installation that needs the pinned release reapplied or upgraded. Its command contains no enrollment token and reuses the root-owned local credential. It fails before modification if the local target, platform URL, environment ownership, or credential is missing or mismatched.
 
 Use **Replace AgentV credential** after suspected exposure or when rebuilding the VM. The replacement command has a fresh one-use token and preserves the VM's registered access policy. The current credential and connection remain valid while the candidate is checked; the installer promotes the replacement only after provisional authentication. A failed cutover restores the previous release, environment, helper policy, socket state, credential, and service connection. The original installation command can also be rerun on the same correctly configured VM: its consumed token is ignored and the operation behaves like a repair.

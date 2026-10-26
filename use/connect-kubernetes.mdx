@@ -15,6 +15,30 @@ Every Kubernetes cluster that AcornOps observes runs AgentK. The connector opens
 
 The registration response includes `{ cluster, agentKey, installInstructions }`. Treat `installInstructions.command` as authoritative.
 
+## Upgrade, repair, or replace a credential
+
+Open **Cluster Settings → Agent maintenance**. Both actions are available for
+installed agents whether connected or disconnected:
+
+- **Upgrade or repair AgentK** generates a credential-free Helm command. It reuses
+  installed values, including credentials, RBAC, namespace scope, CA settings,
+  and image overrides. Check the Kubernetes context, release name, and namespace
+  before running it. Explicit image tag or digest pins remain pinned. The command
+  restarts AgentK and waits up to five minutes, including for same-version repair;
+  a missing release fails rather than creating a new installation.
+- **Replace AgentK credential** opens a separate dialog. Generating the command
+  immediately revokes the old key and disconnects AgentK until you install the new
+  key. Review the generated values and access mode before execution; this is not
+  the value-preserving repair path. Chart-managed key changes restart pods. If you
+  use an external Secret, update that Secret and restart AgentK yourself.
+
+Repair requires `manage_targets`; credential replacement requires
+`manage_agent_keys`. A target that has never connected offers **Install Agent**
+instead. Initial installation defaults to read-only.
+
+VM settings use the same operation names, but VM replacement keeps the current
+credential valid until installation succeeds. See [VM maintenance](/use/connect-vm#repair-and-credential-replacement).
+
 ## Namespace scope
 
 Use namespace include and exclude lists to limit what the agent observes and what builtin tools may touch.
