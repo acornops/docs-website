@@ -11422,7 +11422,14 @@
             "$ref": "#/components/responses/Error404"
           },
           "409": {
-            "$ref": "#/components/responses/Error409"
+            "description": "POD_LOGS_UNAVAILABLE: the selected container has not started. No logs are available yet.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           },
           "429": {
             "$ref": "#/components/responses/Error429"
