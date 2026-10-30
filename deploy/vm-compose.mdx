@@ -13,11 +13,17 @@ Complete the [deployment prerequisites](/deploy/prerequisites). Prepare durable 
 
 ## Prepare the environment
 
-From the AcornOps deployment repository:
+For a fresh installation, create the environment file from the AcornOps
+deployment repository:
 
 ```bash
 cp env/vm/.env.example env/vm/.env.prod
 ```
+
+For an upgrade, preserve the existing environment file, encryption keys and
+other secrets. Do not copy the template over it or regenerate keys. Follow the
+[upgrade path](/deploy/operations#upgrade-flow), updating only the configuration
+required by the selected release.
 
 Review the production environment file. Keep `TRUST_PROXY=1` when the edge proxy terminates TLS and owns forwarded host headers.
 
@@ -30,11 +36,19 @@ supported VM stack.
 
 ## Start the platform
 
+For an existing installation, first select the
+[upgrade path](/deploy/operations#upgrade-flow) using both databases' migration
+history. Preserve matching greenfield databases and secrets; stop on unknown or
+divergent history. A verified earlier epoch needs a separately approved reset or
+data migration.
+
 ```bash
 task prod-up
 ```
 
-Database initialization runs before the services start. Treat initialization failures as deployment blockers.
+Database initialization runs before the new services start, but does not stop
+existing writers. Follow the selected maintenance procedure before running it.
+Treat initialization failures as deployment blockers.
 
 ## Production posture
 
@@ -45,7 +59,9 @@ Database initialization runs before the services start. Treat initialization fai
 - Back up state before a reset or supported upgrade.
 - Review JWKS readiness, request limits, rate limits, and MCP egress.
 
-The current deployment reference describes a greenfield database epoch rather than a mixed-version rolling database upgrade. Follow the exact release guidance before replacing an existing environment.
+The greenfield epoch is not a blanket reset requirement. Follow the
+[upgrade and recovery procedure](/deploy/operations#upgrade-flow) before replacing
+an existing environment.
 
 ## Continue
 

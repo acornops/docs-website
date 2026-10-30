@@ -7,23 +7,30 @@ This page covers day-two operations for the central platform and connected Kuber
 
 ## Upgrade flow
 
-For production-style environments:
+Select the path from both application databases' recorded migration history and
+the selected images' migration files. The `greenfield-1` schema epoch does not
+require resetting an existing installation.
 
-1. Select one pinned stack from the [`stack-versions.yaml` release matrix](https://github.com/acornops/acornops-deployment/blob/main/release/stack-versions.yaml) whose execution contract version is exactly 2.
-2. Confirm Postgres and Redis availability, then explicitly recreate the pre-release control-plane and gateway databases for this greenfield schema epoch.
-3. Deploy gateway, control plane, execution engine, deployment metadata, and documentation as one stack. Do not roll any image independently.
-4. Smoke test OIDC sign-in, workspace listing, agent connectivity, built-in tools, approval receipt execution, workspace and individual credential lifecycles, and a read-only run.
+| Starting state | Action |
+| --- | --- |
+| Fresh installation with two empty application databases | Configure secrets, run the pinned migration jobs, and start the stack. No reset is needed. |
+| Verified pre-`greenfield-1` schema | Stop and plan a separate data migration, or follow the scoped reset procedure only with explicit approval to discard the data. |
+| Existing `greenfield-1` with matching recorded migrations | Preserve both databases and secrets; apply pending forward migrations. |
+| Unknown epoch, missing history on non-empty databases, checksum drift, divergent revisions, or database ahead of selected images | Stop and reconcile provenance. Do not infer permission to reset or downgrade. |
 
-Pin image tags during upgrades so deployments are reproducible.
+Follow the [installation and upgrade runbook](https://github.com/acornops/acornops-deployment/blob/main/docs/OPERATIONS.md#installation-and-upgrade-paths)
+for history/checksum verification and the conditional earlier-epoch reset procedure.
 
-This version is a first-install/reset cutover, not a rolling database upgrade.
-The final baselines intentionally contain no pre-release data conversion paths.
+For an existing greenfield installation:
 
-For external Postgres, take a provider snapshot or `pg_dump`, then use an
-administrative connection to drop and recreate the control-plane database. For
-local Compose, run `task local-reset`. Returning to an older schema requires
-restoring a matching database backup and complete pinned image matrix; an application-only
-rollback is unsafe across schema epochs.
+1. Select one pinned stack from the [`stack-versions.yaml` release matrix](https://github.com/acornops/acornops-deployment/blob/main/release/stack-versions.yaml) whose execution contract version is exactly 2. Record the current image digests, configuration, and migration history.
+2. Rehearse the selected procedure on a restored backup. Quiesce writers as required by the release boundary, back up both application databases and the matching gateway secret namespace, and verify recovery before changing production.
+3. Follow the runbook's coordinated maintenance steps when crossing the MCP credential boundary or activating hosted-readiness changes. Apply pending migrations with the selected images and preserve retained data. `task prod-up` and Helm migration hooks do not stop existing writers for you.
+4. Deploy the complete pinned stack, verify migration status and readiness, then smoke test sign-in, retained workspaces and targets, agent connectivity, tools, approvals, and applicable credential lifecycles before reopening traffic.
+
+An incompatible rollback requires the matching database and secret-store backup,
+configuration, and complete pinned image matrix. Replacing applications alone
+does not undo schema or credential changes.
 
 Control-plane rollouts keep the service available through multiple replicas. Connected agents reconnect to an available pod during the rollout, but commands that are already running can fail or time out and may need to be retried.
 

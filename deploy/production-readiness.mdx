@@ -22,8 +22,9 @@ Complete this checklist after installation and after material platform configura
 ## State and coordination
 
 - Control-plane and LLM-gateway database migrations completed.
+- The starting database state and matching migration history were verified using the [upgrade procedure](/deploy/operations#upgrade-flow); an existing greenfield upgrade preserved data and secrets.
 - Postgres and Redis use durable, monitored services.
-- Backup and recovery procedures are documented and tested.
+- Backup and recovery procedures cover both application databases and the matching gateway secret namespace; restoration and the release's rollback boundary were rehearsed.
 - Multiple replicas use the required Redis coordination paths.
 
 ## Identity and policy

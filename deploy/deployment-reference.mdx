@@ -203,16 +203,19 @@ During a control-plane rollout, connected agents reconnect to an available pod. 
 
 Use the VM Compose stack for a single-machine central platform installation. This path is useful for smaller environments and production-style testing with separate Kubernetes clusters and VM targets.
 
-Typical flow:
+For a fresh installation, create the environment file:
 
 ```bash
 cp env/vm/.env.example env/vm/.env.prod
-task prod-up
 ```
+
+For an upgrade, preserve the existing environment file and secrets; do not
+overwrite it with the template or regenerate encryption keys. Select the
+[upgrade path](/deploy/operations#upgrade-flow) before changing the environment.
 
 Before starting the stack:
 
-- Generate unique internal service tokens and encryption keys.
+- For a fresh installation, generate unique internal service tokens and encryption keys.
 - Set production hostnames and OIDC settings.
 - Keep `TRUST_PROXY=1` when the edge proxy owns TLS and forwarded host headers.
 - Point database and Redis settings at durable services.
@@ -222,12 +225,18 @@ Before starting the stack:
 
 Database init jobs run before services start. Treat init failures as deployment blockers.
 
+After the environment and applicable upgrade procedure are ready, run
+`task prod-up`. Migration jobs do not stop existing writers for you.
+
 ### Greenfield database epoch
 
-This version is not a rolling database upgrade. Back up if needed, then drop and
-recreate the external control-plane and gateway databases before installing the
-complete pinned stack matrix. Pre-release data is not preserved, and mixed
-gateway, control-plane, or execution-engine versions are unsupported.
+Choose the [installation or upgrade path](/deploy/operations#upgrade-flow) from
+the recorded migration history before running deployment commands. Fresh empty
+databases need initialization; existing matching `greenfield-1` databases and
+secrets are preserved through pending forward migrations. Reset is reserved for
+a verified earlier epoch with explicit approval to discard data. Unknown or
+divergent history requires stopping and investigation. Deploy the complete pinned
+stack matrix and follow its coordinated maintenance boundaries.
 
 ## Kubernetes clusters
 
