@@ -17746,15 +17746,19 @@
                   "osFamily": {
                     "type": "string",
                     "enum": [
-                      "linux"
+                      "linux",
+                      "windows"
                     ],
+                    "description": "Immutable OS identity; defaults to linux. Windows requires scm and read-only access; rollout must be qualified and enabled.",
                     "example": "linux"
                   },
                   "serviceManager": {
                     "type": "string",
                     "enum": [
-                      "systemd"
+                      "systemd",
+                      "scm"
                     ],
+                    "description": "Must match OS: linux/systemd or windows/scm.",
                     "example": "systemd"
                   },
                   "allowedLogSources": {
@@ -25704,14 +25708,18 @@
           "osFamily": {
             "type": "string",
             "enum": [
-              "linux"
-            ]
+              "linux",
+              "windows"
+            ],
+            "description": "Immutable OS identity; defaults to linux. Windows requires scm and read-only access; rollout must be qualified and enabled."
           },
           "serviceManager": {
             "type": "string",
             "enum": [
-              "systemd"
-            ]
+              "systemd",
+              "scm"
+            ],
+            "description": "Must match OS: linux/systemd or windows/scm."
           },
           "allowedLogSources": {
             "type": "array",
@@ -25815,7 +25823,7 @@
         "properties": {
           "command": {
             "type": "string",
-            "description": "Executable shell only; initial/replacement commands contain a short-lived enrollment token."
+            "description": "OS-specific executable Bash or PowerShell command; initial/replacement commands contain a short-lived enrollment token."
           },
           "releaseVersion": {
             "type": "string",
