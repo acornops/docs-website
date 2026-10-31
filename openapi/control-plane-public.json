@@ -9440,7 +9440,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Sanitized runtime mode, queue, run, trigger, approval, template readiness, and report-source diagnostics.",
+            "description": "Admission and dispatch availability, queue, run, trigger, approval, template readiness, and report-source diagnostics.",
             "content": {
               "application/json": {
                 "schema": {
@@ -18758,6 +18758,8 @@
                   },
                   "eventTypes": {
                     "type": "array",
+                    "minItems": 1,
+                    "maxItems": 29,
                     "items": {
                       "type": "string",
                       "example": "run.failed.v1"
@@ -18919,6 +18921,8 @@
                   },
                   "eventTypes": {
                     "type": "array",
+                    "minItems": 1,
+                    "maxItems": 29,
                     "items": {
                       "type": "string"
                     }
@@ -21816,7 +21820,24 @@
           },
           "runtime": {
             "type": "object",
-            "additionalProperties": true
+            "required": [
+              "admissionEnabled",
+              "dispatchEnabled",
+              "workerIntervalMs"
+            ],
+            "properties": {
+              "admissionEnabled": {
+                "type": "boolean"
+              },
+              "dispatchEnabled": {
+                "type": "boolean"
+              },
+              "workerIntervalMs": {
+                "type": "integer",
+                "minimum": 250
+              }
+            },
+            "additionalProperties": false
           },
           "dispatch": {
             "type": "object",
