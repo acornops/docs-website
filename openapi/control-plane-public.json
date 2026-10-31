@@ -18392,7 +18392,7 @@
         ],
         "responses": {
           "200": {
-            "description": "VM log entries returned by the connected AgentV.",
+            "description": "VM log entries returned by the connected AgentV. Windows HTTP 200 envelopes also include health.status (ok, partial, unavailable, permission_denied, timed_out, unsupported), truncated, returned_count, original_count and byte_count. A successful HTTP response does not imply complete collection; retain usable entries alongside failed/partial collection status. Linux envelopes are unchanged.",
             "content": {
               "application/json": {
                 "schema": {
@@ -18513,11 +18513,76 @@
         ],
         "responses": {
           "200": {
-            "description": "VM inventory page payload: { items, nextCursor? }.",
+            "description": "VM inventory: Linux retains {items}. Windows adds collectionStatus bound to the same committed snapshot as its rows; null means no matching snapshot/read-model generation. Missing collector evidence is unknown. Omitted counts describe inventory truncation; findingCoverage applies only to volumes/services and does not imply a complete inventory.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/InventoryPage"
+                  "type": "object",
+                  "required": [
+                    "items"
+                  ],
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": true
+                      }
+                    },
+                    "collectionStatus": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "additionalProperties": false,
+                      "required": [
+                        "workspaceId",
+                        "targetId",
+                        "snapshotTs",
+                        "categories"
+                      ],
+                      "properties": {
+                        "workspaceId": {
+                          "type": "string"
+                        },
+                        "targetId": {
+                          "type": "string"
+                        },
+                        "snapshotTs": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "categories": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "required": [
+                            "host",
+                            "filesystems",
+                            "services",
+                            "processes",
+                            "network"
+                          ],
+                          "properties": {
+                            "host": {
+                              "$ref": "#/components/schemas/WindowsCollectionCategory"
+                            },
+                            "filesystems": {
+                              "$ref": "#/components/schemas/WindowsCollectionCategory"
+                            },
+                            "services": {
+                              "$ref": "#/components/schemas/WindowsCollectionCategory"
+                            },
+                            "processes": {
+                              "$ref": "#/components/schemas/WindowsCollectionCategory"
+                            },
+                            "network": {
+                              "$ref": "#/components/schemas/WindowsCollectionCategory"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
                 }
               }
             }
@@ -26432,6 +26497,39 @@
           }
         },
         "additionalProperties": true
+      },
+      "WindowsCollectionCategory": {
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "partial",
+              "unavailable",
+              "permission_denied",
+              "timed_out",
+              "unsupported",
+              "unknown"
+            ]
+          },
+          "omittedCount": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "findingCoverage": {
+            "type": "string",
+            "enum": [
+              "complete",
+              "incomplete"
+            ]
+          }
+        }
       },
       "WorkflowCapabilitiesPreview": {
         "type": "object",
