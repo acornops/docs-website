@@ -33,6 +33,11 @@ wss://api.example.com/api/v1/agent/connect
 
 Replace `example.com` with your deployment domain. The public demo agent route is `wss://api.demo.acornops.dev/api/v1/agent/connect`. Do not claim another distribution as supported until the same bootstrap and live-systemd canary passes there.
 
+When AgentV disconnects, its VM retains the registered host settings and access
+policy. A reconnect with the existing valid credential returns the same target
+online; a temporary connection loss does not require registration or enrollment
+again. Fresh log reads and tools require a connected agent.
+
 For the initial bootstrap, the host's `curl` and Node.js runtime must already trust the platform certificate. Install an organization-private root in the host trust store before running the generated command. After installation, `ACORNOPS_AGENT_ADDITIONAL_CA_BUNDLE_FILE` may point to an additional root-managed PEM bundle for the AgentV runtime; repair and replacement preserve that setting. Never disable certificate or hostname verification.
 
 ## Repair and credential replacement
