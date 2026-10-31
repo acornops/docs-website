@@ -1,24 +1,46 @@
 ---
 title: "Configure automation runtime"
-description: "Roll out Workflow execution safely and monitor its operational state"
+description: "Configure Workflow execution, maintenance pauses, and operational diagnostics"
 ---
 
 This page covers deployment-level automation controls. For authoring and using automation, see [Agents and Workflows](/use/agents-and-workflows).
 
-## Runtime modes
+## Workflow dispatch
 
-Set `AUTOMATION_RUNTIME_MODE` or Helm `automation.runtimeMode` to:
+Workflow dispatch is enabled by default after startup. Complete required
+migrations before starting the control plane. Workspace readiness,
+authorization, approvals, target compatibility, and integration checks still
+apply to every run.
 
-- `off` to stop new dispatch while preserving durable state,
-- `shadow` to create and inspect durable intent without dispatch,
-- `canary` to dispatch only named canary workspaces,
-- `on` to dispatch all eligible workspaces.
+Use the existing workspace execution controls for maintenance:
 
-Keep the runtime off while required migrations and startup upgrades complete. Progress through shadow and canary before enabling all workspaces.
+| Environment variable | Helm value | Effect when false |
+| --- | --- | --- |
+| `WORKSPACE_ADMISSION_ENABLED` | `workspaceCapacity.admissionEnabled` | Reject new execution admissions while accepted work drains. |
+| `WORKSPACE_DISPATCH_ENABLED` | `workspaceCapacity.dispatchEnabled` | Pause dispatch of accepted work, subject to its queue deadline. |
 
-## Canary scope
+Both default to `true` and apply across workspace execution types. A dispatch
+pause does not stop already-running work. Set both to `false` when maintenance
+requires pausing both new admissions and dispatch. Review pending work before
+reopening dispatch.
 
-Set `AUTOMATION_CANARY_WORKSPACE_IDS` or `automation.canaryWorkspaceIds` to the exact workspaces eligible during canary rollout. Canary selection does not bypass workspace readiness, authorization, target compatibility, or integration checks.
+Set `AUTOMATION_WORKER_INTERVAL_MS` or Helm `automation.workerIntervalMs` to
+change the worker poll interval, which defaults to 1000 milliseconds.
+
+## Remove retired rollout settings
+
+Use these settings with a control-plane image that removes the rollout mode.
+Do not remove rollout settings from an older binary that still defaults to
+disabled dispatch.
+
+Remove `AUTOMATION_RUNTIME_MODE` and `AUTOMATION_CANARY_WORKSPACE_IDS` from your
+environment files. New binaries do not read these variables, so an old `off`
+value no longer pauses work. Replace an intentional pause with the workspace
+controls before upgrading.
+
+Remove `automation.runtimeMode` and `automation.canaryWorkspaceIds` from Helm
+overrides. The chart rejects these retired properties. Supply a cleaned values
+file that preserves your other overrides instead of using `--reuse-values`.
 
 ## Runtime and retention
 
@@ -33,7 +55,12 @@ Workflow definitions cannot increase these limits.
 
 ## Diagnostics
 
-Authorized workspace readers can inspect the automation diagnostics endpoint for runtime state, pending dispatch age, run counts, scheduler lag, pending approvals, template readiness, and retained report-source counts.
+Authorized workspace readers can inspect the automation diagnostics endpoint for admission and dispatch availability, pending dispatch age, run counts, scheduler lag, pending approvals, template readiness, and retained report-source counts.
+
+Diagnostics expose `runtime.admissionEnabled` and `runtime.dispatchEnabled`.
+Update clients that read the retired `runtime.mode` and
+`runtime.workspaceEnabled` fields. An admission-only pause lets accepted work
+drain; diagnostics report `disabled` when dispatch is paused.
 
 Monitor the control-plane automation metrics and supplied Prometheus alert rules. Alert on delayed dispatch, scheduler lag, stale approvals, review-blocked runs, trigger rejection, MCP readiness failures, cleanup retries, report failures, and elevated terminal failures.
 
