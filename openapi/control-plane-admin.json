@@ -2219,6 +2219,52 @@
         }
       }
     },
+    "/admin/v1/users/summary": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Read user and verified-user counts",
+        "security": [
+          {
+            "adminBearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Bounded governance summary; requires admin:user:read.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminUserOverview"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error500"
+          }
+        }
+      }
+    },
     "/admin/v1/workspace-plans": {
       "get": {
         "tags": [
@@ -2439,6 +2485,30 @@
         "security": [
           {
             "adminBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Case-insensitive workspace name or ID search."
+          },
+          {
+            "name": "lifecycleStatus",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "active",
+                "suspended"
+              ]
+            },
+            "description": "Filter before pagination; bound to the cursor."
           }
         ],
         "responses": {
@@ -4019,6 +4089,52 @@
           }
         }
       ]
+    },
+    "/admin/v1/workspaces/summary": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Read workspace counts and top three connected environments",
+        "security": [
+          {
+            "adminBearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Bounded governance summary; requires admin:workspace:read.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminWorkspaceOverview"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error500"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -4625,6 +4741,24 @@
         ],
         "description": "Support-safe user. Collection responses may include the optional latest recorded login timestamp. Password hashes, reset tokens, and OIDC subjects are never returned."
       },
+      "AdminUserOverview": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "userCount",
+          "verifiedUserCount"
+        ],
+        "properties": {
+          "userCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "verifiedUserCount": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
       "AdminUserPage": {
         "type": "object",
         "required": [
@@ -4698,6 +4832,65 @@
           },
           "nextCursor": {
             "type": "string"
+          }
+        }
+      },
+      "AdminWorkspaceOverview": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "workspaceCount",
+          "suspendedWorkspaceCount",
+          "kubernetesCount",
+          "virtualMachineCount",
+          "environmentLeaders"
+        ],
+        "properties": {
+          "workspaceCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "suspendedWorkspaceCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "kubernetesCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "virtualMachineCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "environmentLeaders": {
+            "type": "array",
+            "maxItems": 3,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "id",
+                "name",
+                "clusterCount",
+                "virtualMachineCount"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "clusterCount": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "virtualMachineCount": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              }
+            }
           }
         }
       },
