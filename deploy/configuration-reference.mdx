@@ -121,12 +121,12 @@ chain.
 
 | Environment variable | Helm value | Default | Purpose |
 | --- | --- | --- | --- |
-| `AUTOMATION_RUNTIME_MODE` | `automation.runtimeMode` | `off` in production | Select `off`, `shadow`, `canary`, or `on`. |
-| `AUTOMATION_CANARY_WORKSPACE_IDS` | `automation.canaryWorkspaceIds` | empty | Comma-separated workspace IDs eligible in `canary` mode. |
+| `WORKSPACE_ADMISSION_ENABLED` | `workspaceCapacity.admissionEnabled` | `true` | Admit new workspace executions; set `false` for maintenance. |
+| `WORKSPACE_DISPATCH_ENABLED` | `workspaceCapacity.dispatchEnabled` | `true` | Dispatch accepted work; set `false` to pause dispatch. |
 | `AUTOMATION_WORKER_INTERVAL_MS` | `automation.workerIntervalMs` | `1000` | Poll interval for durable schedules and dispatch intent. |
 | `ASSISTANT_WRITE_CONFIRMATION_TIMEOUT_SECONDS` | `assistantRuntime.writeConfirmationTimeoutSeconds` | `900` | Expires Workflow-run and target-run write approvals after 15 minutes. |
 
-See [Automation runtime](/deploy/automation-runtime) for rollout order and operational diagnostics.
+See [Automation runtime](/deploy/automation-runtime) for maintenance pauses, retired rollout settings, and operational diagnostics.
 
 `EXTERNAL_INTEGRATION_CLIENTS_JSON` stores descriptors such as client id,
 provider, display name, enabled flag, lowercase SHA-256 token hash, and optional
