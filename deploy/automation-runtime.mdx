@@ -24,6 +24,12 @@ pause does not stop already-running work. Set both to `false` when maintenance
 requires pausing both new admissions and dispatch. Review pending work before
 reopening dispatch.
 
+Queue deadlines still apply while dispatch is paused. Expired work is marked
+failed, including its overall Workflow status. Maintenance also repairs stale
+summaries left by older versions without rerunning them. Before resuming a failed
+Workflow, review any uncertain operations; its old specialists are cancelled as
+part of terminal cleanup.
+
 Set `AUTOMATION_WORKER_INTERVAL_MS` or Helm `automation.workerIntervalMs` to
 change the worker poll interval, which defaults to 1000 milliseconds.
 
