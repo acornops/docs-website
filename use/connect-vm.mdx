@@ -5,7 +5,14 @@ description: "Register a Linux target, install AgentV, and verify its diagnostic
 
 Every supported VM that AcornOps observes runs the unprivileged AgentV. The agent opens an outbound WebSocket, reports bounded host snapshots, and executes strict VM tools. Production onboarding defaults to read-only. You can instead permit policy-governed restarts for an exact list of systemd services.
 
-The supported first-release host baseline is Ubuntu 24.04 LTS with systemd, Bash, `curl`, `tar`, `sha256sum`, and Node.js 22 or newer at `/usr/bin/node`. You need root or `sudo` access and outbound HTTPS access to both the configured AgentV release host and the AcornOps API. Other Linux distributions, including Rocky Linux, are not qualified for this release.
+The supported first-release host baseline is Ubuntu 24.04 LTS with systemd, Bash, `curl`, `tar`, `sha256sum`, and Node.js 22 or newer installed system-wide at `/usr/bin/node` or `/usr/local/bin/node`. The installer chooses the first trusted supported runtime from those paths, then preserves its selection during repair and upgrade. Per-user runtimes are not supported. You need root or `sudo` access and outbound HTTPS access to both the configured AgentV release host and the AcornOps API. Other Linux distributions, including Rocky Linux, are not qualified for this release.
+
+<Note>
+  Windows/SCM support is a read-only preview and is disabled by default. Keep
+  `AGENTV_WINDOWS_ENABLED=false` in production until native collection, installation
+  recovery, real reboot and release-artifact qualification are complete. The
+  Windows option becoming available in the console does not establish qualification.
+</Note>
 
 ## Register a VM
 
