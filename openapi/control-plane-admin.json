@@ -4645,6 +4645,9 @@
               "connectionStatus": {
                 "type": "string"
               },
+              "connection": {
+                "$ref": "#/components/schemas/TargetConnectionObservation"
+              },
               "latestSnapshot": {
                 "$ref": "#/components/schemas/SnapshotReference"
               },
@@ -5183,6 +5186,49 @@
           }
         },
         "additionalProperties": true
+      },
+      "TargetConnectionObservation": {
+        "type": "object",
+        "required": [
+          "state",
+          "lastHeartbeatAt",
+          "observedAt",
+          "expiresAt",
+          "hasConnectionEvidence"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "state": {
+            "type": "string",
+            "enum": [
+              "connected",
+              "disconnected",
+              "unknown"
+            ]
+          },
+          "lastHeartbeatAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "observedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "expiresAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "hasConnectionEvidence": {
+            "type": "boolean",
+            "description": "A connection identity or heartbeat was recorded, even if its timestamp is unusable. False distinguishes missing evidence for initial setup."
+          }
+        }
       },
       "Workspace": {
         "type": "object",
