@@ -4025,7 +4025,15 @@
             "$ref": "#/components/parameters/PathSessionId"
           },
           {
-            "$ref": "#/components/parameters/QueryLimit3"
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 100
+            }
           },
           {
             "$ref": "#/components/parameters/QueryCursor"
@@ -11223,7 +11231,7 @@
             "$ref": "#/components/parameters/QueryWindow"
           },
           {
-            "$ref": "#/components/parameters/QueryLimit4"
+            "$ref": "#/components/parameters/QueryLimit3"
           }
         ],
         "responses": {
@@ -11469,7 +11477,15 @@
             "$ref": "#/components/parameters/PathClusterId"
           },
           {
-            "$ref": "#/components/parameters/QueryLimit3"
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 100
+            }
           },
           {
             "$ref": "#/components/parameters/QueryCursor"
@@ -11830,7 +11846,7 @@
             "$ref": "#/components/parameters/QueryWindow"
           },
           {
-            "$ref": "#/components/parameters/QueryLimit4"
+            "$ref": "#/components/parameters/QueryLimit3"
           }
         ],
         "responses": {
@@ -17746,15 +17762,19 @@
                   "osFamily": {
                     "type": "string",
                     "enum": [
-                      "linux"
+                      "linux",
+                      "windows"
                     ],
+                    "description": "Immutable OS identity; defaults to linux. Windows requires scm and read-only access; rollout must be qualified and enabled.",
                     "example": "linux"
                   },
                   "serviceManager": {
                     "type": "string",
                     "enum": [
-                      "systemd"
+                      "systemd",
+                      "scm"
                     ],
+                    "description": "Must match OS: linux/systemd or windows/scm.",
                     "example": "systemd"
                   },
                   "allowedLogSources": {
@@ -18294,26 +18314,85 @@
             "in": "query",
             "name": "source",
             "required": false,
+            "description": "Linux only.",
             "schema": {
               "type": "string",
-              "example": "system"
+              "enum": [
+                "journald"
+              ]
             }
           },
           {
             "in": "query",
-            "name": "query",
+            "name": "unit",
             "required": false,
+            "description": "Linux systemd unit.",
             "schema": {
               "type": "string"
             }
           },
           {
-            "$ref": "#/components/parameters/QueryLimit3"
+            "in": "query",
+            "name": "channel",
+            "required": false,
+            "description": "Required for Windows. The channel must also be locally allowed by AgentV.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "Application",
+                "System"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "since",
+            "required": false,
+            "description": "Windows ISO timestamp; the native agent enforces the bounded time window.",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "in": "query",
+            "name": "until",
+            "required": false,
+            "description": "Windows ISO timestamp.",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/QueryQ"
+          },
+          {
+            "in": "query",
+            "name": "tailLines",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 500,
+              "default": 200
+            }
+          },
+          {
+            "in": "query",
+            "name": "limitBytes",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1024,
+              "maximum": 1048576,
+              "default": 1048576
+            }
           }
         ],
         "responses": {
           "200": {
-            "description": "VM log entries returned by the connected AgentV.",
+            "description": "VM log entries returned by the connected AgentV. Windows HTTP 200 envelopes also include health.status (ok, partial, unavailable, permission_denied, timed_out, unsupported), truncated, returned_count, original_count and byte_count. A successful HTTP response does not imply complete collection; retain usable entries alongside failed/partial collection status. Linux envelopes are unchanged.",
             "content": {
               "application/json": {
                 "schema": {
@@ -18368,7 +18447,7 @@
             "$ref": "#/components/parameters/QueryWindow"
           },
           {
-            "$ref": "#/components/parameters/QueryLimit4"
+            "$ref": "#/components/parameters/QueryLimit3"
           }
         ],
         "responses": {
@@ -18434,11 +18513,76 @@
         ],
         "responses": {
           "200": {
-            "description": "VM inventory page payload: { items, nextCursor? }.",
+            "description": "VM inventory: Linux retains {items}. Windows adds collectionStatus bound to the same committed snapshot as its rows; null means no matching snapshot/read-model generation. Missing collector evidence is unknown. Omitted counts describe inventory truncation; findingCoverage applies only to volumes/services and does not imply a complete inventory.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/InventoryPage"
+                  "type": "object",
+                  "required": [
+                    "items"
+                  ],
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": true
+                      }
+                    },
+                    "collectionStatus": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "additionalProperties": false,
+                      "required": [
+                        "workspaceId",
+                        "targetId",
+                        "snapshotTs",
+                        "categories"
+                      ],
+                      "properties": {
+                        "workspaceId": {
+                          "type": "string"
+                        },
+                        "targetId": {
+                          "type": "string"
+                        },
+                        "snapshotTs": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "categories": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "required": [
+                            "host",
+                            "filesystems",
+                            "services",
+                            "processes",
+                            "network"
+                          ],
+                          "properties": {
+                            "host": {
+                              "$ref": "#/components/schemas/WindowsCollectionCategory"
+                            },
+                            "filesystems": {
+                              "$ref": "#/components/schemas/WindowsCollectionCategory"
+                            },
+                            "services": {
+                              "$ref": "#/components/schemas/WindowsCollectionCategory"
+                            },
+                            "processes": {
+                              "$ref": "#/components/schemas/WindowsCollectionCategory"
+                            },
+                            "network": {
+                              "$ref": "#/components/schemas/WindowsCollectionCategory"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
                 }
               }
             }
@@ -18451,6 +18595,130 @@
           },
           "403": {
             "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error500"
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/virtual-machines/registration-options": {
+      "get": {
+        "tags": [
+          "workspaces"
+        ],
+        "summary": "Get available VM registration platforms",
+        "description": "Requires a user session and manage_targets. Windows/scm is included only when the read-only Windows rollout is enabled with valid release coordinates. No release URLs or credentials are returned.",
+        "security": [
+          {
+            "userSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/PathWorkspaceId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Available registration platforms.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "platforms"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "platforms": {
+                      "type": "array",
+                      "items": {
+                        "oneOf": [
+                          {
+                            "type": "object",
+                            "required": [
+                              "osFamily",
+                              "serviceManager",
+                              "accessModes"
+                            ],
+                            "additionalProperties": false,
+                            "properties": {
+                              "osFamily": {
+                                "const": "linux"
+                              },
+                              "serviceManager": {
+                                "const": "systemd"
+                              },
+                              "accessModes": {
+                                "const": [
+                                  "read_only",
+                                  "read_write"
+                                ]
+                              }
+                            }
+                          },
+                          {
+                            "type": "object",
+                            "required": [
+                              "osFamily",
+                              "serviceManager",
+                              "accessModes"
+                            ],
+                            "additionalProperties": false,
+                            "properties": {
+                              "osFamily": {
+                                "const": "windows"
+                              },
+                              "serviceManager": {
+                                "const": "scm"
+                              },
+                              "accessModes": {
+                                "const": [
+                                  "read_only"
+                                ]
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "description": "User session required.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Target management permission required.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           },
           "404": {
             "$ref": "#/components/responses/Error404"
@@ -19917,17 +20185,6 @@
         }
       },
       "QueryLimit3": {
-        "in": "query",
-        "name": "limit",
-        "required": false,
-        "schema": {
-          "type": "integer",
-          "minimum": 1,
-          "maximum": 200,
-          "default": 100
-        }
-      },
-      "QueryLimit4": {
         "in": "query",
         "name": "limit",
         "required": false,
@@ -23394,6 +23651,9 @@
               "connectionStatus": {
                 "type": "string"
               },
+              "connection": {
+                "$ref": "#/components/schemas/TargetConnectionObservation"
+              },
               "latestSnapshot": {
                 "$ref": "#/components/schemas/SnapshotReference"
               },
@@ -24931,6 +25191,49 @@
         },
         "additionalProperties": true
       },
+      "TargetConnectionObservation": {
+        "type": "object",
+        "required": [
+          "state",
+          "lastHeartbeatAt",
+          "observedAt",
+          "expiresAt",
+          "hasConnectionEvidence"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "state": {
+            "type": "string",
+            "enum": [
+              "connected",
+              "disconnected",
+              "unknown"
+            ]
+          },
+          "lastHeartbeatAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "observedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "expiresAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "hasConnectionEvidence": {
+            "type": "boolean",
+            "description": "A connection identity or heartbeat was recorded, even if its timestamp is unusable. False distinguishes missing evidence for initial setup."
+          }
+        }
+      },
       "TargetInsightsActivity": {
         "type": "object",
         "required": [
@@ -25507,6 +25810,9 @@
           "connectionStatus": {
             "type": "string"
           },
+          "connection": {
+            "$ref": "#/components/schemas/TargetConnectionObservation"
+          },
           "latestSnapshot": {
             "$ref": "#/components/schemas/SnapshotReference"
           },
@@ -25693,6 +25999,9 @@
               "connectionStatus": {
                 "type": "string"
               },
+              "connection": {
+                "$ref": "#/components/schemas/TargetConnectionObservation"
+              },
               "latestSnapshot": {
                 "$ref": "#/components/schemas/SnapshotReference"
               },
@@ -25725,14 +26034,18 @@
           "osFamily": {
             "type": "string",
             "enum": [
-              "linux"
-            ]
+              "linux",
+              "windows"
+            ],
+            "description": "Immutable OS identity; defaults to linux. Windows requires scm and read-only access; rollout must be qualified and enabled."
           },
           "serviceManager": {
             "type": "string",
             "enum": [
-              "systemd"
-            ]
+              "systemd",
+              "scm"
+            ],
+            "description": "Must match OS: linux/systemd or windows/scm."
           },
           "allowedLogSources": {
             "type": "array",
@@ -25836,7 +26149,7 @@
         "properties": {
           "command": {
             "type": "string",
-            "description": "Executable shell only; initial/replacement commands contain a short-lived enrollment token."
+            "description": "OS-specific executable Bash or PowerShell command; initial/replacement commands contain a short-lived enrollment token."
           },
           "releaseVersion": {
             "type": "string",
@@ -26236,6 +26549,39 @@
           }
         },
         "additionalProperties": true
+      },
+      "WindowsCollectionCategory": {
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "partial",
+              "unavailable",
+              "permission_denied",
+              "timed_out",
+              "unsupported",
+              "unknown"
+            ]
+          },
+          "omittedCount": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "findingCoverage": {
+            "type": "string",
+            "enum": [
+              "complete",
+              "incomplete"
+            ]
+          }
+        }
       },
       "WorkflowCapabilitiesPreview": {
         "type": "object",

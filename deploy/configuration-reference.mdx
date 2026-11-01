@@ -481,3 +481,17 @@ WEBHOOK_EGRESS_ALLOWED_PRIVATE_HOSTS_JSON='["mattermost-bot.internal"]'
 ```
 
 An exact entry matches only that hostname. A leading `*.` entry matches subdomains, including deeper descendants, but not the bare suffix. The allowlist is additive: public destinations remain available. AcornOps still rejects HTTP, embedded credentials, IP-literal URLs, localhost, metadata services, hard-blocked reserved destinations, mixed allowed/disallowed DNS answers, and redirects. It validates DNS and pins an allowed address before connecting. There is no broad insecure-development webhook switch.
+
+## Agent connection reporting
+
+The control-plane environment variable
+`CONTROL_PLANE_AGENT_HEARTBEAT_FRESHNESS_SECONDS` defaults to `120` and accepts
+integers from `60` to `600`. It applies to AgentK and AgentV connection reporting.
+Configure the same value on every control-plane replica and keep their clocks
+synchronized with PostgreSQL. This grace does not change owner leases, command
+routing, heartbeat frequency or collector health.
+
+Deploy the backend before the management console. No agent update or database
+migration is required. Existing API status filters continue to filter stored
+status; connection freshness is exposed separately. Older backends retain their
+legacy connection reporting.

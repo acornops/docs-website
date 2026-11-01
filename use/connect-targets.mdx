@@ -30,3 +30,21 @@ Use the generated command rather than assembling one manually. It contains the t
 </Warning>
 
 Connecting a target is different from [deploying the central platform](/deploy). The target connector runs in the environment that AcornOps observes; the central platform hosts the management console and coordination services.
+
+## Connection freshness
+
+The management console reports an agent as connected while its authenticated
+heartbeats are recent. The default grace is 120 seconds. If heartbeats stop,
+including during a control-plane outage, cached connection indicators expire
+without requiring you to reload the page. A new heartbeat restores the indication.
+
+Disconnected does not necessarily mean the host is shut down. Check the agent
+service and its network path to the control plane. An unavailable connection
+indication means AcornOps lacks reliable connection evidence; a target that has
+never connected keeps its setup instructions.
+
+Connection and telemetry health are separate. An agent can remain connected while
+a collector reports a failure or a target is degraded. Stored target health and
+command authorization are unchanged. API consumers should use the optional
+`connection` observation for freshness; the existing `status` field retains its
+stored lifecycle and health meaning.
