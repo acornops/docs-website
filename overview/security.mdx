@@ -3,7 +3,7 @@ title: "Platform security"
 description: "How AcornOps layers identity, tool policy, approvals, and target-native enforcement"
 ---
 
-AcornOps uses defence in depth. A platform decision does not replace the controls already present in a Kubernetes cluster or Linux VM. Each request must pass the platform's identity and policy checks, any required human approval, and the target's local enforcement.
+AcornOps uses defence in depth. A platform decision does not replace the controls already present in a Kubernetes cluster or VM. Each request must pass the platform's identity and policy checks, any required human approval, and the target's local enforcement.
 
 ## Defence in depth
 
@@ -51,9 +51,9 @@ flowchart LR
     AgentK --> KPolicy
   end
 
-  subgraph VM["Linux / systemd VM"]
+  subgraph VM["Virtual machine"]
     AgentV["AgentV"]
-    VPolicy["Local tool allowlist"]
+    VPolicy["Local tool policy"]
     AgentV --> VPolicy
   end
 
@@ -76,9 +76,11 @@ flowchart LR
   linkStyle 2,3 stroke:#7A1F08,stroke-width:2px;
 ```
 
-AgentK and AgentV authenticate with target-specific credentials and establish outbound WebSocket connections to the control plane. AgentK uses its existing cluster-key flow. AgentV onboarding exchanges a 15-minute one-use token for a durable credential that is returned only to the root installer. The connection carries heartbeats, capability metadata, snapshots, and bounded tool requests. Target access stays with the connector inside the environment.
+AgentK and AgentV authenticate with target-specific credentials and establish outbound WebSocket connections to the control plane. AgentK uses its existing cluster-key flow. AgentV onboarding exchanges a 15-minute one-use token for a durable credential that is returned only to the privileged host installer. The connection carries heartbeats, capability metadata, snapshots, and bounded tool requests. Target access stays with the connector inside the environment.
 
-AgentV is read-only by default. Read-write onboarding binds one to 32 exact non-AgentV systemd services to the one-use enrollment. The root installer writes that policy and enables the privileged socket; the copied command cannot widen it. The local allowlist remains a capability ceiling. The VM run permission policy independently chooses read-only, approval-required, or reviewed non-destructive automatic changes. Updating the host allowlist requires another one-use root command, pauses writes until commit, and rolls back to the previous policy and credential on failure. No control-plane setting can authorize a service outside the applied local allowlist.
+On Linux, AgentV is read-only by default. Read-write onboarding binds one to 32 exact non-AgentV systemd services to the one-use enrollment. The root installer writes that policy and enables the privileged socket; the copied command cannot widen it. The local allowlist remains a capability ceiling. The VM run permission policy independently chooses read-only, approval-required, or reviewed non-destructive automatic changes. Updating the host allowlist requires another one-use root command, pauses writes until commit, and rolls back to the previous policy and credential on failure. No control-plane setting can authorize a service outside the applied local allowlist.
+
+The [Windows/SCM preview](/use/connect-vm#windows-preview-setup) is disabled by default and not qualified for production. It exposes only read-only AgentV tools regardless of run permissions. Windows event log reads also require a locally allowed channel.
 
 Outbound connectivity describes the direction in which the session is established. Administrators must still restrict egress to the expected AcornOps endpoint, validate TLS, protect connector credentials, and apply least-privilege target policy.
 

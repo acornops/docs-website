@@ -3,13 +3,13 @@ title: "Understand AcornOps"
 description: "Follow the path from a workspace request to target-scoped evidence and tools"
 ---
 
-AcornOps separates the platform that coordinates operations from the Kubernetes clusters and Linux VMs that it manages.
+AcornOps separates the platform that coordinates operations from the Kubernetes clusters and VMs that it manages.
 
 ## The operating model
 
 1. A platform administrator deploys the central platform.
 2. A workspace owner creates a workspace and invites members.
-3. An authorized member registers a Kubernetes cluster or Linux VM as a target.
+3. An authorized member registers a Kubernetes cluster or VM as a target.
 4. The generated AgentK or AgentV installation connects outbound to the control plane.
 5. Members investigate the target through chat or launch a Workflow.
 6. AcornOps compiles the run's exact model, target, tool, and approval scope.
@@ -33,7 +33,7 @@ Deployments can optionally add the separate [platform admin console](/deploy/pla
 
 ## Connected targets
 
-AgentK runs in a connected Kubernetes cluster. AgentV runs as a systemd service on a connected Linux VM. Both initiate outbound connections, report inventory and health information, and advertise their available target-native tools.
+AgentK runs in a connected Kubernetes cluster. AgentV runs as a systemd service on the qualified Linux VM platform. The separate [Windows/SCM preview](/use/connect-vm#windows-preview-setup) is read-only, disabled by default, and not qualified for production. Both connectors initiate outbound connections, report inventory and health information, and advertise their available target-native tools.
 
 These connectors are different from [specialist Agents](/overview/agents-and-workflows). A specialist Agent is a workspace definition used by a Workflow. AgentK and AgentV are target-side services.
 
