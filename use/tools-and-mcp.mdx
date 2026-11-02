@@ -36,7 +36,7 @@ If you are building a bot or workflow adapter that reacts to AcornOps events, st
 | --- | --- | --- |
 | AcornOps workspace-native tools | Control plane | The Agent's **Capabilities → Tools** page lists code-owned tools separately. An owner or admin grants them to any specialist Agent. |
 | Builtin Kubernetes tools | AgentK | The connected agent advertises tools and AcornOps shows them in the target tool catalog. |
-| Builtin VM tools | AgentV | The agent advertises strict, read-only Linux/systemd tools over `tools/list`; the control plane synchronizes complete input, output, artifact, timeout, and capability contracts into the gateway for the VM target. |
+| Builtin VM tools | AgentV | The agent advertises bounded diagnostic tools and, on Linux, an optional allowlisted `restart_service` tool governed by host and run policy. The Windows preview is read-only. The control plane synchronizes the advertised tool contracts into the gateway for the VM target. |
 | Remote MCP servers | Workspace Agent or target | Owners or admins connect an endpoint by URL, or enable a starter seeded from platform **Workspace Defaults**, then configure authentication through the same credential flow. Registry installation remains a disabled **Coming soon** placeholder. |
 
 Newly discovered remote MCP tools stay disabled until an owner or admin reviews
@@ -246,4 +246,4 @@ When write confirmations are required, the run pauses before a write-capable too
 
 The default timeout is 300 seconds. Rejection and timeout do not call the target connector. Approval executes the queued write once. AgentV restart requests use stable operation IDs and never automatically retry an unknown outcome.
 
-See [Connect a Kubernetes cluster](/use/connect-kubernetes#write-confirmation-policy) for Kubernetes write confirmation behavior, [Connect a Linux VM](/use/connect-vm#tools-and-mcp) for VM tool behavior, and the API reference sidebar for public endpoint schemas.
+See [Connect a Kubernetes cluster](/use/connect-kubernetes#write-confirmation-policy) for Kubernetes write confirmation behavior, [Connect a VM](/use/connect-vm#tools-and-mcp) for VM tool behavior, and the API reference sidebar for public endpoint schemas.

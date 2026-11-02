@@ -3,7 +3,9 @@ title: "Platform architecture"
 description: "How AcornOps components, trust boundaries, and runtime flows fit together"
 ---
 
-AcornOps separates the operator experience, platform state, run execution, model/tool access, and target access into distinct components. The platform has a target core for Kubernetes clusters and Linux/systemd VMs. That separation keeps public traffic narrow and lets target agents connect outbound only.
+AcornOps separates the operator experience, platform state, run execution, model/tool access, and target access into distinct components. The platform has a target core for Kubernetes clusters and VMs. That separation keeps public traffic narrow and lets target agents connect outbound only.
+
+Linux/systemd is the qualified VM platform. The [Windows/SCM preview](/use/connect-vm#windows-preview-setup) is read-only, disabled by default, and not qualified for production.
 
 ## System overview
 
@@ -29,7 +31,7 @@ flowchart LR
   subgraph TargetConnectors[" "]
     direction LR
     AgentK["AgentK → Kubernetes cluster<br/>Outbound WebSocket · local RBAC"]
-    AgentV["AgentV → Linux / systemd VM<br/>Outbound WebSocket · local allowlist"]
+    AgentV["AgentV → VM<br/>Outbound WebSocket · local policy"]
     AgentK ~~~ AgentV
   end
 
@@ -68,7 +70,7 @@ flowchart LR
 | LLM gateway | Provider routing, run-scoped model access, MCP registry, secret lookup, gateway auditing | Internal only |
 | Platform admin console (optional) | Deployment-wide governance UI and fixed-route BFF for the private admin API | Dedicated admin host |
 | AgentK | Kubernetes cluster snapshots, logs, and builtin Kubernetes tool execution | Outbound only |
-| AgentV | Bounded Linux/systemd snapshots and strict built-in tools; optional local helper for allowlisted service restart | Network outbound only |
+| AgentV | Bounded VM snapshots and strict built-in tools; optional Linux helper for allowlisted service restart; read-only Windows preview | Network outbound only |
 
 The optional platform admin console is intentionally outside the tenant runtime path shown above. It uses a dedicated OIDC client and forwards only fixed governance routes to the private control-plane admin API. It cannot access target operations, sessions, runs, prompts, tools, or tenant audit records.
 
